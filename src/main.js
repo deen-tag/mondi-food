@@ -54,8 +54,8 @@ function home(){return `
 </section>
 <section class="welcome"><div><span>OFFRE DE BIENVENUE</span><h3>-10% SUR VOTRE 1ÈRE COMMANDE</h3><small>Code : <b>WELCOME10</b></small></div><strong>%</strong></section>
 <section class="homeTiles">
-${tile('pannuezo','/images/pannuezo-original.jpg','PANNUEZO','Ultra fondant · généreusement garni')}
-${tile('pizza','/images/margherita.jpg','PIZZA','Pâte artisanale · ingrédients frais')}</section>
+${tile('pannuezo','/images/pannuezo-card.jpg','PANNUEZO','Ultra fondant · généreusement garni')}
+${tile('pizza','/images/pizza-card.jpg','PIZZA','Pâte artisanale · ingrédients frais')}</section>
 <section class="perks"><div><b>♨</b><strong>Cuisson parfaite</strong><small>Doré & croustillant</small></div><div><b>♧</b><strong>Ingrédients frais</strong><small>Sélectionnés avec soin</small></div><div><b>♧</b><strong>Livraison rapide</strong><small>30–45 min</small></div></section>
 <section class="block"><div class="heading"><span><i>À LA CARTE</i><h2>Nos incontournables</h2></span><button data-go="menu">Tout voir →</button></div><div class="rail">${P.slice(0,4).map(mini).join('')}</div></section>`}
 
