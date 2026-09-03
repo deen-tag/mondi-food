@@ -13,6 +13,7 @@ const PATHS = {
   delivery: "<path d='M3 6h11v11H3z'/><path d='M14 10h4l3 3v4h-7z'/><circle cx='7' cy='19' r='2'/><circle cx='18' cy='19' r='2'/>",
   fire: "<path d='M13 3c.5 3-2 4.5-2 7 0 1.5 1 2.5 2.5 2.5C16 12.5 17 10 16 8c3 2 4 4.2 4 7a8 8 0 0 1-16 0c0-4.5 3.2-7.7 6.8-10.5-.3 2.2.3 3.5 1.2 4.5C13 7 13.5 5 13 3Z'/>",
   home: "<path d='M3 10.5 12 3l9 7.5'/><path d='M5.5 9.5V21h13V9.5'/><path d='M9.5 21v-6h5v6'/>",
+  list: "<circle cx='4.5' cy='6' r='1.4' fill='currentColor' stroke='none'/><path d='M9 6h11'/><circle cx='4.5' cy='12' r='1.4' fill='currentColor' stroke='none'/><path d='M9 12h11'/><circle cx='4.5' cy='18' r='1.4' fill='currentColor' stroke='none'/><path d='M9 18h11'/>",
   location: "<path d='M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z'/><circle cx='12' cy='10' r='2.5'/>",
   lock: "<rect x='4' y='10' width='16' height='10' rx='2'/><path d='M7 10V7a5 5 0 0 1 10 0v3'/>",
   menu: "<path d='M4 5h16M4 12h16M4 19h16'/>",
@@ -30,7 +31,7 @@ export function icon(name, cls = '', filled = false) {
   if (!body) return '';
   const fillAttr = filled ? "fill='currentColor' stroke='none'" : "fill='none' stroke='currentColor'";
   const cls2 = cls ? `icon ${cls}` : 'icon';
-  return `<svg class="${cls2}" viewBox='0 0 24 24' ${fillAttr} stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' focusable='false'>${body}</svg>`;
+  return `<svg class="${cls2}" viewBox='0 0 24 24' ${fillAttr} stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true' focusable='false'>${body}</svg>`;
 }
 
 export function stars(n = 5, cls = '') {
