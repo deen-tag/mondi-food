@@ -59,7 +59,7 @@ ${tile('pizza','/images/pizza-hero.jpg','PIZZA','Pâte artisanale · ingrédient
 <section class="perks"><div><b>♨</b><strong>Cuisson parfaite</strong><small>Doré & croustillant</small></div><div><b>♧</b><strong>Ingrédients frais</strong><small>Sélectionnés avec soin</small></div><div><b>♧</b><strong>Livraison rapide</strong><small>30–45 min</small></div></section>
 <section class="block"><div class="heading"><span><i>À LA CARTE</i><h2>Nos incontournables</h2></span><button data-go="menu">Tout voir →</button></div><div class="rail">${P.slice(0,4).map(mini).join('')}</div></section>`}
 
-function tile(type,img,title,sub){return `<button class="tile" data-type="${type}" data-go="category"><img src="${img}"><div class="tileShade"></div><div class="tileText"><i>${type==='pizza'?'PÂTE ARTISANALE':'SIGNATURE'}</i><h3>${title}</h3><p>${sub}</p></div><span>→</span></button>`}
+function tile(type,img,title,sub){return `<button class="tile" data-type="${type}" data-go="category"><div class="tileText"><i>${type==='pizza'?'PÂTE ARTISANALE':'SIGNATURE'}</i><h3>${title}</h3><p>${sub}</p></div><div class="tileImg"><img src="${img}"></div><span>→</span></button>`}
 function mini(p){return `<button class="mini" data-product="${p.id}"><img src="${p.img}"><b>${p.name}</b><strong>${formatPrice(p.price)}</strong></button>`}
 
 function menu(){
