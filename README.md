@@ -112,6 +112,37 @@ Stripe demande aussi une vérification d'identité/entreprise (KYC) avant d'acti
   fiable côté serveur (base de données), indépendamment du retour navigateur.
 - Une vraie base de données / API de commandes plutôt que `localStorage` pour le suivi.
 
+## Espace Admin & Livreur (branché sur Firestore)
+Deux pages supplémentaires, servies par le même déploiement Vercel :
+- `/admin.html` — dashboard équipe : nouvelles commandes (avec alerte sonore), préparation,
+  assignation livreur, paiement, annulation, historique.
+- `/driver.html` — écran simplifié pour chaque livreur : ses livraisons en cours, bouton "Livrée".
+
+Toute la logique de sécurité vit dans `api/` (jamais dans le navigateur) :
+- `api/_admin-auth.js`, `api/admin-login.js`, `api/admin-logout.js`, `api/admin-session.js` —
+  session admin par cookie httpOnly signé (HMAC), pas de token exposé côté client.
+- `api/orders.js`, `api/orders/[id].js` — liste (admin) et création (public, paiement à la
+  livraison) / mise à jour (admin) des commandes dans Firestore.
+- `api/drivers.js`, `api/drivers/[id].js` — gestion des livreurs (ajout = admin uniquement).
+- `api/driver-status.js`, `api/driver-orders.js`, `api/driver-deliver.js` — actions en libre
+  service pour un livreur, strictement limitées à ses propres commandes (vérifié côté serveur).
+- `api/track.js` — suivi public, n'expose jamais l'adresse ni le téléphone du client.
+
+### Variables d'environnement à ajouter sur Vercel
+- `ADMIN_PASSWORD` — mot de passe de connexion à `/admin.html`
+- `ADMIN_SESSION_SECRET` — chaîne aléatoire longue, générée une fois (ex. `openssl rand -hex 32`)
+  et jamais réutilisée ailleurs. Change-la si tu soupçonnes qu'elle a fuité : ça invalide
+  instantanément toutes les sessions admin en cours.
+
+⚠️ À faire une fois ces variables ajoutées : redéployer, puis dans Firebase Console → Firestore
+→ créer manuellement un premier document dans `drivers` (ou utiliser le formulaire "Ajouter un
+livreur" de `/admin.html` une fois connecté) pour que `/driver.html` ait quelqu'un à proposer.
+
+Si Firestore répond une erreur "the query requires an index" sur `api/driver-orders.js`, clique
+simplement le lien fourni dans le message d'erreur (Firebase Console crée l'index composite en un
+clic, ça prend quelques minutes la première fois).
+
+
 ## Effets premium V2+
 - animations d’entrée des écrans et des cartes
 - micro-interactions sur boutons, cartes et filtres
