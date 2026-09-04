@@ -71,7 +71,7 @@ function menu(){
 <div class="switch"><button class="${S.type==='pizza'?'active':''}" data-type="pizza" data-go="category">Pizza</button><button class="${S.type==='pannuezo'?'active':''}" data-type="pannuezo" data-go="category">Pannuezo</button></div>
 <section class="menuSection"><div class="heading"><span><i>NOS ${S.type==='pizza'?'PIZZAS':'PANNUEZO'}</i><h2>Choisis ton préféré</h2></span></div><div class="filters">${filters.map(f=>`<button class="${S.filter===f?'active':''}" data-filter="${f}">${f}</button>`).join('')}</div><div class="cards">${list.map(card).join('')}</div></section>${sticky()}`}
 
-function card(p){return `<article class="card"><button data-product="${p.id}" class="cardMain"><div class="thumb"><img src="${p.img}"></div><div class="copy">${p.badge?`<em class="badge">${icon('star','',true)} ${p.badge}</em>`:''}<h3>${p.name}</h3><p>${p.desc}</p><strong>${formatPrice(p.price)}</strong></div></button><button class="plus" data-add="${p.id}">${icon('plus')}</button></article>`}
+function card(p){return `<article class="card"><button data-product="${p.id}" class="cardMain"><div class="thumb">${p.badge?`<em class="badge">${icon('star','',true)} ${p.badge}</em>`:''}<img src="${p.img}"></div><div class="copy"><h3>${p.name}</h3><p>${p.desc}</p><strong>${formatPrice(p.price)}</strong></div></button><button class="plus" data-add="${p.id}">${icon('plus')}</button></article>`}
 
 function product(){
  const p=P.find(x=>x.id===S.selected); if(!p)return '';
