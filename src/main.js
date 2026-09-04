@@ -123,6 +123,64 @@ function bind(){
  document.querySelectorAll('[data-add]').forEach(b=>b.onclick=e=>{e.stopPropagation();add(b.dataset.add)});
  document.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>qty(b.dataset.qty,+b.dataset.d));
  document.querySelector('[data-menu]')?.addEventListener('click',()=>toast('Navigation : Accueil · Menu · Panier · Suivi'));
- document.querySelector('#order')?.addEventListener('submit',e=>{e.preventDefault();let d=Object.fromEntries(new FormData(e.target)),t=total()+(total()>=25?0:2.5);let o={...d,total:t,id:'DK-'+Math.floor(1000+Math.random()*9000)};localStorage.setItem('fd_last',JSON.stringify(o));S.cart=[];save();S.route='confirmation';render()});
+ document.querySelector('#order')?.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const form=e.target;
+  const d=Object.fromEntries(new FormData(form));
+  const t=total()+(total()>=25?0:2.5);
+  if(d.payment==='delivery'){
+   let o={...d,total:t,id:'DK-'+Math.floor(1000+Math.random()*9000)};
+   localStorage.setItem('fd_last',JSON.stringify(o));
+   S.cart=[];save();S.route='confirmation';render();
+   return;
+  }
+  // Paiement en ligne : on part sur Stripe Checkout via l'API serverless.
+  const submitBtn=form.querySelector('button[type=submit]');
+  if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='REDIRECTION VERS LE PAIEMENT…'}
+  try{
+   localStorage.setItem('fd_pending',JSON.stringify(d));
+   const res=await fetch('/api/create-checkout-session',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+     cart:S.cart.map(x=>({id:x.id,opts:x.opts,qty:x.qty})),
+     customer:d
+    })
+   });
+   const data=await res.json();
+   if(!res.ok||!data.url)throw new Error(data.error||'Erreur de paiement');
+   window.location.href=data.url;
+  }catch(err){
+   toast(err.message||'Paiement indisponible, réessaie.');
+   if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='CONFIRMER LA COMMANDE'}
+  }
+ });
 }
-shell();
+// Retour depuis Stripe Checkout : on vérifie la session côté serveur avant
+// d'afficher la confirmation (ne jamais faire confiance à l'URL seule).
+async function handleStripeReturn(){
+ const params=new URLSearchParams(window.location.search);
+ const sessionId=params.get('session_id');
+ if(!sessionId)return false;
+ try{
+  const res=await fetch(`/api/verify-session?session_id=${encodeURIComponent(sessionId)}`);
+  const data=await res.json();
+  if(data.paid){
+   const pending=JSON.parse(localStorage.getItem('fd_pending')||'{}');
+   const o={...pending,payment:'online',total:data.total,id:data.orderId||('DK-'+Math.floor(1000+Math.random()*9000)),firstName:data.firstName||pending.firstName};
+   localStorage.setItem('fd_last',JSON.stringify(o));
+   localStorage.removeItem('fd_pending');
+   S.cart=[];save();S.route='confirmation';
+  }else{
+   toast('Paiement non confirmé, réessaie.');
+   S.route='checkout';
+  }
+ }catch(err){
+  toast('Impossible de vérifier le paiement.');
+  S.route='checkout';
+ }
+ window.history.replaceState({},'',window.location.pathname);
+ return true;
+}
+
+handleStripeReturn().then(()=>shell());
