@@ -14,10 +14,22 @@ const P = [
  {id:'p5',type:'pizza',name:'Diavolo',price:13.50,desc:'Sauce tomate épicée, mozzarella, chorizo, poivrons, piment',img:'/images/diavolo.jpg',hot:true,tag:'Épicées'},
 ];
 
-const S = {route:'home',type:'pizza',filter:'Toutes',selected:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]')};
+const S = {route:'home',type:'pizza',filter:'Toutes',selected:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),trackData:null};
 const formatPrice = n => n.toFixed(2).replace('.',',')+' €';
 const count=()=>S.cart.reduce((a,x)=>a+x.qty,0);
 const total=()=>S.cart.reduce((a,x)=>a+x.price*x.qty,0);
+
+async function loadTrack(){
+ const last=JSON.parse(localStorage.getItem('fd_last')||'{}');
+ const oid=last.orderId||last.id;
+ if(!oid){S.trackData=null;return}
+ try{
+  const res=await fetch(`/api/track?orderId=${encodeURIComponent(oid)}`);
+  const data=await res.json();
+  S.trackData=res.ok?data:null;
+ }catch{S.trackData=null}
+ if(S.route==='track')render();
+}
 const save=()=>localStorage.setItem('fd_cart',JSON.stringify(S.cart));
 
 function shell(){document.querySelector('#root').innerHTML=`
@@ -86,9 +98,18 @@ function cart(){
 function checkout(){
  const t=total()+(total()>=25?0:2.5);return `<section class="checkout"><button class="back" data-go="cart">${icon('arrow-left')} <span>Retour au panier</span></button><i>DERNIÈRE ÉTAPE</i><h1>ON TE LIVRE OÙ ?</h1><div class="steps"><b>${icon('check')}</b><span></span><b>2</b><span></span><b>3</b></div><form id="order"><div class="form"><h3>INFORMATIONS</h3><label>Prénom<input required name=firstName placeholder="Ex. Alex"></label><label>Téléphone<input required name=phone placeholder="06 00 00 00 00"></label></div><div class="form"><h3>ADRESSE DE LIVRAISON</h3><label>Adresse<input required name=address placeholder="12 rue des Lilas"></label><div class=two><label>Code postal<input required name=zip placeholder="75000"></label><label>Ville<input required name=city placeholder="Paris"></label></div><label>Instructions<textarea name=note placeholder="Digicode, étage, précision pour le livreur..."></textarea></label></div><div class="form"><h3>MODE DE PAIEMENT</h3><label class=pay><input type=radio name=payment value=online checked><span>${icon('payment-card')} <b>Paiement en ligne</b><small>Carte bancaire · sécurisé</small></span><em>RECOMMANDÉ</em></label><label class=pay><input type=radio name=payment value=delivery><span>${icon('cash')} <b>Paiement à la livraison</b><small>Selon les moyens acceptés</small></span></label></div><div class="checkoutTotal">TOTAL À PAYER <b>${formatPrice(t)}</b></div><button class="cta wide" type=submit>CONFIRMER LA COMMANDE ${icon('arrow-right')}</button><small class=secure>${icon('lock')} Tes données sont utilisées uniquement pour traiter la commande.</small></form></section>`}
 
-function confirmation(){let o=JSON.parse(localStorage.getItem('fd_last')||'{}');return `<section class="confirm"><div class="ok">${icon('check')}</div><i>COMMANDE CONFIRMÉE</i><h1>MERCI ${o.firstName||''} !</h1><p>Ta commande <b>#${o.id||'DK-2048'}</b> est bien enregistrée.</p><div class="status"><div><b>${icon('fire','',true)}</b><strong>En préparation</strong><small>Notre cuisine prépare ta commande.</small></div><span>${icon('arrow-right')}</span><div><b>${icon('delivery')}</b><strong>30–45 min</strong><small>Livraison estimée chez toi.</small></div></div><div class="recap"><span>Total</span><b>${formatPrice(o.total||0)}</b><span>Paiement</span><b>${o.payment==='online'?'En ligne':'À la livraison'}</b></div><button class=cta data-go=track>SUIVRE MA COMMANDE ${icon('arrow-right')}</button><button class=ghost data-go=home>Retour à l’accueil</button></section>`}
+function confirmation(){let o=JSON.parse(localStorage.getItem('fd_last')||'{}');return `<section class="confirm"><div class="ok">${icon('check')}</div><i>COMMANDE CONFIRMÉE</i><h1>MERCI ${o.firstName||''} !</h1><p>Ta commande <b>#${o.orderId||'DK-2048'}</b> est bien enregistrée.</p><div class="status"><div><b>${icon('fire','',true)}</b><strong>En préparation</strong><small>Notre cuisine prépare ta commande.</small></div><span>${icon('arrow-right')}</span><div><b>${icon('delivery')}</b><strong>30–45 min</strong><small>Livraison estimée chez toi.</small></div></div><div class="recap"><span>Total</span><b>${formatPrice(o.total||0)}</b><span>Paiement</span><b>${o.payment==='online'?'En ligne':'À la livraison'}</b></div><button class=cta data-go=track>SUIVRE MA COMMANDE ${icon('arrow-right')}</button><button class=ghost data-go=home>Retour à l’accueil</button></section>`}
 
-function track(){return `<section class="simple"><i>SUIVI</i><h1>TA COMMANDE</h1><p>Suivi en temps réel — prêt à être relié à ton backend.</p><div class=timeline>${[[icon('check'),'Commande reçue','Nous avons bien reçu ta commande.'],[icon('fire','',true),'En préparation','La cuisine prépare ton repas.'],[icon('delivery'),'En livraison','Un livreur prend bientôt la route.'],[icon('home'),'Livrée','Bon appétit !']].map((x,i)=>`<div class="${i<2?'done':''}"><b>${x[0]}</b><span><strong>${x[1]}</strong><small>${x[2]}</small></span></div>`).join('')}</div><button class=cta data-go=menu>COMMANDER AUTRE CHOSE ${icon('arrow-right')}</button></section>`}
+function track(){
+ const last=JSON.parse(localStorage.getItem('fd_last')||'{}');
+ const d=S.trackData;
+ const steps=[['received',icon('check'),'Commande reçue','Nous avons bien reçu ta commande.'],['preparing',icon('fire','',true),'En préparation','La cuisine prépare ton repas.'],['delivering',icon('delivery'),'En livraison','Un livreur prend bientôt la route.'],['delivered',icon('home'),'Livrée','Bon appétit !']];
+ const order=['received','preparing','delivering','delivered'];
+ if(!last.orderId&&!last.id)return `<section class="simple"><i>SUIVI</i><h1>AUCUNE COMMANDE</h1><p>Tu n'as pas encore de commande en cours.</p><button class=cta data-go=menu>COMMANDER ${icon('arrow-right')}</button></section>`;
+ if(!d)return `<section class="simple"><i>SUIVI</i><h1>${last.orderId||last.id}</h1><p>Chargement du statut…</p></section>`;
+ if(d.status==='cancelled')return `<section class="simple"><i>SUIVI</i><h1>COMMANDE ANNULÉE</h1><p>Ta commande <b>#${d.orderId}</b> a été annulée${d.cancelReason?` — ${d.cancelReason}`:''}. Contacte-nous si besoin.</p><button class=cta data-go=menu>COMMANDER AUTRE CHOSE ${icon('arrow-right')}</button></section>`;
+ const idx=order.indexOf(d.status);
+ return `<section class="simple"><i>SUIVI</i><h1>#${d.orderId}</h1><p>${d.driverName?`Livreur : ${d.driverName}. `:''}Mise à jour en direct par notre équipe.</p><div class=timeline>${steps.map((x,i)=>`<div class="${i<=idx?'done':''}"><b>${x[1]}</b><span><strong>${x[2]}</strong><small>${x[3]}</small></span></div>`).join('')}</div><button class=cta data-go=menu>COMMANDER AUTRE CHOSE ${icon('arrow-right')}</button></section>`}
 function account(){return `<section class="simple left"><i>ESPACE CLIENT</i><h1>TON COMPTE</h1><div class=account><span>👤</span><div><b>Connexion à venir</b><small>Le backend pourra gérer comptes, adresses et historique.</small></div></div><div class=links><button>${icon('location')} Mes adresses <b>›</b></button><button>🧾 Mes commandes <b>›</b></button><button>⚙️ Préférences <b>›</b></button></div></section>`}
 function sticky(){return S.cart.length?`<div class=sticky><span class="stickyBag">${icon('cart')}</span><span class="stickyInfo"><b>${count()} articles</b><small>${formatPrice(total())}</small></span><button class="cta pill" data-go=cart>VOIR LE PANIER ${icon('arrow-right')}</button></div>`:''}
 
@@ -116,7 +137,7 @@ function toast(t){
 }
 
 function bind(){
- document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{S.route=b.dataset.go; if(b.dataset.type)S.type=b.dataset.type;if(S.route==='category')S.filter='Toutes';render()});
+ document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{S.route=b.dataset.go; if(b.dataset.type)S.type=b.dataset.type;if(S.route==='category')S.filter='Toutes';render();if(S.route==='track')loadTrack()});
  document.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>{S.type=b.dataset.type;S.filter='Toutes';S.route='category';render()});
  document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{S.filter=b.dataset.filter;render()});
  document.querySelectorAll('[data-product]').forEach(b=>b.onclick=()=>{S.selected=b.dataset.product;S.route='product';render()});
@@ -129,9 +150,22 @@ function bind(){
   const d=Object.fromEntries(new FormData(form));
   const t=total()+(total()>=25?0:2.5);
   if(d.payment==='delivery'){
-   let o={...d,total:t,id:'DK-'+Math.floor(1000+Math.random()*9000)};
-   localStorage.setItem('fd_last',JSON.stringify(o));
-   S.cart=[];save();S.route='confirmation';render();
+   const submitBtn=form.querySelector('button[type=submit]');
+   if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='ENVOI DE LA COMMANDE…'}
+   try{
+    const res=await fetch('/api/orders',{
+     method:'POST',
+     headers:{'Content-Type':'application/json'},
+     body:JSON.stringify({cart:S.cart.map(x=>({id:x.id,opts:x.opts,qty:x.qty})),customer:d})
+    });
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Commande refusée');
+    localStorage.setItem('fd_last',JSON.stringify({...d,total:data.total,orderId:data.orderId,payment:'delivery'}));
+    S.cart=[];save();S.route='confirmation';render();
+   }catch(err){
+    toast(err.message||'Impossible d’enregistrer la commande, réessaie.');
+    if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='CONFIRMER LA COMMANDE'}
+   }
    return;
   }
   // Paiement en ligne : on part sur Stripe Checkout via l'API serverless.
@@ -167,7 +201,7 @@ async function handleStripeReturn(){
   const data=await res.json();
   if(data.paid){
    const pending=JSON.parse(localStorage.getItem('fd_pending')||'{}');
-   const o={...pending,payment:'online',total:data.total,id:data.orderId||('DK-'+Math.floor(1000+Math.random()*9000)),firstName:data.firstName||pending.firstName};
+   const o={...pending,payment:'online',total:data.total,orderId:data.orderId||('DK-'+Math.floor(1000+Math.random()*9000)),firstName:data.firstName||pending.firstName};
    localStorage.setItem('fd_last',JSON.stringify(o));
    localStorage.removeItem('fd_pending');
    S.cart=[];save();S.route='confirmation';
