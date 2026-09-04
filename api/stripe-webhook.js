@@ -36,6 +36,11 @@ export default async function handler(req, res) {
 
     try {
       const db = getFirestore();
+      const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 50 });
+      const items = lineItems.data
+        .filter((li) => li.description !== 'Livraison')
+        .map((li) => ({ name: li.description, qty: li.quantity, price: (li.amount_total || 0) / 100 / (li.quantity || 1) }));
+
       await db.collection('orders').doc(session.id).set({
         orderId: session.metadata?.orderId || null,
         firstName: session.metadata?.firstName || '',
@@ -44,10 +49,18 @@ export default async function handler(req, res) {
         zip: session.metadata?.zip || '',
         city: session.metadata?.city || '',
         note: session.metadata?.note || '',
+        items,
         total: (session.amount_total || 0) / 100,
         currency: session.currency,
-        paymentStatus: session.payment_status,
-        status: 'received', // received -> preparing -> delivering -> delivered
+        paymentMethod: 'online',
+        paymentStatus: session.payment_status === 'paid' ? 'paye' : 'echoue',
+        status: 'received', // received -> preparing -> delivering -> delivered -> cancelled
+        driverId: null,
+        prepEstimate: null,
+        readyAt: null,
+        deliveryStartedAt: null,
+        deliveredAt: null,
+        cancelReason: null,
         stripeSessionId: session.id,
         createdAt: new Date().toISOString(),
       });
