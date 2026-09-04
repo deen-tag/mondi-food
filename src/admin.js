@@ -14,6 +14,8 @@ const AS = {
   drivers: [],
   knownNew: new Set(),
   loading: true,
+  activeCount: null, // dernier compteur "ping" connu (received+preparing+delivering)
+  globalStats: null, // { totalOrders, totalRevenue } depuis toujours, chargé une fois
 };
 
 const formatPrice = n => (+n).toFixed(2).replace('.', ',') + ' €';
@@ -51,10 +53,31 @@ async function refresh() {
     const [o, d] = await Promise.all([api('/api/orders'), api('/api/drivers')]);
     AS.orders = o.orders || [];
     AS.drivers = d.drivers || [];
+    AS.activeCount = AS.orders.filter(o => ['received', 'preparing', 'delivering'].includes(o.status)).length;
     checkNewOrders();
   } catch {}
   AS.loading = false;
   renderRoot();
+}
+
+// Vérification "légère" toutes les 15s : un seul compteur (quasi gratuit côté
+// Firestore), pas la liste complète. On ne va chercher la liste complète que si
+// ce compteur a changé depuis la dernière fois, càd qu'il y a du nouveau.
+async function pingCheck() {
+  try {
+    const r = await api('/api/orders?ping=1');
+    if (AS.activeCount === null) { AS.activeCount = r.active; return; }
+    if (r.active !== AS.activeCount) await refresh();
+  } catch {}
+}
+
+// Chargé une seule fois à l'ouverture de l'onglet Historique (pas de polling ici).
+async function loadGlobalStats() {
+  if (AS.globalStats) return;
+  try {
+    AS.globalStats = await api('/api/orders?stats=1');
+    renderRoot();
+  } catch {}
 }
 
 function checkNewOrders() {
@@ -269,14 +292,16 @@ function historyView() {
   const today = all.filter(o => isToday(o.createdAt));
   const yesterday = all.filter(o => isYesterday(o.createdAt));
   const week = all.filter(o => isThisWeek(o.createdAt));
+  const gs = AS.globalStats;
   return `
   <h1 class="aTitle">HISTORIQUE</h1>
   <div class="aStats">
    <div><b>${today.length}</b><small>Aujourd'hui</small></div>
    <div><b>${yesterday.length}</b><small>Hier</small></div>
    <div><b>${week.length}</b><small>Cette semaine</small></div>
-   <div><b>${all.length}</b><small>Total</small></div>
+   <div><b>${gs ? gs.totalOrders : '…'}</b><small>Total (depuis toujours)</small></div>
   </div>
+  ${gs ? `<div class="aStats"><div><b>${formatPrice(gs.totalRevenue)}</b><small>Chiffre d'affaires total</small></div></div>` : ''}
   <div class="aHistList">${all.map(o => `
    <div class="aHistRow" data-open="${o.id}">
     <span>#${o.orderId || o.id}</span><span>${dm(o.createdAt)} ${hm(o.createdAt)}</span><span>${o.firstName || ''}</span>
@@ -320,7 +345,10 @@ function bind() {
   document.querySelector('[data-logout]')?.addEventListener('click', async () => {
     await api('/api/admin-auth', { method: 'POST', body: JSON.stringify({ action: 'logout' }) }); AS.authed = false; renderRoot();
   });
-  document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => { AS.view = b.dataset.view; AS.selected = null; renderRoot(); }));
+  document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
+    AS.view = b.dataset.view; AS.selected = null; renderRoot();
+    if (AS.view === 'history') loadGlobalStats();
+  }));
   document.querySelectorAll('[data-filter]').forEach(b => b.addEventListener('click', () => { AS.filter = b.dataset.filter; renderRoot(); }));
   document.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => { AS.selected = el.dataset.open; AS.view = 'order'; renderRoot(); }));
   document.querySelector('#aSearch')?.addEventListener('input', e => { AS.search = e.target.value; renderRoot(); });
@@ -355,5 +383,5 @@ function bind() {
   });
 }
 
-setInterval(() => { if (AS.authed && AS.view === 'dashboard') refresh(); }, 5000);
+setInterval(() => { if (AS.authed && AS.view === 'dashboard') pingCheck(); }, 15000);
 init();
