@@ -24,7 +24,7 @@ async function loadDrivers() {
 }
 async function loadMyOrders() {
   if (!DS.driverId) return;
-  const d = await api(`/api/driver-orders?driverId=${encodeURIComponent(DS.driverId)}`);
+  const d = await api(`/api/driver?driverId=${encodeURIComponent(DS.driverId)}`);
   DS.orders = d.orders || [];
   DS.doneToday = d.doneToday || 0;
 }
@@ -105,13 +105,13 @@ function bind(driver) {
   });
   document.querySelector('[data-toggle]')?.addEventListener('click', async () => {
     try {
-      await api('/api/driver-status', { method: 'POST', body: JSON.stringify({ driverId: driver.id, status: driver.status === 'pause' ? 'dispo' : 'pause' }) });
+      await api('/api/driver', { method: 'POST', body: JSON.stringify({ action: 'status', driverId: driver.id, status: driver.status === 'pause' ? 'dispo' : 'pause' }) });
       refresh();
     } catch (err) { alert(err.message || 'Erreur'); }
   });
   document.querySelectorAll('[data-delivered]').forEach(b => b.addEventListener('click', async () => {
     try {
-      await api('/api/driver-deliver', { method: 'POST', body: JSON.stringify({ driverId: driver.id, orderId: b.dataset.delivered }) });
+      await api('/api/driver', { method: 'POST', body: JSON.stringify({ action: 'deliver', driverId: driver.id, orderId: b.dataset.delivered }) });
       refresh();
     } catch (err) { alert(err.message || 'Erreur'); }
   }));

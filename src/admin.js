@@ -67,7 +67,7 @@ function checkNewOrders() {
 // ---------- Shell ----------
 async function init() {
   try {
-    const s = await api('/api/admin-session');
+    const s = await api('/api/admin-auth');
     AS.authed = s.authed;
   } catch { AS.authed = false; }
   if (AS.authed) refresh();
@@ -92,7 +92,7 @@ function bindLogin() {
     e.preventDefault();
     const pass = new FormData(e.target).get('pass');
     try {
-      await api('/api/admin-login', { method: 'POST', body: JSON.stringify({ password: pass }) });
+      await api('/api/admin-auth', { method: 'POST', body: JSON.stringify({ action: 'login', password: pass }) });
       AS.authed = true; AS.loading = true; renderRoot(); refresh();
     } catch { document.querySelector('#loginErr').textContent = 'Mot de passe incorrect.'; }
   });
@@ -318,7 +318,7 @@ async function cancelOrder(id) {
 
 function bind() {
   document.querySelector('[data-logout]')?.addEventListener('click', async () => {
-    await api('/api/admin-logout', { method: 'POST' }); AS.authed = false; renderRoot();
+    await api('/api/admin-auth', { method: 'POST', body: JSON.stringify({ action: 'logout' }) }); AS.authed = false; renderRoot();
   });
   document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => { AS.view = b.dataset.view; AS.selected = null; renderRoot(); }));
   document.querySelectorAll('[data-filter]').forEach(b => b.addEventListener('click', () => { AS.filter = b.dataset.filter; renderRoot(); }));
