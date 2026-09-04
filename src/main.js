@@ -43,6 +43,8 @@ function render(){
  if(S.route==='track')s.innerHTML=track();
 
  document.querySelector('nav')?.replaceWith(new DOMParser().parseFromString(nav(),'text/html').body.firstChild);
+ const headerCartB=document.querySelector('.cartIcon b');
+ if(headerCartB)headerCartB.textContent=count();
  bind();scrollTo(0,0);
 }
 
