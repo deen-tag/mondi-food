@@ -1,4 +1,5 @@
 import { getFirestore } from './_firebase.js';
+import { AggregateField } from 'firebase-admin/firestore';
 import { requireAdmin } from './_admin-auth.js';
 import { priceCart } from './_menu.js';
 
@@ -6,9 +7,45 @@ export default async function handler(req, res) {
   const db = getFirestore();
 
   if (req.method === 'GET') {
-    // Réservé à l'admin : toutes les commandes, triées des plus récentes aux plus anciennes.
     if (!requireAdmin(req, res)) return;
-    const snap = await db.collection('orders').orderBy('createdAt', 'desc').limit(300).get();
+
+    // Mode "stats" : totaux depuis toujours (nombre de commandes + chiffre d'affaires).
+    // Utilisé dans l'onglet Historique, chargé une seule fois (pas de polling), via
+    // une requête d'agrégation Firestore qui ne lit pas chaque commande une par une.
+    if (req.query.stats) {
+      const [countAgg, sumAgg] = await Promise.all([
+        db.collection('orders').count().get(),
+        db.collection('orders').aggregate({ totalRevenue: AggregateField.sum('total') }).get(),
+      ]);
+      return res.status(200).json({
+        totalOrders: countAgg.data().count,
+        totalRevenue: sumAgg.data().totalRevenue || 0,
+      });
+    }
+
+    // Mode "ping" : utilisé par le polling toutes les 15s côté admin. Ne renvoie
+    // qu'un compteur (requête d'agrégation Firestore : ~1 lecture peu importe le
+    // nombre de commandes) au lieu de la liste complète. Le dashboard ne va chercher
+    // la liste complète (coûteuse) que quand ce compteur change, càd qu'il se passe
+    // réellement quelque chose (nouvelle commande, livraison terminée, etc.).
+    if (req.query.ping) {
+      const agg = await db.collection('orders')
+        .where('status', 'in', ['received', 'preparing', 'delivering'])
+        .count()
+        .get();
+      return res.status(200).json({ active: agg.data().count });
+    }
+
+    // Sinon : commandes des 7 derniers jours (suffisant pour le dashboard
+    // et les stats "aujourd'hui / hier / cette semaine"), triées des plus récentes aux
+    // plus anciennes. On borne par date en plus du limit pour éviter que la requête
+    // ne lise de plus en plus de documents au fil du temps (coût Firestore).
+    const cutoff = new Date(Date.now() - 7 * 86400000).toISOString();
+    const snap = await db.collection('orders')
+      .where('createdAt', '>=', cutoff)
+      .orderBy('createdAt', 'desc')
+      .limit(200)
+      .get();
     const orders = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     return res.status(200).json({ orders });
   }
