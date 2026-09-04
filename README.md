@@ -1,160 +1,142 @@
-# Food Dark Kitchen — V2 premium
+# Mondi Food — Food Dark Kitchen
 
-## 📌 Suivi de mise en place (mis à jour au fil de l'avancement)
+Site de livraison (Pannuezo & Pizza) : frontend Vite + backend serverless Vercel
+(Stripe pour le paiement en ligne, Firestore pour les commandes et l'admin).
+
+## 📌 État du projet
 
 ### ✅ Fait
-- Projet Firebase créé : **mondifood** (console.firebase.google.com)
-- Base de données **Cloud Firestore** créée (édition Standard, mode production, région eur3)
-- Clé de service Firebase générée (fichier JSON téléchargé)
-- Variable `FIREBASE_SERVICE_ACCOUNT` ajoutée sur Vercel (contenu du JSON collé)
-- Site déployé sur Vercel : **mondi-food.vercel.app**
-- Variable `STRIPE_SECRET_KEY` créée sur Vercel (⚠️ valeur pas encore renseignée, voir ci-dessous)
+- Frontend : identité noir/violet, menu Pizza/Pannuezo, fiche produit, panier, checkout,
+  confirmation, suivi — voir "Site client" ci-dessous.
+- Projet Firebase créé (**mondifood**, Cloud Firestore Standard, mode production, région eur3).
+- Compte Stripe créé, paiement en ligne opérationnel via Stripe Checkout.
+- Webhook Stripe configuré (`checkout.session.completed` → écrit la commande dans Firestore).
+- Site déployé sur Vercel : **mondi-food.vercel.app**.
+- Espace **Admin** (`/admin.html`) et **Livreur** (`/driver.html`), branchés sur Firestore
+  via une API sécurisée — voir "Admin & Livreur" ci-dessous.
 
-### ⚠️ À faire ensuite (dans l'ordre)
-1. **Créer un compte Stripe** sur https://dashboard.stripe.com/register
-2. Récupérer la **clé secrète de test** sur https://dashboard.stripe.com/apikeys (commence par `sk_test_...`)
-   → la coller comme valeur de `STRIPE_SECRET_KEY` sur Vercel
-3. Créer le **webhook Stripe** :
-   - dashboard.stripe.com/webhooks → "Ajouter un endpoint"
-   - URL : `https://mondi-food.vercel.app/api/stripe-webhook`
-   - Événement à écouter : `checkout.session.completed`
-   - Copier le "signing secret" (`whsec_...`) donné après création
-   - L'ajouter sur Vercel comme nouvelle variable `STRIPE_WEBHOOK_SECRET`
-4. **Redéployer** le projet sur Vercel une fois toutes les variables renseignées
-   (Deployments → "..." → Redeploy)
-5. Tester un paiement en mode test Stripe et vérifier qu'une commande apparaît
-   bien dans la collection Firestore `orders`
+### ⚠️ À faire
+1. Sur Vercel, ajouter les variables `ADMIN_PASSWORD` et `ADMIN_SESSION_SECRET`
+   (voir "Variables d'environnement") puis redéployer.
+2. Se connecter sur `/admin.html` et ajouter un premier livreur, pour que `/driver.html`
+   ait quelqu'un à proposer.
+3. Tester un paiement Stripe en mode test **et** une commande "à la livraison", vérifier
+   que les deux apparaissent dans Firestore (`orders`) et dans `/admin.html`.
+4. Avant de passer en paiements réels : voir "Passer en production" plus bas.
 
-### 🔐 Sécurité — à ne pas oublier
-- La clé privée Firebase (`mondifood-firebase-adminsdk-fbsvc-08ec9bf60a.json`) a été
-  manipulée pendant la mise en place et doit être **régénérée puis révoquée** par précaution :
-  1. Firebase Console → Paramètres du projet → Comptes de service → Générer une nouvelle clé privée
-  2. Mettre à jour la valeur de `FIREBASE_SERVICE_ACCOUNT` sur Vercel avec la nouvelle clé
-  3. Révoquer l'ancienne clé dans Google Cloud Console → IAM et administration →
-     Comptes de service → `firebase-adminsdk-fbsvc@mondifood...` → onglet Clés → supprimer
-     la clé avec l'ID `08ec9bf60a...`
-  4. Redéployer sur Vercel
-- Ne jamais partager le contenu d'une clé de service (Firebase, Stripe, etc.) en clair,
-  même dans un chat ou un outil d'IA — traiter ces fichiers comme des mots de passe.
+### 🔐 Sécurité — rappel
+- Une clé de service Firebase a été régénérée et l'ancienne révoquée (elle avait été
+  manipulée pendant la mise en place). Si une nouvelle clé (Firebase, Stripe, `ADMIN_SESSION_SECRET`...)
+  fuite un jour (collée dans un chat, un ticket, un commit...), le réflexe est le même :
+  la régénérer et révoquer l'ancienne immédiatement, ne jamais attendre.
+- Aucun secret n'est commité dans ce dépôt : tout passe par les variables d'environnement Vercel.
+- Le navigateur ne parle jamais directement à Firestore ni à Stripe avec une clé secrète —
+  tout passe par les fonctions `api/`, qui recalculent les prix et vérifient chaque
+  transition d'état côté serveur.
 
 ---
 
+## Site client
 
-Cette version rapproche volontairement le frontend des maquettes générées :
-- identité noir/violet
-- typographies Barlow Condensed + Inter
-- hero et cartes visuelles
-- vraies images issues des maquettes de référence
-- navigation mobile
-- menu Pizza / Pannuezo
-- fiche produit
-- panier
-- checkout livraison
-- choix paiement en ligne / à la livraison
-- confirmation et suivi
-- localStorage pour le panier
+- Navigation mobile : **Accueil · Menu · Panier · Suivi**, sans compte ni connexion.
+- Menu Pizza / Pannuezo, fiche produit, panier, checkout avec choix du mode de paiement.
+- Confirmation et suivi de commande en temps quasi réel (poll de l'API toutes les 5s).
+- Animations : entrée des écrans/cartes, micro-interactions boutons/cartes/filtres,
+  zoom photos, badge panier animé, respect de `prefers-reduced-motion`.
 
-Lancer :
-`npm install`
-`npm run dev`
+Lancer en local :
+```
+npm install
+npm run dev
+```
+(pour tester aussi les fonctions `api/` en local : `vercel dev`, qui sert le frontend Vite
+et les fonctions serverless ensemble)
 
 ## Paiement en ligne (Stripe)
-Le paiement en ligne est branché sur **Stripe Checkout** via des fonctions serverless
-compatibles Vercel dans `api/` :
-- `api/create-checkout-session.js` : recalcule le panier côté serveur (jamais confiance
-  aux prix envoyés par le client) et crée une session Stripe Checkout.
-- `api/verify-session.js` : vérifie qu'une session est bien payée avant d'afficher la
-  confirmation, après le retour depuis Stripe.
-- `api/stripe-webhook.js` : reçoit l'événement `checkout.session.completed` envoyé par
-  Stripe et enregistre la commande dans Firestore — c'est ce que ton espace admin lira.
-- `api/_firebase.js` : initialisation du SDK Firebase Admin (écriture Firestore).
-- `api/_menu.js` : copie serveur du catalogue/prix, à garder synchronisée avec `src/main.js`.
 
-### Mise en place — Stripe
-1. Créer un compte Stripe et récupérer une clé secrète de test sur
-   https://dashboard.stripe.com/apikeys
-2. Copier `.env.example` en `.env` et renseigner `STRIPE_SECRET_KEY`
-3. `npm install`
-4. Déployer sur Vercel (ou tester en local avec `vercel dev`, qui sert à la fois le
-   frontend Vite et les fonctions `api/`) et définir `STRIPE_SECRET_KEY` dans les
-   variables d'environnement du projet Vercel (jamais commitée, jamais exposée au client)
+- `api/create-checkout-session.js` — recalcule le panier côté serveur à partir de
+  `api/_menu.js` (jamais confiance aux prix envoyés par le client), crée une session
+  Stripe Checkout.
+- `api/verify-session.js` — vérifie qu'une session est bien payée avant d'afficher la
+  confirmation, au retour depuis Stripe.
+- `api/stripe-webhook.js` — reçoit `checkout.session.completed`, vérifie la signature
+  Stripe, et écrit la commande dans Firestore (source de vérité, indépendante du retour
+  navigateur).
+- `api/_firebase.js` — initialisation du SDK Firebase Admin.
+- `api/_menu.js` — copie serveur du catalogue/prix ; à garder synchronisée avec `src/main.js`.
 
-### Mise en place — Firebase (pour l'espace admin)
-1. Créer un projet sur https://console.firebase.google.com, activer **Firestore**
-2. Paramètres du projet → Comptes de service → "Générer une nouvelle clé privée"
-   (télécharge un fichier JSON)
-3. Copier tout le contenu de ce JSON dans la variable d'environnement
-   `FIREBASE_SERVICE_ACCOUNT` (sur une seule ligne), en local et sur Vercel
-4. Sur https://dashboard.stripe.com/webhooks → "Ajouter un endpoint" :
-   URL = `https://TON-DOMAINE.vercel.app/api/stripe-webhook`,
-   événement à écouter = `checkout.session.completed`
-5. Stripe te donne une "signing secret" (`whsec_...`) → à mettre dans
-   `STRIPE_WEBHOOK_SECRET`, en local et sur Vercel
-6. Chaque paiement réussi crée un document dans la collection Firestore `orders`
-   (champs : nom, téléphone, adresse, total, statut, etc.) — ton espace admin peut lire
-   cette collection directement (avec les règles de sécurité Firestore adaptées) ou via
-   sa propre API.
-
-Le paiement « à la livraison » continue de fonctionner sans backend, comme avant — pense
-à l'enregistrer aussi côté Firestore si ton admin doit aussi le suivre (actuellement il
-n'écrit que dans `localStorage`, dis-moi si tu veux que je l'ajoute).
+Le paiement « à la livraison » passe par `api/orders.js` (POST) : même recalcul de prix
+côté serveur, écriture directe dans Firestore sans passer par Stripe.
 
 ### Passer en production (paiements réels)
-Aucun code à modifier — seulement la clé :
-1. Sur le dashboard Stripe, basculer en mode **Live** (en haut à droite)
-2. Récupérer la clé secrète live (`sk_live_...`)
-3. Sur Vercel → Settings → Environment Variables, remplacer `STRIPE_SECRET_KEY` par cette clé
-4. Redéployer
+Aucun code à modifier, seulement la clé :
+1. Dashboard Stripe → mode **Live**, récupérer `sk_live_...`
+2. Vercel → Settings → Environment Variables → remplacer `STRIPE_SECRET_KEY`
+3. Redéployer
 Stripe demande aussi une vérification d'identité/entreprise (KYC) avant d'activer les paiements réels.
 
-### Pour aller plus loin (non inclus)
-- Un webhook Stripe (`checkout.session.completed`) pour enregistrer la commande de façon
-  fiable côté serveur (base de données), indépendamment du retour navigateur.
-- Une vraie base de données / API de commandes plutôt que `localStorage` pour le suivi.
+## Admin & Livreur
 
-## Espace Admin & Livreur (branché sur Firestore)
 Deux pages supplémentaires, servies par le même déploiement Vercel :
-- `/admin.html` — dashboard équipe : nouvelles commandes (avec alerte sonore), préparation,
-  assignation livreur, paiement, annulation, historique.
-- `/driver.html` — écran simplifié pour chaque livreur : ses livraisons en cours, bouton "Livrée".
+- **`/admin.html`** — dashboard équipe : compteurs, alerte sonore sur nouvelle commande,
+  recherche/filtres, fiche commande (accepter avec temps de préparation, appeler/contacter
+  le client, adresse + lien carte, notes, statut de paiement, assignation livreur,
+  annulation avec motif), gestion des livreurs, historique (jour/hier/semaine).
+- **`/driver.html`** — écran simplifié par livreur : choix du nom, ses livraisons en cours
+  uniquement (adresse, carte, appel, montant à encaisser), bouton **Livrée**, disponibilité
+  (pause/dispo) quand il n'a rien en cours.
 
-Toute la logique de sécurité vit dans `api/` (jamais dans le navigateur) :
-- `api/_admin-auth.js`, `api/admin-login.js`, `api/admin-logout.js`, `api/admin-session.js` —
-  session admin par cookie httpOnly signé (HMAC), pas de token exposé côté client.
-- `api/orders.js`, `api/orders/[id].js` — liste (admin) et création (public, paiement à la
-  livraison) / mise à jour (admin) des commandes dans Firestore.
-- `api/drivers.js`, `api/drivers/[id].js` — gestion des livreurs (ajout = admin uniquement).
-- `api/driver-status.js`, `api/driver-orders.js`, `api/driver-deliver.js` — actions en libre
-  service pour un livreur, strictement limitées à ses propres commandes (vérifié côté serveur).
-- `api/track.js` — suivi public, n'expose jamais l'adresse ni le téléphone du client.
+Toute la logique sensible vit côté serveur, jamais dans le navigateur :
+
+| Fichier | Rôle | Accès |
+|---|---|---|
+| `api/_admin-auth.js` | Signature/vérification du cookie de session admin (HMAC) | interne |
+| `api/admin-login.js` / `admin-logout.js` / `admin-session.js` | Connexion / déconnexion / vérif session admin | public → session |
+| `api/orders.js` | GET liste des commandes · POST création (paiement à la livraison) | GET admin · POST public |
+| `api/orders/[id].js` | PATCH statut/livreur/paiement/annulation, avec effets de bord serveur (libère le livreur à la livraison/annulation) | admin |
+| `api/drivers.js` | GET liste des livreurs · POST ajout | GET public · POST admin |
+| `api/drivers/[id].js` | PATCH statut d'un livreur (vue admin) | admin |
+| `api/driver-status.js` | Un livreur bascule lui-même dispo ↔ pause | public, restreint |
+| `api/driver-orders.js` | Livraisons assignées à un livreur donné | public, scoping par `driverId` |
+| `api/driver-deliver.js` | Un livreur marque sa propre commande livrée (vérifie qu'elle lui appartient) | public, restreint |
+| `api/track.js` | Suivi client — statut uniquement, jamais adresse/téléphone | public |
+
+### Schéma Firestore
+
+**Collection `orders`** (un document par commande) :
+
+| Champ | Type | Détail |
+|---|---|---|
+| `orderId` | string | Code court affiché au client (`DK-1042`) |
+| `firstName`, `phone`, `address`, `zip`, `city`, `note` | string | Coordonnées client |
+| `items` | array | `{ name, qty, price, opts? }` |
+| `total`, `currency` | number, string | |
+| `paymentMethod` | string | `online` \| `delivery` |
+| `paymentStatus` | string | `paye` \| `attente` \| `echoue` |
+| `status` | string | `received` → `preparing` → `delivering` → `delivered` (ou `cancelled`) |
+| `driverId` | string \| null | Référence vers `drivers` |
+| `prepEstimate` | number \| null | Minutes, saisi à l'acceptation |
+| `readyAt`, `deliveryStartedAt`, `deliveredAt` | ISO string \| null | Horodatages |
+| `cancelReason` | string \| null | Motif si `status = cancelled` |
+| `createdAt` | ISO string | |
+| `stripeSessionId` | string | Présent uniquement si `paymentMethod = online` |
+
+**Collection `drivers`** :
+
+| Champ | Type | Détail |
+|---|---|---|
+| `name` | string | Prénom affiché |
+| `status` | string | `dispo` \| `livraison` \| `pause` |
 
 ### Variables d'environnement à ajouter sur Vercel
-- `ADMIN_PASSWORD` — mot de passe de connexion à `/admin.html`
-- `ADMIN_SESSION_SECRET` — chaîne aléatoire longue, générée une fois (ex. `openssl rand -hex 32`)
-  et jamais réutilisée ailleurs. Change-la si tu soupçonnes qu'elle a fuité : ça invalide
-  instantanément toutes les sessions admin en cours.
+- `ADMIN_PASSWORD` — mot de passe de connexion à `/admin.html`.
+- `ADMIN_SESSION_SECRET` — chaîne aléatoire longue générée une fois (`openssl rand -hex 32`).
+  La changer invalide instantanément toutes les sessions admin en cours — utile si elle fuite.
 
-⚠️ À faire une fois ces variables ajoutées : redéployer, puis dans Firebase Console → Firestore
-→ créer manuellement un premier document dans `drivers` (ou utiliser le formulaire "Ajouter un
-livreur" de `/admin.html` une fois connecté) pour que `/driver.html` ait quelqu'un à proposer.
+### Limites connues (MVP)
+- Pas de temps réel poussé (websocket) : admin et livreur font un poll toutes les 5s.
+- Le livreur s'identifie en choisissant son nom dans une liste, sans mot de passe —
+  suffisant pour une petite équipe de confiance, pas pour une vraie authentification.
+- Si Firestore répond *"the query requires an index"* sur `api/driver-orders.js`, ouvrir
+  le lien donné dans le message d'erreur : Firebase Console crée l'index composite en un clic.
 
-Si Firestore répond une erreur "the query requires an index" sur `api/driver-orders.js`, clique
-simplement le lien fourni dans le message d'erreur (Firebase Console crée l'index composite en un
-clic, ça prend quelques minutes la première fois).
-
-
-## Effets premium V2+
-- animations d’entrée des écrans et des cartes
-- micro-interactions sur boutons, cartes et filtres
-- zoom subtil des photos
-- glow/hover sur CTA
-- badge panier animé
-- animation du logo
-- panier flottant animé
-- feedback animé lors d’un ajout au panier
-- écran de confirmation animé
-- respect de `prefers-reduced-motion`
-
-## UX finale
-Aucun compte, profil ou connexion : la navigation mobile est volontairement limitée à
-**Accueil · Menu · Panier · Suivi**. La commande reste possible sans créer de compte.
