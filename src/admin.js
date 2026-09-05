@@ -90,6 +90,23 @@ async function subscribeToPush() {
   }
 }
 
+async function unsubscribeFromPush() {
+  if (!confirm('Désactiver les notifications push sur cet appareil ?')) return;
+  try {
+    const reg = await navigator.serviceWorker.getRegistration('/sw.js');
+    const sub = await reg?.pushManager.getSubscription();
+    if (sub) {
+      await api('/api/push-subscribe', { method: 'DELETE', body: JSON.stringify({ endpoint: sub.endpoint }) });
+      await sub.unsubscribe();
+    }
+    AS.pushSubscribed = false;
+    renderRoot();
+  } catch (err) {
+    console.error(err);
+    alert('Impossible de désactiver les notifications.');
+  }
+}
+
 function startTitleBlink(count) {
   stopTitleBlink();
   const alt = count > 1 ? `🔴 (${count}) Nouvelles commandes` : '🔴 (1) Nouvelle commande';
@@ -202,7 +219,7 @@ function bindLogin() {
 
 function header() {
   const news = AS.orders.filter(o => o.status === 'received').length;
-  const canAskPush = 'serviceWorker' in navigator && 'PushManager' in window && !AS.pushSubscribed;
+  const pushOk = 'serviceWorker' in navigator && 'PushManager' in window;
   return `<header class="aHeader">
   <span class="aLogo">${icon('fire', '', true)} MONDI FOOD <b>ADMIN</b></span>
   <nav class="aTabs">
@@ -210,7 +227,7 @@ function header() {
    <button data-view="drivers" class="${AS.view === 'drivers' ? 'on' : ''}">Livreurs</button>
    <button data-view="history" class="${AS.view === 'history' ? 'on' : ''}">Historique</button>
   </nav>
-  ${canAskPush ? `<button class="aLogout" data-ask-notif title="Activer les notifications push">🔔</button>` : ''}
+  ${pushOk ? `<button class="aLogout" data-toggle-push title="${AS.pushSubscribed ? 'Désactiver les notifications push' : 'Activer les notifications push'}">${AS.pushSubscribed ? '🔔' : '🔕'}</button>` : ''}
   <button class="aLogout" data-logout>${icon('close')}</button>
   </header>`;
 }
@@ -434,7 +451,9 @@ async function deleteOrder(id) {
 }
 
 function bind() {
-  document.querySelector('[data-ask-notif]')?.addEventListener('click', () => subscribeToPush());
+  document.querySelector('[data-toggle-push]')?.addEventListener('click', () => {
+    AS.pushSubscribed ? unsubscribeFromPush() : subscribeToPush();
+  });
   document.querySelector('[data-logout]')?.addEventListener('click', async () => {
     await api('/api/admin-auth', { method: 'POST', body: JSON.stringify({ action: 'logout' }) }); AS.authed = false; renderRoot();
   });
