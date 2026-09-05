@@ -2,6 +2,7 @@ import { getFirestore } from './_firebase.js';
 import { AggregateField } from 'firebase-admin/firestore';
 import { requireAdmin } from './_admin-auth.js';
 import { priceCart } from './_menu.js';
+import { sendPushToAll } from './_push.js';
 
 export default async function handler(req, res) {
   const db = getFirestore();
@@ -80,6 +81,10 @@ export default async function handler(req, res) {
         createdAt: new Date().toISOString(),
       };
       const ref = await db.collection('orders').add(doc);
+      await sendPushToAll({
+        title: 'Nouvelle commande',
+        body: `#${orderId} · ${total.toFixed(2).replace('.', ',')} €`,
+      });
       return res.status(200).json({ id: ref.id, orderId, total });
     } catch (err) {
       console.error(err);

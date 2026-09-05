@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { getFirestore } from './_firebase.js';
+import { sendPushToAll } from './_push.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -63,6 +64,11 @@ export default async function handler(req, res) {
         cancelReason: null,
         stripeSessionId: session.id,
         createdAt: new Date().toISOString(),
+      });
+
+      await sendPushToAll({
+        title: 'Nouvelle commande',
+        body: `#${session.metadata?.orderId || ''} · ${((session.amount_total || 0) / 100).toFixed(2).replace('.', ',')} €`,
       });
     } catch (err) {
       console.error('Erreur écriture Firestore:', err);
