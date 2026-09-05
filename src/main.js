@@ -14,10 +14,12 @@ const P = [
  {id:'p5',type:'pizza',name:'Diavolo',price:13.50,desc:'Sauce tomate épicée, mozzarella, chorizo, poivrons, piment',img:'/images/diavolo.jpg',hot:true,tag:'Épicées'},
 ];
 
-const S = {route:'home',type:'pizza',filter:'Toutes',selected:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),trackData:null};
+const S = {route:'home',type:'pizza',filter:'Toutes',selected:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),trackData:null,promo:null,promoChecking:false};
 const formatPrice = n => n.toFixed(2).replace('.',',')+' €';
 const count=()=>S.cart.reduce((a,x)=>a+x.qty,0);
 const total=()=>S.cart.reduce((a,x)=>a+x.price*x.qty,0);
+const discountAmount=()=>S.promo&&S.promo.valid?S.promo.discount:0;
+const finalTotal=()=>{const d=total()+(total()>=25?0:2.5)-discountAmount();return Math.max(0,Math.round(d*100)/100)};
 
 async function loadTrack(){
  const last=JSON.parse(localStorage.getItem('fd_last')||'{}');
@@ -96,9 +98,9 @@ function cart(){
  const delivery=total()>=25?0:2.5;return `<section class="cartPage"><button class="back" data-go="menu">${icon('arrow-left')} <span>Retour au menu</span></button><i>COMMANDE</i><h1>TON PANIER</h1><p>${count()} articles · livraison uniquement</p><div class="cartItems">${S.cart.map(x=>`<article><img src="${x.img}"><div><h3>${x.name}</h3>${x.opts&&x.opts.length?`<small class="opts">${x.opts.join(' · ')}</small>`:''}<small>${formatPrice(x.price)}</small><div class="qty"><button data-qty="${x.key}" data-d="-1">${icon('minus')}</button><b>${x.qty}</b><button data-qty="${x.key}" data-d="1">${icon('plus')}</button></div></div><strong>${formatPrice(x.price*x.qty)}</strong></article>`).join('')}</div><div class="summary"><p>Sous-total <b>${formatPrice(total())}</b></p><p>Livraison <b>${delivery?'2,50 €':'OFFERTE'}</b></p><hr><h3>Total <b>${formatPrice(total()+delivery)}</b></h3></div><button class="cta wide" data-go="checkout">PASSER LA COMMANDE ${icon('arrow-right')}</button><small class="secure">${icon('lock')} Paiement sécurisé · carte ou paiement à la livraison</small></section>`}
 
 function checkout(){
- const t=total()+(total()>=25?0:2.5);return `<section class="checkout"><button class="back" data-go="cart">${icon('arrow-left')} <span>Retour au panier</span></button><i>DERNIÈRE ÉTAPE</i><h1>ON TE LIVRE OÙ ?</h1><div class="steps"><b>${icon('check')}</b><span></span><b>2</b><span></span><b>3</b></div><form id="order"><div class="form"><h3>INFORMATIONS</h3><label>Prénom<input required name=firstName placeholder="Ex. Alex"></label><label>Téléphone<input required name=phone placeholder="06 00 00 00 00"></label></div><div class="form"><h3>ADRESSE DE LIVRAISON</h3><label>Adresse<input required name=address placeholder="12 rue des Lilas"></label><div class=two><label>Code postal<input required name=zip placeholder="75000"></label><label>Ville<input required name=city placeholder="Paris"></label></div><label>Instructions<textarea name=note placeholder="Digicode, étage, précision pour le livreur..."></textarea></label></div><div class="form"><h3>MODE DE PAIEMENT</h3><label class=pay><input type=radio name=payment value=online checked><span>${icon('payment-card')} <b>Paiement en ligne</b><small>Carte bancaire · sécurisé</small></span><em>RECOMMANDÉ</em></label><label class=pay><input type=radio name=payment value=delivery><span>${icon('cash')} <b>Paiement à la livraison</b><small>Selon les moyens acceptés</small></span></label></div><div class="checkoutTotal">TOTAL À PAYER <b>${formatPrice(t)}</b></div><button class="cta wide" type=submit>CONFIRMER LA COMMANDE ${icon('arrow-right')}</button><small class=secure>${icon('lock')} Tes données sont utilisées uniquement pour traiter la commande.</small></form></section>`}
+ const t=finalTotal();return `<section class="checkout"><button class="back" data-go="cart">${icon('arrow-left')} <span>Retour au panier</span></button><i>DERNIÈRE ÉTAPE</i><h1>ON TE LIVRE OÙ ?</h1><div class="steps"><b>${icon('check')}</b><span></span><b>2</b><span></span><b>3</b></div><form id="order"><div class="form"><h3>INFORMATIONS</h3><label>Prénom<input required name=firstName placeholder="Ex. Alex"></label><label>Téléphone<input required name=phone placeholder="06 00 00 00 00"></label></div><div class="form"><h3>ADRESSE DE LIVRAISON</h3><label>Adresse<input required name=address placeholder="12 rue des Lilas"></label><div class=two><label>Code postal<input required name=zip placeholder="75000"></label><label>Ville<input required name=city placeholder="Paris"></label></div><label>Instructions<textarea name=note placeholder="Digicode, étage, précision pour le livreur..."></textarea></label></div><div class="form"><h3>CODE PROMO</h3><div class="promoRow"><input id="promoInput" placeholder="Ex. WELCOME10" value="${S.promo?.code||''}"><button type="button" class="ghost small" id="applyPromo" ${S.promoChecking?'disabled':''}>${S.promoChecking?'…':'APPLIQUER'}</button></div>${S.promo?S.promo.valid?`<small class="promoOk">${icon('check')} Code appliqué : -${formatPrice(S.promo.discount)}</small>`:`<small class="promoErr">${S.promo.error}</small>`:''}</div><div class="form"><h3>MODE DE PAIEMENT</h3><label class=pay><input type=radio name=payment value=online checked><span>${icon('payment-card')} <b>Paiement en ligne</b><small>Carte bancaire · sécurisé</small></span><em>RECOMMANDÉ</em></label><label class=pay><input type=radio name=payment value=delivery><span>${icon('cash')} <b>Paiement à la livraison</b><small>Selon les moyens acceptés</small></span></label></div>${discountAmount()>0?`<p class="promoLine">Réduction <b class="promoOk">-${formatPrice(discountAmount())}</b></p>`:''}<div class="checkoutTotal">TOTAL À PAYER <b>${formatPrice(t)}</b></div><button class="cta wide" type=submit>CONFIRMER LA COMMANDE ${icon('arrow-right')}</button><small class=secure>${icon('lock')} Tes données sont utilisées uniquement pour traiter la commande.</small></form></section>`}
 
-function confirmation(){let o=JSON.parse(localStorage.getItem('fd_last')||'{}');return `<section class="confirm"><div class="ok">${icon('check')}</div><i>COMMANDE CONFIRMÉE</i><h1>MERCI ${o.firstName||''} !</h1><p>Ta commande <b>#${o.orderId||'DK-2048'}</b> est bien enregistrée.</p><div class="status"><div><b>${icon('fire','',true)}</b><strong>En préparation</strong><small>Notre cuisine prépare ta commande.</small></div><span>${icon('arrow-right')}</span><div><b>${icon('delivery')}</b><strong>30–45 min</strong><small>Livraison estimée chez toi.</small></div></div><div class="recap"><span>Total</span><b>${formatPrice(o.total||0)}</b><span>Paiement</span><b>${o.payment==='online'?'En ligne':'À la livraison'}</b></div><button class=cta data-go=track>SUIVRE MA COMMANDE ${icon('arrow-right')}</button><button class=ghost data-go=home>Retour à l’accueil</button></section>`}
+function confirmation(){let o=JSON.parse(localStorage.getItem('fd_last')||'{}');return `<section class="confirm"><div class="ok">${icon('check')}</div><i>COMMANDE CONFIRMÉE</i><h1>MERCI ${o.firstName||''} !</h1><p>Ta commande <b>#${o.orderId||'DK-2048'}</b> est bien enregistrée.</p><div class="status"><div><b>${icon('fire','',true)}</b><strong>En préparation</strong><small>Notre cuisine prépare ta commande.</small></div><span>${icon('arrow-right')}</span><div><b>${icon('delivery')}</b><strong>30–45 min</strong><small>Livraison estimée chez toi.</small></div></div><div class="recap">${o.discount?`<span>Réduction</span><b class="promoOk">-${formatPrice(o.discount)}</b>`:''}<span>Total</span><b>${formatPrice(o.total||0)}</b><span>Paiement</span><b>${o.payment==='online'?'En ligne':'À la livraison'}</b></div><button class=cta data-go=track>SUIVRE MA COMMANDE ${icon('arrow-right')}</button><button class=ghost data-go=home>Retour à l’accueil</button></section>`}
 
 function track(){
  const last=JSON.parse(localStorage.getItem('fd_last')||'{}');
@@ -129,7 +131,7 @@ function add(id){
  if(cartIconEl){cartIconEl.animate([{transform:'scale(1)'},{transform:'scale(1.16)'},{transform:'scale(1)'}],{duration:360,easing:'cubic-bezier(.2,.8,.2,1)'})}
  render();
 }
-function qty(key,d){let x=S.cart.find(x=>x.key===key);if(!x)return;x.qty+=d;if(x.qty<1)S.cart=S.cart.filter(y=>y.key!==key);save();render()}
+function qty(key,d){let x=S.cart.find(x=>x.key===key);if(!x)return;x.qty+=d;if(x.qty<1)S.cart=S.cart.filter(y=>y.key!==key);S.promo=null;save();render()}
 function toast(t){
  let e=document.querySelector('#toast');if(!e)return;
  e.innerHTML=icon('check')+' '+t;e.className='toast';
@@ -144,11 +146,27 @@ function bind(){
  document.querySelectorAll('[data-add]').forEach(b=>b.onclick=e=>{e.stopPropagation();add(b.dataset.add)});
  document.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>qty(b.dataset.qty,+b.dataset.d));
  document.querySelector('[data-menu]')?.addEventListener('click',()=>toast('Navigation : Accueil · Menu · Panier · Suivi'));
+ document.querySelector('#applyPromo')?.addEventListener('click',async()=>{
+  const input=document.querySelector('#promoInput');
+  const code=(input?.value||'').trim();
+  if(!code){S.promo=null;render();return}
+  S.promoChecking=true;render();
+  try{
+   const res=await fetch(`/api/orders?validatePromo=${encodeURIComponent(code)}&subtotal=${total()}`);
+   const data=await res.json();
+   S.promo=data.valid?{code:data.code,valid:true,discount:data.discount}:{code,valid:false,error:data.error||'Code invalide'};
+  }catch{
+   S.promo={code,valid:false,error:'Impossible de vérifier le code, réessaie.'};
+  }
+  S.promoChecking=false;render();
+  document.querySelector('#promoInput')?.focus();
+ });
  document.querySelector('#order')?.addEventListener('submit',async e=>{
   e.preventDefault();
   const form=e.target;
   const d=Object.fromEntries(new FormData(form));
-  const t=total()+(total()>=25?0:2.5);
+  const t=finalTotal();
+  const promoCode=S.promo&&S.promo.valid?S.promo.code:undefined;
   if(d.payment==='delivery'){
    const submitBtn=form.querySelector('button[type=submit]');
    if(submitBtn){submitBtn.disabled=true;submitBtn.textContent='ENVOI DE LA COMMANDE…'}
@@ -156,12 +174,12 @@ function bind(){
     const res=await fetch('/api/orders',{
      method:'POST',
      headers:{'Content-Type':'application/json'},
-     body:JSON.stringify({cart:S.cart.map(x=>({id:x.id,opts:x.opts,qty:x.qty})),customer:d})
+     body:JSON.stringify({cart:S.cart.map(x=>({id:x.id,opts:x.opts,qty:x.qty})),customer:d,promoCode})
     });
     const data=await res.json();
     if(!res.ok)throw new Error(data.error||'Commande refusée');
-    localStorage.setItem('fd_last',JSON.stringify({...d,total:data.total,orderId:data.orderId,payment:'delivery'}));
-    S.cart=[];save();S.route='confirmation';render();
+    localStorage.setItem('fd_last',JSON.stringify({...d,total:data.total,discount:data.discount||0,orderId:data.orderId,payment:'delivery'}));
+    S.cart=[];S.promo=null;save();S.route='confirmation';render();
    }catch(err){
     toast(err.message||'Impossible d’enregistrer la commande, réessaie.');
     if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='CONFIRMER LA COMMANDE'}
@@ -178,7 +196,8 @@ function bind(){
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
      cart:S.cart.map(x=>({id:x.id,opts:x.opts,qty:x.qty})),
-     customer:d
+     customer:d,
+     promoCode
     })
    });
    const data=await res.json();
@@ -201,7 +220,7 @@ async function handleStripeReturn(){
   const data=await res.json();
   if(data.paid){
    const pending=JSON.parse(localStorage.getItem('fd_pending')||'{}');
-   const o={...pending,payment:'online',total:data.total,orderId:data.orderId||('DK-'+Math.floor(1000+Math.random()*9000)),firstName:data.firstName||pending.firstName};
+   const o={...pending,payment:'online',total:data.total,discount:data.discount||0,orderId:data.orderId||('DK-'+Math.floor(1000+Math.random()*9000)),firstName:data.firstName||pending.firstName};
    localStorage.setItem('fd_last',JSON.stringify(o));
    localStorage.removeItem('fd_pending');
    S.cart=[];save();S.route='confirmation';

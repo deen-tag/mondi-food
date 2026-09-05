@@ -90,6 +90,8 @@ main{padding:16px}
 .aTitle{font:800 32px 'Barlow Condensed';margin:0 0 14px}
 .aDrivers{display:grid;gap:8px;margin-bottom:16px}
 .aDriverCard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
+.aDriverCard>div:first-child{display:flex;flex-direction:column;gap:2px}
+.aPromoActions{display:flex;flex-direction:column;gap:6px}
 .aDriverCard b{font-size:13px;display:block}
 .aDriverCard small{color:var(--muted);font-size:11px}
 #addDriver{display:flex;gap:8px}

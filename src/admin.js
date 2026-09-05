@@ -12,6 +12,7 @@ const AS = {
   selected: null,
   orders: [],
   drivers: [],
+  promoCodes: [],
   knownNew: new Set(),
   loading: true,
   activeCount: null, // dernier compteur "ping" connu (received+preparing+delivering)
@@ -138,9 +139,10 @@ async function api(path, opts = {}) {
 
 async function refresh() {
   try {
-    const [o, d] = await Promise.all([api('/api/orders'), api('/api/drivers')]);
+    const [o, d, p] = await Promise.all([api('/api/orders'), api('/api/drivers'), api('/api/orders?promo=1')]);
     AS.orders = o.orders || [];
     AS.drivers = d.drivers || [];
+    AS.promoCodes = p.promoCodes || [];
     AS.activeCount = AS.orders.filter(o => ['received', 'preparing', 'delivering'].includes(o.status)).length;
     checkNewOrders();
   } catch {}
@@ -225,6 +227,7 @@ function header() {
   <nav class="aTabs">
    <button data-view="dashboard" class="${AS.view === 'dashboard' ? 'on' : ''}">Dashboard${news ? `<em>${news}</em>` : ''}</button>
    <button data-view="drivers" class="${AS.view === 'drivers' ? 'on' : ''}">Livreurs</button>
+   <button data-view="promo" class="${AS.view === 'promo' ? 'on' : ''}">Codes promo</button>
    <button data-view="history" class="${AS.view === 'history' ? 'on' : ''}">Historique</button>
   </nav>
   ${pushOk ? `<button class="aLogout" data-toggle-push title="${AS.pushSubscribed ? 'Désactiver les notifications push' : 'Activer les notifications push'}">${AS.pushSubscribed ? '🔔' : '🔕'}</button>` : ''}
@@ -235,6 +238,7 @@ function header() {
 function screen() {
   if (AS.view === 'order') return orderView();
   if (AS.view === 'drivers') return driversView();
+  if (AS.view === 'promo') return promoView();
   if (AS.view === 'history') return historyView();
   return dashboardView();
 }
@@ -389,6 +393,41 @@ function driversView() {
   </div>`;
 }
 
+// ---------- Codes promo ----------
+function promoView() {
+  return `
+  <h1 class="aTitle">CODES PROMO</h1>
+  <div class="aDrivers">${AS.promoCodes.map(p => `
+   <div class="aDriverCard">
+    <div>
+     <b>🏷️ ${p.code}</b>
+     <small>${p.type === 'percent' ? `-${p.value}%` : `-${p.value.toFixed(2).replace('.', ',')} €`}${p.minSubtotal ? ` dès ${p.minSubtotal.toFixed(2).replace('.', ',')} €` : ''}</small>
+     <small>${p.usedCount || 0} utilisation${(p.usedCount || 0) > 1 ? 's' : ''}${p.maxUses != null ? ` / ${p.maxUses} max` : ''} · ${p.active ? '🟢 Actif' : '⚪ Désactivé'}</small>
+    </div>
+    <div class="aPromoActions">
+     <button class="ghost small" data-promo-toggle="${p.code}">${p.active ? 'Désactiver' : 'Activer'}</button>
+     <button class="ghost small danger" data-promo-delete="${p.code}">Supprimer</button>
+    </div>
+   </div>`).join('') || `<p class="aEmpty">Aucun code promo pour le moment.</p>`}</div>
+  <div class="aBox"><h3>Créer un code promo</h3>
+   <form id="addPromo">
+    <input name="code" placeholder="Code (ex: WELCOME10)" required maxlength="30">
+    <div class="two">
+     <select name="type">
+      <option value="percent">Pourcentage (%)</option>
+      <option value="fixed">Montant fixe (€)</option>
+     </select>
+     <input name="value" type="number" step="0.01" min="0" placeholder="Valeur" required>
+    </div>
+    <div class="two">
+     <input name="minSubtotal" type="number" step="0.01" min="0" placeholder="Minimum panier (€, optionnel)">
+     <input name="maxUses" type="number" step="1" min="1" placeholder="Nb d'utilisations max (optionnel)">
+    </div>
+    <button class="cta small" type="submit">CRÉER LE CODE</button>
+   </form>
+  </div>`;
+}
+
 // ---------- Historique ----------
 function historyView() {
   const all = AS.orders;
@@ -493,6 +532,28 @@ function bind() {
     const name = new FormData(e.target).get('name');
     try { await api('/api/drivers', { method: 'POST', body: JSON.stringify({ name }) }); refresh(); }
     catch (err) { alert(err.message || 'Erreur'); }
+  });
+
+  document.querySelectorAll('[data-promo-toggle]').forEach(b => b.addEventListener('click', async () => {
+    try {
+      await api('/api/orders', { method: 'POST', body: JSON.stringify({ action: 'promo-toggle', code: b.dataset.promoToggle }) });
+      refresh();
+    } catch (err) { alert(err.message || 'Erreur'); }
+  }));
+  document.querySelectorAll('[data-promo-delete]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm(`Supprimer le code ${b.dataset.promoDelete} ?`)) return;
+    try {
+      await api('/api/orders', { method: 'POST', body: JSON.stringify({ action: 'promo-delete', code: b.dataset.promoDelete }) });
+      refresh();
+    } catch (err) { alert(err.message || 'Erreur'); }
+  }));
+  document.querySelector('#addPromo')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const d = Object.fromEntries(new FormData(e.target));
+    try {
+      await api('/api/orders', { method: 'POST', body: JSON.stringify({ action: 'promo-create', ...d }) });
+      refresh();
+    } catch (err) { alert(err.message || 'Erreur'); }
   });
 }
 
