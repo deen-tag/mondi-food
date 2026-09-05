@@ -327,6 +327,10 @@ function orderView() {
       <select id="cancelReason">${CANCEL_REASONS.map(r => `<option>${r}</option>`).join('')}</select>
       <button class="ghost small danger" data-act="cancel" data-id="${o.id}">Annuler la commande</button></div>` : '';
 
+  const deleteBox = `<div class="aBox danger"><h3>Supprimer</h3>
+    <p class="aMuted">Suppression définitive — utile pour effacer une commande de test. Action irréversible.</p>
+    <button class="ghost small danger" data-act="delete" data-id="${o.id}">Supprimer définitivement</button></div>`;
+
   return `<button class="back" data-view="dashboard">${icon('arrow-left')} <span>Retour</span></button>
   <div class="aOrderHead"><h1>#${o.orderId || o.id}</h1><span class="statusChip ${o.status}">${statusIcon(o.status)} ${STATUS[o.status]}</span></div>
   <p class="aMuted">${dm(o.createdAt)} à ${hm(o.createdAt)}</p>
@@ -349,6 +353,7 @@ function orderView() {
 
   ${action}
   ${cancelBox}
+  ${deleteBox}
   `;
 }
 
@@ -421,6 +426,12 @@ async function cancelOrder(id) {
   await api(`/api/orders/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'cancelled', cancelReason: reason }) });
   refresh();
 }
+async function deleteOrder(id) {
+  if (!confirm('Supprimer définitivement cette commande ? Cette action est irréversible.')) return;
+  await api(`/api/orders/${id}`, { method: 'DELETE' });
+  AS.view = 'dashboard'; AS.selected = null;
+  refresh();
+}
 
 function bind() {
   document.querySelector('[data-ask-notif]')?.addEventListener('click', () => subscribeToPush());
@@ -445,6 +456,7 @@ function bind() {
       else if (act === 'assign') await assign(id);
       else if (act === 'delivered') await delivered(id);
       else if (act === 'cancel') await cancelOrder(id);
+      else if (act === 'delete') await deleteOrder(id);
       else if (act === 'markPaid') { await api(`/api/orders/${id}`, { method: 'PATCH', body: JSON.stringify({ paymentStatus: 'paye' }) }); refresh(); }
       else if (act === 'markFailed') { await api(`/api/orders/${id}`, { method: 'PATCH', body: JSON.stringify({ paymentStatus: 'echoue' }) }); refresh(); }
     } catch (err) { alert(err.message || 'Erreur'); }
