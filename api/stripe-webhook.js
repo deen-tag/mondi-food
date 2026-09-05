@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { getFirestore } from './_firebase.js';
 import { sendPushToAll } from './_push.js';
+import { consumePromoCode } from './_promo.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -41,6 +42,8 @@ export default async function handler(req, res) {
       const items = lineItems.data
         .filter((li) => li.description !== 'Livraison')
         .map((li) => ({ name: li.description, qty: li.quantity, price: (li.amount_total || 0) / 100 / (li.quantity || 1) }));
+      const promoCode = session.metadata?.promoCode || null;
+      const discount = session.total_details?.amount_discount ? session.total_details.amount_discount / 100 : 0;
 
       await db.collection('orders').doc(session.id).set({
         orderId: session.metadata?.orderId || null,
@@ -51,6 +54,8 @@ export default async function handler(req, res) {
         city: session.metadata?.city || '',
         note: session.metadata?.note || '',
         items,
+        promoCode: promoCode || null,
+        discount,
         total: (session.amount_total || 0) / 100,
         currency: session.currency,
         paymentMethod: 'online',
@@ -65,6 +70,8 @@ export default async function handler(req, res) {
         stripeSessionId: session.id,
         createdAt: new Date().toISOString(),
       });
+
+      if (promoCode) await consumePromoCode(db, promoCode);
 
       await sendPushToAll({
         title: 'Nouvelle commande',

@@ -1,5 +1,7 @@
 import Stripe from 'stripe';
 import { priceCart } from './_menu.js';
+import { getFirestore } from './_firebase.js';
+import { checkPromoCode } from './_promo.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -9,8 +11,26 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { cart, customer } = req.body || {};
-    const { items, delivery, total } = priceCart(cart);
+    const { cart, customer, promoCode } = req.body || {};
+    const { items, subtotal, delivery, total } = priceCart(cart);
+
+    let discounts;
+    let appliedPromo = null;
+    if (promoCode) {
+      // Revalidé côté serveur, jamais confiance dans une réduction affichée plus tôt.
+      const db = getFirestore();
+      const result = await checkPromoCode(db, promoCode, subtotal);
+      appliedPromo = result.code;
+      // Stripe n'accepte pas de ligne à prix négatif : la réduction passe par un
+      // "coupon" créé à la volée (montant fixe en centimes), appliqué à la session.
+      const coupon = await stripe.coupons.create({
+        amount_off: Math.round(result.discount * 100),
+        currency: 'eur',
+        duration: 'once',
+        name: `Code ${appliedPromo}`,
+      });
+      discounts = [{ coupon: coupon.id }];
+    }
 
     const line_items = items.map((it) => ({
       price_data: {
@@ -41,6 +61,7 @@ export default async function handler(req, res) {
       mode: 'payment',
       payment_method_types: ['card'],
       line_items,
+      discounts,
       success_url: `${origin}/?session_id={CHECKOUT_SESSION_ID}#confirmation`,
       cancel_url: `${origin}/?#checkout`,
       customer_email: customer?.email || undefined,
@@ -52,6 +73,7 @@ export default async function handler(req, res) {
         zip: customer?.zip || '',
         city: customer?.city || '',
         note: customer?.note || '',
+        promoCode: appliedPromo || '',
       },
     });
 

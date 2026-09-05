@@ -16,6 +16,7 @@ export default async function handler(req, res) {
       orderId: session.metadata?.orderId || null,
       firstName: session.metadata?.firstName || '',
       total: (session.amount_total || 0) / 100,
+      discount: session.total_details?.amount_discount ? session.total_details.amount_discount / 100 : 0,
     });
   } catch (err) {
     console.error(err);
