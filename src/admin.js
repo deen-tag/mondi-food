@@ -16,6 +16,7 @@ const AS = {
   loading: true,
   activeCount: null, // dernier compteur "ping" connu (received+preparing+delivering)
   globalStats: null, // { totalOrders, totalRevenue } depuis toujours, chargé une fois
+  pushSubscribed: false, // abonné aux notifs push (Service Worker) ?
 };
 
 const formatPrice = n => (+n).toFixed(2).replace('.', ',') + ' €';
@@ -24,6 +25,9 @@ const dm = iso => iso ? new Date(iso).toLocaleDateString('fr-FR', { day: '2-digi
 const isToday = iso => new Date(iso).toDateString() === new Date().toDateString();
 const isYesterday = iso => { const y = new Date(); y.setDate(y.getDate() - 1); return new Date(iso).toDateString() === y.toDateString(); };
 const isThisWeek = iso => (Date.now() - new Date(iso).getTime()) < 7 * 86400000;
+
+const ORIGINAL_TITLE = 'Mondi Food — Admin';
+let titleBlinkTimer = null;
 
 function beep() {
   try {
@@ -34,6 +38,73 @@ function beep() {
     o.start(); o.stop(ctx.currentTime + 0.18);
   } catch {}
 }
+
+// ---------- Notifications navigateur (immédiates, onglet ouvert) ----------
+function notifyDesktop(count) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    new Notification(count > 1 ? `${count} nouvelles commandes` : 'Nouvelle commande', {
+      body: 'Ouvre le dashboard pour la traiter.',
+      tag: 'mondi-new-order', // évite d'empiler des notifs, juste la dernière
+    });
+  } catch {}
+}
+
+// ---------- Push (Service Worker) : notifs même onglet/navigateur fermé ----------
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+
+async function checkPushStatus() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    const sub = await reg.pushManager.getSubscription();
+    AS.pushSubscribed = !!sub;
+  } catch { AS.pushSubscribed = false; }
+  renderRoot();
+}
+
+async function subscribeToPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    alert('Ton navigateur ne supporte pas les notifications push.');
+    return;
+  }
+  try {
+    const { publicKey } = await api('/api/push-subscribe');
+    if (!publicKey) { alert('Notifications push pas encore configurées côté serveur.'); return; }
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
+    await api('/api/push-subscribe', { method: 'POST', body: JSON.stringify({ subscription: sub }) });
+    AS.pushSubscribed = true;
+    renderRoot();
+  } catch (err) {
+    console.error(err);
+    alert('Impossible d’activer les notifications push. Vérifie que tu as autorisé les notifications pour ce site.');
+  }
+}
+
+function startTitleBlink(count) {
+  stopTitleBlink();
+  const alt = count > 1 ? `🔴 (${count}) Nouvelles commandes` : '🔴 (1) Nouvelle commande';
+  let on = false;
+  titleBlinkTimer = setInterval(() => { document.title = on ? ORIGINAL_TITLE : alt; on = !on; }, 1000);
+}
+
+function stopTitleBlink() {
+  if (titleBlinkTimer) { clearInterval(titleBlinkTimer); titleBlinkTimer = null; }
+  document.title = ORIGINAL_TITLE;
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) stopTitleBlink(); // l'admin regarde à nouveau l'onglet
+});
 
 // ---------- Couche API ----------
 async function api(path, opts = {}) {
@@ -84,7 +155,15 @@ function checkNewOrders() {
   const fresh = AS.orders.filter(o => o.status === 'received');
   let isNew = false;
   fresh.forEach(o => { if (!AS.knownNew.has(o.id)) { AS.knownNew.add(o.id); isNew = true; } });
-  if (isNew && AS.view === 'dashboard' && !AS.loading) beep();
+  if (isNew && AS.view === 'dashboard' && !AS.loading) {
+    if (document.hidden) {
+      // Onglet en arrière-plan : notif système + titre clignotant, pas de bip inutile.
+      notifyDesktop(fresh.length);
+      startTitleBlink(fresh.length);
+    } else {
+      beep();
+    }
+  }
 }
 
 // ---------- Shell ----------
@@ -93,7 +172,7 @@ async function init() {
     const s = await api('/api/admin-auth');
     AS.authed = s.authed;
   } catch { AS.authed = false; }
-  if (AS.authed) refresh();
+  if (AS.authed) { refresh(); checkPushStatus(); }
   else renderRoot();
 }
 
@@ -116,13 +195,14 @@ function bindLogin() {
     const pass = new FormData(e.target).get('pass');
     try {
       await api('/api/admin-auth', { method: 'POST', body: JSON.stringify({ action: 'login', password: pass }) });
-      AS.authed = true; AS.loading = true; renderRoot(); refresh();
+      AS.authed = true; AS.loading = true; renderRoot(); refresh(); checkPushStatus();
     } catch { document.querySelector('#loginErr').textContent = 'Mot de passe incorrect.'; }
   });
 }
 
 function header() {
   const news = AS.orders.filter(o => o.status === 'received').length;
+  const canAskPush = 'serviceWorker' in navigator && 'PushManager' in window && !AS.pushSubscribed;
   return `<header class="aHeader">
   <span class="aLogo">${icon('fire', '', true)} MONDI FOOD <b>ADMIN</b></span>
   <nav class="aTabs">
@@ -130,6 +210,7 @@ function header() {
    <button data-view="drivers" class="${AS.view === 'drivers' ? 'on' : ''}">Livreurs</button>
    <button data-view="history" class="${AS.view === 'history' ? 'on' : ''}">Historique</button>
   </nav>
+  ${canAskPush ? `<button class="aLogout" data-ask-notif title="Activer les notifications push">🔔</button>` : ''}
   <button class="aLogout" data-logout>${icon('close')}</button>
   </header>`;
 }
@@ -342,6 +423,7 @@ async function cancelOrder(id) {
 }
 
 function bind() {
+  document.querySelector('[data-ask-notif]')?.addEventListener('click', () => subscribeToPush());
   document.querySelector('[data-logout]')?.addEventListener('click', async () => {
     await api('/api/admin-auth', { method: 'POST', body: JSON.stringify({ action: 'logout' }) }); AS.authed = false; renderRoot();
   });
