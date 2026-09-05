@@ -84,7 +84,7 @@ export default async function handler(req, res) {
       await sendPushToAll({
         title: 'Nouvelle commande',
         body: `#${orderId} · ${total.toFixed(2).replace('.', ',')} €`,
-      });
+      }).catch((err) => console.error('Push ignoré (ne bloque pas la commande):', err.message));
       return res.status(200).json({ id: ref.id, orderId, total });
     } catch (err) {
       console.error(err);

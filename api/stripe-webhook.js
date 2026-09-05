@@ -69,7 +69,7 @@ export default async function handler(req, res) {
       await sendPushToAll({
         title: 'Nouvelle commande',
         body: `#${session.metadata?.orderId || ''} · ${((session.amount_total || 0) / 100).toFixed(2).replace('.', ',')} €`,
-      });
+      }).catch((err) => console.error('Push ignoré (ne bloque pas la commande):', err.message));
     } catch (err) {
       console.error('Erreur écriture Firestore:', err);
       // On renvoie quand même 200 à Stripe pour éviter des retries en boucle
