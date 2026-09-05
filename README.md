@@ -14,6 +14,9 @@ Site de livraison (Pannuezo & Pizza) : frontend Vite + backend serverless Vercel
 - Site déployé sur Vercel : **mondi-food.vercel.app**.
 - Espace **Admin** (`/admin.html`) et **Livreur** (`/driver.html`), branchés sur Firestore
   via une API sécurisée — voir "Admin & Livreur" ci-dessous.
+- Notifications admin en 3 couches (bip sonore, notif navigateur/titre clignotant, push
+  Service Worker même app fermée) + polling optimisé pour rester dans les quotas gratuits
+  Firestore — voir "Notifications & optimisation des lectures" ci-dessous.
 
 ### ⚠️ À faire
 1. Sur Vercel, ajouter les variables `ADMIN_PASSWORD` et `ADMIN_SESSION_SECRET`
@@ -22,7 +25,9 @@ Site de livraison (Pannuezo & Pizza) : frontend Vite + backend serverless Vercel
    ait quelqu'un à proposer.
 3. Tester un paiement Stripe en mode test **et** une commande "à la livraison", vérifier
    que les deux apparaissent dans Firestore (`orders`) et dans `/admin.html`.
-4. Avant de passer en paiements réels : voir "Passer en production" plus bas.
+4. Générer les clés VAPID et les ajouter sur Vercel pour activer les notifications push
+   (voir "Notifications & optimisation des lectures").
+5. Avant de passer en paiements réels : voir "Passer en production" plus bas.
 
 ### 🔐 Sécurité — rappel
 - Une clé de service Firebase a été régénérée et l'ancienne révoquée (elle avait été
@@ -91,15 +96,15 @@ Toute la logique sensible vit côté serveur, jamais dans le navigateur :
 | Fichier | Rôle | Accès |
 |---|---|---|
 | `api/_admin-auth.js` | Signature/vérification du cookie de session admin (HMAC) | interne |
-| `api/admin-login.js` / `admin-logout.js` / `admin-session.js` | Connexion / déconnexion / vérif session admin | public → session |
-| `api/orders.js` | GET liste des commandes · POST création (paiement à la livraison) | GET admin · POST public |
-| `api/orders/[id].js` | PATCH statut/livreur/paiement/annulation, avec effets de bord serveur (libère le livreur à la livraison/annulation) | admin |
+| `api/admin-auth.js` | GET vérif session · POST `{action:'login'\|'logout'}` | public → session |
+| `api/orders.js` | GET liste des commandes (7 derniers jours) · GET `?ping=1` compteur léger · GET `?stats=1` totaux depuis toujours · POST création (paiement à la livraison) | GET/stats/ping admin · POST public |
+| `api/orders/[id].js` | PATCH statut/livreur/paiement/annulation (avec effets de bord serveur : libère le livreur à la livraison/annulation) · DELETE suppression définitive | admin |
 | `api/drivers.js` | GET liste des livreurs · POST ajout | GET public · POST admin |
 | `api/drivers/[id].js` | PATCH statut d'un livreur (vue admin) | admin |
-| `api/driver-status.js` | Un livreur bascule lui-même dispo ↔ pause | public, restreint |
-| `api/driver-orders.js` | Livraisons assignées à un livreur donné | public, scoping par `driverId` |
-| `api/driver-deliver.js` | Un livreur marque sa propre commande livrée (vérifie qu'elle lui appartient) | public, restreint |
+| `api/driver.js` | GET livraisons d'un livreur · POST `{action:'status'}` bascule dispo/pause · POST `{action:'deliver'}` marque sa propre commande livrée | public, restreint (scoping par `driverId`) |
 | `api/track.js` | Suivi client — statut uniquement, jamais adresse/téléphone | public |
+| `api/_push.js` | Envoi des notifications push (VAPID) à tous les appareils admin abonnés ; jamais bloquant pour la création de commande | interne |
+| `api/push-subscribe.js` | GET clé publique VAPID · POST enregistre un abonnement · DELETE le supprime | GET public · POST/DELETE admin |
 
 ### Schéma Firestore
 
@@ -128,15 +133,80 @@ Toute la logique sensible vit côté serveur, jamais dans le navigateur :
 | `name` | string | Prénom affiché |
 | `status` | string | `dispo` \| `livraison` \| `pause` |
 
+**Collection `pushSubscriptions`** (un document par appareil admin abonné aux notifs
+push, id = hash de l'endpoint) :
+
+| Champ | Type | Détail |
+|---|---|---|
+| `endpoint`, `keys` | string, object | Objet `PushSubscription` standard du navigateur, stocké tel quel |
+
+
+### Notifications & optimisation des lectures Firestore
+
+**Le problème de départ :** l'admin vérifiait les nouvelles commandes en rechargeant
+*toute* la liste toutes les 5s, avec une requête sans limite de date (`limit(300)` peu
+importe l'âge des commandes). Sur un volume réel, ça pouvait représenter plusieurs
+centaines de milliers de lectures Firestore par jour — bien au-delà du quota gratuit
+Spark (50 000 lectures/jour).
+
+**Ce qui a été mis en place pour rester dans les quotas gratuits :**
+- `GET /api/orders` ne renvoie que les commandes des **7 derniers jours** (plafonné à
+  200), au lieu de "les 300 dernières peu importe leur âge".
+- `GET /api/orders?ping=1` : un mode "léger" qui ne renvoie qu'un **compteur** (requête
+  d'agrégation Firestore, ~1 lecture peu importe le nombre de commandes). L'admin
+  l'appelle toutes les 15s ; il ne va chercher la liste complète que si ce compteur a
+  changé, c'est-à-dire qu'il y a vraiment du nouveau.
+- `GET /api/orders?stats=1` : totaux "depuis toujours" (nombre de commandes + chiffre
+  d'affaires), via agrégation `count()`/`sum()` — chargé une seule fois à l'ouverture de
+  l'onglet Historique, jamais en boucle.
+
+**Notifications, en 3 couches indépendantes (`src/admin.js`) :**
+1. **Bip sonore** (Web Audio, aucun fichier) — si l'onglet dashboard est ouvert et affiché.
+2. **Notification navigateur + titre d'onglet clignotant** — si l'onglet est ouvert mais
+   en arrière-plan (autre onglet actif). S'arrête dès que l'onglet redevient visible.
+3. **Push (Service Worker, `public/sw.js`)** — fonctionne même navigateur/onglet fermé ou
+   téléphone verrouillé, tant que l'appareil a du réseau. C'est le seul mécanisme qui ne
+   dépend pas d'un onglet ouvert : le serveur contacte directement l'appareil (`api/_push.js`)
+   au moment de la création de la commande (`api/orders.js` et `api/stripe-webhook.js`),
+   au lieu que le client interroge le serveur en boucle.
+
+Le bouton 🔕/🔔 dans l'en-tête admin active/désactive le push sur l'appareil courant
+(chaque appareil a son propre abonnement indépendant, stocké dans Firestore
+`pushSubscriptions`). Un appareil éteint ou hors ligne n'empêche jamais l'envoi vers un
+autre appareil abonné, et un échec d'envoi push ne bloque jamais la création de la commande
+(erreurs toujours capturées, jamais remontées au client).
+
+**Configuration nécessaire pour activer le push (sinon les commandes se créent
+normalement, juste sans notif push) :**
+1. Générer une paire de clés : `npx web-push generate-vapid-keys`
+2. Vercel → Settings → Environment Variables, ajouter :
+   - `VAPID_PUBLIC_KEY`
+   - `VAPID_PRIVATE_KEY`
+   - `VAPID_SUBJECT` — doit être au format `mailto:ton-email@exemple.com` (le préfixe
+     `mailto:` est obligatoire, sinon `web-push` refuse de démarrer)
+3. Redéployer
+4. Sur `/admin.html`, cliquer sur 🔕 pour s'abonner (le navigateur demande l'autorisation)
+
+**Limite connue :** sur iOS, le push ne fonctionne que si le site est ajouté à l'écran
+d'accueil comme une PWA (iOS 16.4+). Sur Android et desktop, ça marche directement dans
+le navigateur.
+
 ### Variables d'environnement à ajouter sur Vercel
 - `ADMIN_PASSWORD` — mot de passe de connexion à `/admin.html`.
 - `ADMIN_SESSION_SECRET` — chaîne aléatoire longue générée une fois (`openssl rand -hex 32`).
   La changer invalide instantanément toutes les sessions admin en cours — utile si elle fuite.
+- `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` — notifications push admin,
+  voir "Notifications & optimisation des lectures" ci-dessus. Facultatif : sans ces
+  variables, tout fonctionne normalement, juste sans notif push.
 
 ### Limites connues (MVP)
-- Pas de temps réel poussé (websocket) : admin et livreur font un poll toutes les 5s.
+- Le livreur fait toujours un poll toutes les 5s (`src/driver.js`), requête restreinte
+  à ses propres livraisons donc sans risque de quota. L'admin, lui, ne poll plus la liste
+  complète en boucle — voir "Notifications & optimisation des lectures" ci-dessus.
 - Le livreur s'identifie en choisissant son nom dans une liste, sans mot de passe —
   suffisant pour une petite équipe de confiance, pas pour une vraie authentification.
-- Si Firestore répond *"the query requires an index"* sur `api/driver-orders.js`, ouvrir
-  le lien donné dans le message d'erreur : Firebase Console crée l'index composite en un clic.
+- Si Firestore répond *"the query requires an index"* sur `api/driver.js` ou `api/orders.js`
+  (mode `?ping=1`/`?stats=1`), ouvrir le lien donné dans le message d'erreur : Firebase
+  Console crée l'index composite en un clic.
+
 
