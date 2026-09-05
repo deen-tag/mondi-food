@@ -8,17 +8,25 @@ const ALLOWED = [
 ];
 
 export default async function handler(req, res) {
-  if (req.method !== 'PATCH') return res.status(405).end();
   if (!requireAdmin(req, res)) return;
-
   const { id } = req.query;
+  const db = getFirestore();
+
+  if (req.method === 'DELETE') {
+    // Suppression définitive — pratique pour nettoyer des commandes de test.
+    // Irréversible, donc réservé à l'admin (déjà vérifié ci-dessus).
+    await db.collection('orders').doc(id).delete();
+    return res.status(200).json({ ok: true });
+  }
+
+  if (req.method !== 'PATCH') return res.status(405).end();
+
   const body = req.body || {};
   const patch = {};
   for (const k of ALLOWED) if (k in body) patch[k] = body[k];
   if (!Object.keys(patch).length) return res.status(400).json({ error: 'Rien à mettre à jour' });
 
   try {
-    const db = getFirestore();
     const ref = db.collection('orders').doc(id);
     const snap = await ref.get();
     if (!snap.exists) return res.status(404).json({ error: 'Commande introuvable' });
