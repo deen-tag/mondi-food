@@ -75,6 +75,12 @@ async function subscribeToPush() {
     return;
   }
   try {
+    // Profite du geste utilisateur (clic sur la cloche) pour aussi demander la permission
+    // de notification navigateur "immédiate" (onglet ouvert), sinon notifyDesktop() ne
+    // s'active jamais : elle vérifie la permission mais ne la demande nulle part ailleurs.
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
     const { publicKey } = await api('/api/push-subscribe');
     if (!publicKey) { alert('Notifications push pas encore configurées côté serveur.'); return; }
     const reg = await navigator.serviceWorker.register('/sw.js');
@@ -276,9 +282,9 @@ function dashboardView() {
   return `
   ${news.length ? `<div class="alertBar">${icon('fire', '', true)} ${news.length} NOUVELLE${news.length > 1 ? 'S' : ''} COMMANDE${news.length > 1 ? 'S' : ''}</div>` : ''}
   <div class="aStats">
-   <div><b>${news.length}</b><small>Nouvelles</small></div>
-   <div><b>${cuisine.length}</b><small>Cuisine</small></div>
-   <div><b>${livraison.length}</b><small>Livraison</small></div>
+   <div data-filter="received" class="${AS.filter === 'received' ? 'active' : ''}"><b>${news.length}</b><small>Nouvelles</small></div>
+   <div data-filter="preparing" class="${AS.filter === 'preparing' ? 'active' : ''}"><b>${cuisine.length}</b><small>Cuisine</small></div>
+   <div data-filter="delivering" class="${AS.filter === 'delivering' ? 'active' : ''}"><b>${livraison.length}</b><small>Livraison</small></div>
    <div><b>${today.length}</b><small>Aujourd'hui</small></div>
   </div>
   <div class="aToolbar"><input id="aSearch" placeholder="🔍 Rechercher commande, nom, téléphone" value="${AS.search}"></div>
@@ -354,7 +360,7 @@ function orderView() {
 
   const deleteBox = `<div class="aBox danger"><h3>Supprimer</h3>
     <p class="aMuted">Suppression définitive — utile pour effacer une commande de test. Action irréversible.</p>
-    <button class="ghost small danger" data-act="delete" data-id="${o.id}">Supprimer définitivement</button></div>`;
+    <button class="ghost small danger solid" data-act="delete" data-id="${o.id}">Supprimer définitivement</button></div>`;
 
   return `<button class="back" data-view="dashboard">${icon('arrow-left')} <span>Retour</span></button>
   <div class="aOrderHead"><h1>#${o.orderId || o.id}</h1><span class="statusChip ${o.status}">${statusIcon(o.status)} ${STATUS[o.status]}</span></div>
@@ -401,18 +407,22 @@ function driversView() {
 function promoView() {
   return `
   <h1 class="aTitle">CODES PROMO</h1>
-  <div class="aDrivers">${AS.promoCodes.map(p => `
+  <div class="aDrivers">${AS.promoCodes.map(p => {
+    const expired = p.expiresAt && new Date(p.expiresAt) < new Date();
+    return `
    <div class="aDriverCard">
     <div>
      <b>🏷️ ${p.code}</b>
      <small>${p.type === 'percent' ? `-${p.value}%` : `-${p.value.toFixed(2).replace('.', ',')} €`}${p.minSubtotal ? ` dès ${p.minSubtotal.toFixed(2).replace('.', ',')} €` : ''}</small>
-     <small>${p.usedCount || 0} utilisation${(p.usedCount || 0) > 1 ? 's' : ''}${p.maxUses != null ? ` / ${p.maxUses} max` : ''} · ${p.active ? '🟢 Actif' : '⚪ Désactivé'}</small>
+     <small>${p.usedCount || 0} utilisation${(p.usedCount || 0) > 1 ? 's' : ''}${p.maxUses != null ? ` / ${p.maxUses} max` : ''} · ${expired ? '🔴 Expiré' : (p.active ? '🟢 Actif' : '⚪ Désactivé')}</small>
+     ${p.expiresAt ? `<small>Expire le ${dm(p.expiresAt)}</small>` : ''}
     </div>
     <div class="aPromoActions">
      <button class="ghost small" data-promo-toggle="${p.code}">${p.active ? 'Désactiver' : 'Activer'}</button>
-     <button class="ghost small danger" data-promo-delete="${p.code}">Supprimer</button>
+     <button class="ghost small danger solid" data-promo-delete="${p.code}">Supprimer</button>
     </div>
-   </div>`).join('') || `<p class="aEmpty">Aucun code promo pour le moment.</p>`}</div>
+   </div>`;
+  }).join('') || `<p class="aEmpty">Aucun code promo pour le moment.</p>`}</div>
   <div class="aBox"><h3>Créer un code promo</h3>
    <form id="addPromo">
     <input name="code" placeholder="Code (ex: WELCOME10)" required maxlength="30">
@@ -427,6 +437,7 @@ function promoView() {
      <input name="minSubtotal" type="number" step="0.01" min="0" placeholder="Minimum panier (€, optionnel)">
      <input name="maxUses" type="number" step="1" min="1" placeholder="Nb d'utilisations max (optionnel)">
     </div>
+    <label>Date d'expiration (optionnel)<input name="expiresAt" type="date"></label>
     <button class="cta small" type="submit">CRÉER LE CODE</button>
    </form>
   </div>`;
