@@ -14,7 +14,16 @@ const P = [
  {id:'p5',type:'pizza',name:'Diavolo',price:13.50,desc:'Sauce tomate épicée, mozzarella, chorizo, poivrons, piment',img:'/images/diavolo.png',hot:true,tag:'Épicées'},
 ];
 
-const S = {route:'home',type:'pizza',filter:'Toutes',selected:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),trackData:null,promo:null,promoChecking:false,justAddedKey:null,orderForm:{},opts:{cheese:false,spicy:false}};
+// ⚠️ À REMPLACER par les vraies coordonnées avant mise en prod — voir bottom sheet "Nous contacter".
+// phone/whatsapp au format international. whatsapp sans "+" ni espaces (format attendu par wa.me).
+const CONTACT = {
+ phone:'+33 6 00 00 00 00',
+ phoneHref:'+33600000000',
+ whatsapp:'33600000000',
+ email:'contact@mondifood.fr',
+};
+
+const S = {route:'home',type:'pizza',filter:'Toutes',selected:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),trackData:null,promo:null,promoChecking:false,justAddedKey:null,orderForm:{},opts:{cheese:false,spicy:false},contactOpen:false};
 let prevRoute=S.route,prevCount=null;
 const formatPrice = n => n.toFixed(2).replace('.',',')+' €';
 const count=()=>S.cart.reduce((a,x)=>a+x.qty,0);
@@ -37,9 +46,22 @@ const save=()=>localStorage.setItem('fd_cart',JSON.stringify(S.cart));
 
 function shell(){document.querySelector('#root').innerHTML=`
 <div class="phone">
-<header><button class="hamb" data-menu>${icon('menu')}</button><button class="logo" data-go="home"><img src="/logo.png"></button>
+<header><button class="hamb" data-contact>${icon('phone')}</button><button class="logo" data-go="home"><img src="/logo.png"></button>
 <button class="cartIcon" data-go="cart">${icon('cart')}<b>${count()}</b></button></header>
-<main id="screen"></main>${nav()}<div id="toast"></div></div>`;render()}
+<main id="screen"></main>${nav()}<div id="toast"></div><div id="contactSheet"></div></div>`;render()}
+
+function contactSheet(){
+ const c=document.querySelector('#contactSheet');
+ if(!c)return;
+ if(!S.contactOpen){c.className='';c.innerHTML='';return}
+ c.className='sheetWrap';
+ c.innerHTML=`<div class="sheetBackdrop" data-contact-close></div><div class="sheetPanel"><div class="sheetHandle"></div><button class="sheetClose" data-contact-close>${icon('close')}</button><h2>NOUS CONTACTER</h2><p class="sheetSub">Une question sur ta commande ? On te répond vite.</p><div class="contactLinks">
+<a class="contactRow" href="tel:${CONTACT.phoneHref}">${icon('phone')}<div><b>Téléphone</b><small>${CONTACT.phone}</small></div></a>
+<a class="contactRow" href="https://wa.me/${CONTACT.whatsapp}" target="_blank" rel="noopener">${icon('phone')}<div><b>WhatsApp</b><small>Réponse rapide</small></div></a>
+<a class="contactRow" href="mailto:${CONTACT.email}">${icon('mail')}<div><b>Email</b><small>${CONTACT.email}</small></div></a>
+</div></div>`;
+ c.querySelectorAll('[data-contact-close]').forEach(b=>b.onclick=()=>{S.contactOpen=false;contactSheet()});
+}
 
 function nav(){return `<nav>
 <button data-go="home" class="${S.route==='home'?'on':''}"><i>${icon('home')}</i><small>Accueil</small></button>
@@ -172,7 +194,10 @@ function bind(){
  document.querySelector('#optSpicy')?.addEventListener('change',e=>{S.opts.spicy=e.target.checked});
  document.querySelectorAll('[data-add]').forEach(b=>b.onclick=e=>{e.stopPropagation();add(b.dataset.add)});
  document.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>qty(b.dataset.qty,+b.dataset.d));
- document.querySelector('[data-menu]')?.addEventListener('click',()=>toast('Navigation : Accueil · Menu · Panier · Suivi'));
+ // .onclick= (pas addEventListener) car le header n'est jamais recréé — bind() tourne
+ // après chaque navigation, un addEventListener empilerait les gestionnaires à l'infini.
+ const contactBtn=document.querySelector('[data-contact]');
+ if(contactBtn)contactBtn.onclick=()=>{S.contactOpen=true;contactSheet()};
  // On sauvegarde chaque frappe dans S.orderForm pour que les infos client survivent
  // aux re-render du formulaire (ex: application d'un code promo, qui redessine tout le HTML).
  document.querySelector('#order')?.addEventListener('input',e=>{

@@ -19,6 +19,7 @@ const PATHS = {
   menu: "<path d='M4 5h16M4 12h16M4 19h16'/>",
   minus: "<path d='M5 12h14'/>",
   'payment-card': "<rect x='3' y='5' width='18' height='14' rx='2'/><path d='M3 9h18M7 15h4'/>",
+  mail: "<rect x='3' y='5' width='18' height='14' rx='2'/><path d='m4 6.5 8 6 8-6'/>",
   phone: "<path d='M7 3h3l1.5 4-2 1.5a13 13 0 0 0 6 6l1.5-2 4 1.5v3c0 1.1-.9 2-2 2C10.7 19 5 13.3 5 6c0-1.7.9-3 2-3Z'/>",
   plus: "<path d='M12 5v14M5 12h14'/>",
   star: "<path d='m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z'/>",
