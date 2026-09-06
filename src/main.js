@@ -87,7 +87,7 @@ ${tile('pizza','/images/pizza-card.png','PIZZA','Pâte artisanale · ingrédient
 <section class="block"><div class="heading"><span><i>À LA CARTE</i><h2>Nos incontournables</h2></span><button data-go="menu">Tout voir ${icon('arrow-right')}</button></div><div class="railWrap"><div class="rail">${P.slice(0,4).map(mini).join('')}</div></div></section>`}
 
 function tile(type,img,title,sub){return `<button class="tile" data-type="${type}" data-go="category"><div class="tileText"><i>${type==='pizza'?'PÂTE ARTISANALE':'SIGNATURE'}</i><h3>${title}</h3><p>${sub}</p></div><div class="tileImg"><img src="${img}"></div><span>Découvrir <i>${icon('arrow-right')}</i></span></button>`}
-function mini(p){return `<button class="mini" data-product="${p.id}"><img src="${p.img}"><b>${p.name}</b><strong>${formatPrice(p.price)}</strong></button>`}
+function mini(p){return `<button class="mini" data-product="${p.id}">${p.badge?`<em class="badge">${icon('star','',true)} ${p.badge}</em>`:''}<img src="${p.img}"><b>${p.name}</b><strong>${formatPrice(p.price)}</strong></button>`}
 
 function menu(){
  const list=P.filter(x=>x.type===S.type).filter(x=>S.filter==='Toutes'||x.tag===S.filter);
