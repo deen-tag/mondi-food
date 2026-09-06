@@ -84,8 +84,11 @@ export default async function handler(req, res) {
       if (!code || !value) return res.status(400).json({ error: 'Code ou valeur invalide' });
       const minSubtotal = Math.max(0, Number(body.minSubtotal) || 0);
       const maxUses = body.maxUses === '' || body.maxUses == null ? null : Math.max(1, parseInt(body.maxUses, 10) || 1);
+      // Date d'expiration optionnelle (input type=date -> "YYYY-MM-DD"). On la fixe à la
+      // fin de journée (23:59:59 locale) pour que le code reste valide toute la journée choisie.
+      const expiresAt = body.expiresAt ? new Date(`${body.expiresAt}T23:59:59`).toISOString() : null;
       await db.collection('promoCodes').doc(code).set({
-        type, value, minSubtotal, maxUses, active: true, usedCount: 0, createdAt: new Date().toISOString(),
+        type, value, minSubtotal, maxUses, expiresAt, active: true, usedCount: 0, createdAt: new Date().toISOString(),
       });
       return res.status(200).json({ ok: true });
     }

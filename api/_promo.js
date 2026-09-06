@@ -10,6 +10,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 //   active     boolean               (l'admin peut désactiver sans supprimer)
 //   minSubtotal number               (sous-total minimum requis, 0 = aucun minimum)
 //   maxUses    number | null         (null = illimité)
+//   expiresAt  ISO string | null     (null = pas d'expiration)
 //   usedCount  number                (compteur, incrémenté à chaque commande validée)
 //   createdAt  ISO string
 
@@ -30,6 +31,9 @@ export async function checkPromoCode(db, rawCode, subtotal) {
 
   const p = snap.data();
   if (!p.active) throw new Error('Ce code promo n’est plus actif');
+  if (p.expiresAt && new Date(p.expiresAt) < new Date()) {
+    throw new Error('Ce code promo a expiré');
+  }
   if (p.maxUses != null && (p.usedCount || 0) >= p.maxUses) {
     throw new Error('Ce code promo a atteint sa limite d’utilisation');
   }
