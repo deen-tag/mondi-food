@@ -65,7 +65,7 @@ function contactSheet(){
 
 function nav(){return `<nav>
 <button data-go="home" class="${S.route==='home'?'on':''}"><i>${icon('home')}</i><small>Accueil</small></button>
-<button data-go="menu" class="${['menu','category'].includes(S.route)?'on':''}"><i>${icon('list')}</i><small>Menu</small></button>
+<button data-go="about" class="${S.route==='about'?'on':''}"><i>${icon('info')}</i><small>Infos</small></button>
 <button data-go="cart" class="${S.route==='cart'?'on':''}"><i>${icon('cart')}<b>${count()}</b></i><small>Panier</small></button>
 <button data-go="track" class="${S.route==='track'?'on':''}"><i>${icon('tracking')}</i><small>Suivi</small></button></nav>`}
 
@@ -78,6 +78,7 @@ function render(){
  if(S.route==='checkout')s.innerHTML=checkout();
  if(S.route==='confirmation')s.innerHTML=confirmation();
  if(S.route==='track')s.innerHTML=track();
+ if(S.route==='about')s.innerHTML=about();
 
  document.querySelector('nav')?.replaceWith(new DOMParser().parseFromString(nav(),'text/html').body.firstChild);
  if(S.route!==prevRoute){
@@ -144,6 +145,19 @@ function track(){
  if(d.status==='cancelled')return `<section class="simple"><i>SUIVI</i><h1>COMMANDE ANNULÉE</h1><p>Ta commande <b>#${d.orderId}</b> a été annulée${d.cancelReason?` — ${d.cancelReason}`:''}. Contacte-nous si besoin.</p><button class=cta data-go=menu>COMMANDER AUTRE CHOSE ${icon('arrow-right')}</button></section>`;
  const idx=order.indexOf(d.status);
  return `<section class="simple"><i>SUIVI</i><h1>#${d.orderId}</h1><p>${d.driverName?`Livreur : ${d.driverName}. `:''}Mise à jour en direct par notre équipe.</p><div class=timeline>${steps.map((x,i)=>`<div class="${i<=idx?'done':''}"><b>${x[1]}</b><span><strong>${x[2]}</strong><small>${x[3]}</small></span></div>`).join('')}</div><button class=cta data-go=menu>COMMANDER AUTRE CHOSE ${icon('arrow-right')}</button></section>`}
+function about(){return `<section class="aboutPage">
+<i>NOTRE HISTOIRE</i><h1>L'APPEL DES SAVEURS</h1>
+<p class="lead">Imaginez une pâte fine et croustillante, tout juste sortie du four, qui craque sous la première bouchée. La chaleur du fromage fondu qui s'étire, le parfum des herbes qui remonte avant même que vous ayez goûté. C'est ça, l'expérience Pannuezo & Pizza signée Mondi Food.</p>
+<p>Mondi Food, c'est une dark kitchen basée à Vannes, entièrement tournée vers la livraison. Pas de salle, pas de comptoir — juste une cuisine qui prépare, avec soin, des plats généreux pensés pour voyager chauds jusqu'à chez vous.</p>
+<p>Chaque plat est pensé pour réveiller les papilles : des garnitures généreuses, des saveurs qui claquent, un équilibre entre le croustillant et le fondant. Fermez les yeux, imaginez le carton qui s'ouvre, la vapeur qui s'échappe, cette odeur qui remplit la pièce... et cette première bouchée qui vous fait dire « encore un peu ».</p>
+<div class="aboutGrid">
+<div><b>${icon('check')}</b><div><strong>Pensée pour la livraison</strong><small>Pas un restaurant classique adapté après coup</small></div></div>
+<div><b>${icon('fire','',true)}</b><div><strong>Recettes maison</strong><small>Préparées avec soin, ingrédients frais</small></div></div>
+<div><b>${icon('delivery')}</b><div><strong>Vannes et environs</strong><small>Livraison en 30–45 min</small></div></div>
+</div>
+<button class="cta wide" data-go="menu">DÉCOUVRIR LE MENU ${icon('arrow-right')}</button>
+<button class="ghost" data-contact>${icon('phone')} NOUS CONTACTER</button>
+</section>`}
 function account(){return `<section class="simple left"><i>ESPACE CLIENT</i><h1>TON COMPTE</h1><div class=account><span>👤</span><div><b>Connexion à venir</b><small>Le backend pourra gérer comptes, adresses et historique.</small></div></div><div class=links><button>${icon('location')} Mes adresses <b>›</b></button><button>🧾 Mes commandes <b>›</b></button><button>⚙️ Préférences <b>›</b></button></div></section>`}
 function sticky(){return S.cart.length?`<div class=sticky><span class="stickyBag">${icon('cart')}</span><span class="stickyInfo"><b>${count()} articles</b><small>${formatPrice(total())}</small></span><button class="cta pill" data-go=cart>VOIR LE PANIER ${icon('arrow-right')}</button></div>`:''}
 
@@ -196,8 +210,7 @@ function bind(){
  document.querySelectorAll('[data-qty]').forEach(b=>b.onclick=()=>qty(b.dataset.qty,+b.dataset.d));
  // .onclick= (pas addEventListener) car le header n'est jamais recréé — bind() tourne
  // après chaque navigation, un addEventListener empilerait les gestionnaires à l'infini.
- const contactBtn=document.querySelector('[data-contact]');
- if(contactBtn)contactBtn.onclick=()=>{S.contactOpen=true;contactSheet()};
+ document.querySelectorAll('[data-contact]').forEach(b=>b.onclick=()=>{S.contactOpen=true;contactSheet()});
  // On sauvegarde chaque frappe dans S.orderForm pour que les infos client survivent
  // aux re-render du formulaire (ex: application d'un code promo, qui redessine tout le HTML).
  document.querySelector('#order')?.addEventListener('input',e=>{
