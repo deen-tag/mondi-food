@@ -3,6 +3,7 @@
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--white);font-family:Inter,Arial,sans-serif}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 input,select,textarea{font:inherit;color:inherit;background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(140,37,211,.18)}
 .icon{width:1em;height:1em;display:inline-block;vertical-align:-.14em}
 .admin{max-width:920px;margin:0 auto;min-height:100vh;padding-bottom:40px}
 
