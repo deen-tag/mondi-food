@@ -14,7 +14,8 @@ const P = [
  {id:'p5',type:'pizza',name:'Diavolo',price:13.50,desc:'Sauce tomate épicée, mozzarella, chorizo, poivrons, piment',img:'/images/diavolo.jpg',hot:true,tag:'Épicées'},
 ];
 
-const S = {route:'home',type:'pizza',filter:'Toutes',selected:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),trackData:null,promo:null,promoChecking:false};
+const S = {route:'home',type:'pizza',filter:'Toutes',selected:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),trackData:null,promo:null,promoChecking:false,justAddedKey:null};
+let prevRoute=S.route,prevCount=null;
 const formatPrice = n => n.toFixed(2).replace('.',',')+' €';
 const count=()=>S.cart.reduce((a,x)=>a+x.qty,0);
 const total=()=>S.cart.reduce((a,x)=>a+x.price*x.qty,0);
@@ -57,9 +58,18 @@ function render(){
  if(S.route==='track')s.innerHTML=track();
 
  document.querySelector('nav')?.replaceWith(new DOMParser().parseFromString(nav(),'text/html').body.firstChild);
+ if(S.route!==prevRoute){
+  document.querySelector('nav .on i')?.animate([{transform:'scale(1)'},{transform:'scale(1.3)'},{transform:'scale(1)'}],{duration:280,easing:'cubic-bezier(.2,.8,.2,1)'});
+  prevRoute=S.route;
+ }
+ const c=count();
+ if(prevCount!==null&&c!==prevCount){
+  document.querySelectorAll('.cartIcon b, nav b').forEach(b=>b.animate([{transform:'scale(1)'},{transform:'scale(1.5)'},{transform:'scale(1)'}],{duration:320,easing:'cubic-bezier(.2,.8,.2,1)'}));
+ }
+ prevCount=c;
  const headerCartB=document.querySelector('.cartIcon b');
- if(headerCartB)headerCartB.textContent=count();
- bind();scrollTo(0,0);
+ if(headerCartB)headerCartB.textContent=c;
+ bind();initReveal();scrollTo(0,0);
 }
 
 function home(){return `
@@ -87,11 +97,11 @@ function menu(){
 <div class="switch"><button class="${S.type==='pizza'?'active':''}" data-type="pizza" data-go="category">Pizza</button><button class="${S.type==='pannuezo'?'active':''}" data-type="pannuezo" data-go="category">Pannuezo</button></div>
 <section class="menuSection"><div class="heading"><span><i>NOS ${S.type==='pizza'?'PIZZAS':'PANNUEZO'}</i><h2>Choisis ton préféré</h2></span></div><div class="filters">${filters.map(f=>`<button class="${S.filter===f?'active':''}" data-filter="${f}">${f}</button>`).join('')}</div><div class="cards">${list.map(card).join('')}</div></section>${sticky()}`}
 
-function card(p){return `<article class="card"><button data-product="${p.id}" class="cardMain"><div class="thumb">${p.badge?`<em class="badge">${icon('star','',true)} ${p.badge}</em>`:''}<img src="${p.img}"></div><div class="copy"><h3>${p.name}</h3><p>${p.desc}</p><strong>${formatPrice(p.price)}</strong></div></button><button class="plus" data-add="${p.id}">${icon('plus')}</button></article>`}
+function card(p){return `<article class="card"><button data-product="${p.id}" class="cardMain"><div class="thumb">${p.badge?`<em class="badge">${icon('star','',true)} ${p.badge}</em>`:''}<img src="${p.img}"></div><div class="copy"><h3>${p.name}</h3><p>${p.desc}</p><strong>${formatPrice(p.price)}</strong></div></button><button class="plus${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check'):icon('plus')}</button></article>`}
 
 function product(){
  const p=P.find(x=>x.id===S.selected); if(!p)return '';
- return `<section class="detail"><button class="back" data-go="menu">${icon('arrow-left')} <span>Retour au menu</span></button><div class="detailImg"><img src="${p.img}"><span>FRAIS · PRÉPARÉ À LA COMMANDE</span></div><div class="detailBody"><i>${p.type.toUpperCase()} · SIGNATURE</i><h1>${p.name}</h1><div class="stars">${stars(5)} <small>4,9 · Nos clients adorent</small></div><p class="desc">${p.desc}.</p><div class="detailPerks"><span>${icon('fire','',true)} Cuisson minute</span><span>${icon('check')} Ingrédients frais</span><span>${icon('delivery')} Livraison 30–45 min</span></div><div class="options"><h3>PERSONNALISE TA COMMANDE</h3><small>Ajoute une touche en plus</small><label>Fromage supplémentaire <b>+1,00 € <input type=checkbox id="optCheese"></b></label><label>Base épicée <b>+0,50 € <input type=checkbox id="optSpicy"></b></label></div><div class="buy"><div><small>Prix</small><strong>${formatPrice(p.price)}</strong></div><button class="cta" data-add="${p.id}">AJOUTER AU PANIER ${icon('arrow-right')}</button></div></div></section>`}
+ return `<section class="detail"><button class="back" data-go="menu">${icon('arrow-left')} <span>Retour au menu</span></button><div class="detailImg"><img src="${p.img}"><span>FRAIS · PRÉPARÉ À LA COMMANDE</span></div><div class="detailBody"><i>${p.type.toUpperCase()} · SIGNATURE</i><h1>${p.name}</h1><div class="stars">${stars(5)} <small>4,9 · Nos clients adorent</small></div><p class="desc">${p.desc}.</p><div class="detailPerks"><span>${icon('fire','',true)} Cuisson minute</span><span>${icon('check')} Ingrédients frais</span><span>${icon('delivery')} Livraison 30–45 min</span></div><div class="options"><h3>PERSONNALISE TA COMMANDE</h3><small>Ajoute une touche en plus</small><label>Fromage supplémentaire <b>+1,00 € <input type=checkbox id="optCheese"></b></label><label>Base épicée <b>+0,50 € <input type=checkbox id="optSpicy"></b></label></div><div class="buy"><div><small>Prix</small><strong>${formatPrice(p.price)}</strong></div><button class="cta${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check')+' AJOUTÉ':'AJOUTER AU PANIER '+icon('arrow-right')}</button></div></div></section>`}
 
 function cart(){
  if(!S.cart.length)return `<section class="empty"><div>${icon('cart')}</div><i>TON PANIER</i><h1>IL EST VIDE.</h1><p>Ajoute une pizza ou un pannuezo et on s’occupe du reste.</p><button class="cta" data-go="menu">DÉCOUVRIR LE MENU ${icon('arrow-right')}</button></section>`;
@@ -129,13 +139,24 @@ function add(id){
  toast('Ajouté au panier');
  const cartIconEl=document.querySelector('.cartIcon');
  if(cartIconEl){cartIconEl.animate([{transform:'scale(1)'},{transform:'scale(1.16)'},{transform:'scale(1)'}],{duration:360,easing:'cubic-bezier(.2,.8,.2,1)'})}
+ S.justAddedKey=id;
  render();
+ setTimeout(()=>{if(S.justAddedKey===id){S.justAddedKey=null;render()}},1000);
 }
 function qty(key,d){let x=S.cart.find(x=>x.key===key);if(!x)return;x.qty+=d;if(x.qty<1)S.cart=S.cart.filter(y=>y.key!==key);S.promo=null;save();render()}
 function toast(t){
  let e=document.querySelector('#toast');if(!e)return;
  e.innerHTML=icon('check')+' '+t;e.className='toast';
  setTimeout(()=>e.className='',1500)
+}
+
+function initReveal(){
+ const els=document.querySelectorAll('.card:not(.in), .mini:not(.in)');
+ if(!('IntersectionObserver' in window)){els.forEach(el=>el.classList.add('in'));return}
+ const io=new IntersectionObserver(entries=>{
+  entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('in');io.unobserve(entry.target)}})
+ },{threshold:.15});
+ els.forEach(el=>io.observe(el));
 }
 
 function bind(){

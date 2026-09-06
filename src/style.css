@@ -20,7 +20,7 @@ nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,
 
 /* --- Premium motion layer --- */
 html{scroll-behavior:smooth}
-button,.card,.tile,.mini,.pay,.links button,.switch button,.filters button{transition:transform .22s cubic-bezier(.2,.8,.2,1),border-color .22s,background .22s,box-shadow .22s,filter .22s}
+button,.card,.tile,.mini,.pay,.links button,.switch button,.filters button{transition:transform .22s cubic-bezier(.2,.8,.2,1),border-color .22s,background .22s,box-shadow .22s,filter .22s}.plus:active,.cta:active{transform:scale(.92)}.plus.added{background:#1f9d63}.cta.added{background:linear-gradient(120deg,#1f9d63,#27b473)}
 button:active{transform:scale(.97)}
 .cta{position:relative;overflow:hidden}
 .cta:before{content:"";position:absolute;inset:-2px;transform:translateX(-110%) skewX(-18deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);transition:transform .65s}
@@ -33,9 +33,8 @@ button:active{transform:scale(.97)}
 @keyframes pulseBadge{0%,75%,100%{box-shadow:0 0 0 0 rgba(140,37,211,0)}85%{box-shadow:0 0 0 7px rgba(140,37,211,.14)}}
 #screen>*{animation:screenIn .42s cubic-bezier(.2,.75,.2,1) both}
 @keyframes screenIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.cards .card{animation:cardIn .5s both}
+.card,.mini{opacity:0;transform:translateY(14px);transition:opacity .45s ease,transform .45s ease}.card.in,.mini.in{opacity:1;transform:none}
 .cards .card:nth-child(2){animation-delay:.05s}.cards .card:nth-child(3){animation-delay:.1s}.cards .card:nth-child(4){animation-delay:.15s}.cards .card:nth-child(5){animation-delay:.2s}
-@keyframes cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .sticky{animation:stickyUp .45s cubic-bezier(.2,.8,.2,1)}
 @keyframes stickyUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 .plus{transition:transform .2s,box-shadow .2s,background .2s}.plus:hover{transform:scale(1.08);box-shadow:0 0 18px rgba(140,37,211,.3)}
