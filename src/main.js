@@ -3,15 +3,15 @@ import './style.css';
 import { icon, stars } from './icons.js';
 
 const P = [
- {id:'m1',type:'pannuezo',name:'L’Original',price:12.90,desc:'Sauce tomate maison, mozzarella fondante, jambon fumé, origan',img:'/images/pannuezo-original.jpg',badge:'LE PLUS POPULAIRE',tag:'Classiques'},
- {id:'m2',type:'pannuezo',name:'Poulet Crémeux',price:13.90,desc:'Crème fraîche, mozzarella, poulet rôti, champignons, oignons caramélisés',img:'/images/pannuezo-poulet.jpg',tag:'Gourmands'},
- {id:'m3',type:'pannuezo',name:'Diavolo',price:13.50,desc:'Sauce tomate épicée, mozzarella, chorizo, poivrons, piment',img:'/images/pannuezo-diavolo.jpg',hot:true,tag:'Épicés'},
- {id:'m4',type:'pannuezo',name:'Végétarien',price:12.90,desc:'Sauce tomate, mozzarella, courgettes grillées, poivrons, champignons, roquette',img:'/images/pannuezo-vege.jpg',veg:true,tag:'Végétariens'},
- {id:'p1',type:'pizza',name:'Margherita',price:11.90,desc:'Sauce tomate maison, mozzarella fior di latte, basilic frais, huile d’olive',img:'/images/margherita.jpg',badge:'LA PLUS POPULAIRE',tag:'Classiques'},
- {id:'p2',type:'pizza',name:'Pepperoni',price:12.90,desc:'Sauce tomate, mozzarella, pepperoni, origan',img:'/images/pepperoni.jpg',tag:'Classiques'},
- {id:'p3',type:'pizza',name:'4 Fromages',price:12.90,desc:'Mozzarella, gorgonzola, chèvre, parmesan, emmental',img:'/images/four-cheese.jpg',tag:'Gourmandes'},
- {id:'p4',type:'pizza',name:'Légumes Rôtis',price:12.50,desc:'Sauce tomate, mozzarella, poivrons, courgettes, aubergines, oignons rouges',img:'/images/veggie.jpg',veg:true,tag:'Végétariennes'},
- {id:'p5',type:'pizza',name:'Diavolo',price:13.50,desc:'Sauce tomate épicée, mozzarella, chorizo, poivrons, piment',img:'/images/diavolo.jpg',hot:true,tag:'Épicées'},
+ {id:'m1',type:'pannuezo',name:'L’Original',price:12.90,desc:'Sauce tomate maison, mozzarella fondante, jambon fumé, origan',img:'/images/pannuezo-original.png',badge:'LE PLUS POPULAIRE',tag:'Classiques'},
+ {id:'m2',type:'pannuezo',name:'Poulet Crémeux',price:13.90,desc:'Crème fraîche, mozzarella, poulet rôti, champignons, oignons caramélisés',img:'/images/pannuezo-poulet.png',tag:'Gourmands'},
+ {id:'m3',type:'pannuezo',name:'Diavolo',price:13.50,desc:'Sauce tomate épicée, mozzarella, chorizo, poivrons, piment',img:'/images/pannuezo-diavolo.png',hot:true,tag:'Épicés'},
+ {id:'m4',type:'pannuezo',name:'Végétarien',price:12.90,desc:'Sauce tomate, mozzarella, courgettes grillées, poivrons, champignons, roquette',img:'/images/pannuezo-vege.png',veg:true,tag:'Végétariens'},
+ {id:'p1',type:'pizza',name:'Margherita',price:11.90,desc:'Sauce tomate maison, mozzarella fior di latte, basilic frais, huile d’olive',img:'/images/margherita.png',badge:'LA PLUS POPULAIRE',tag:'Classiques'},
+ {id:'p2',type:'pizza',name:'Pepperoni',price:12.90,desc:'Sauce tomate, mozzarella, pepperoni, origan',img:'/images/pepperoni.png',tag:'Classiques'},
+ {id:'p3',type:'pizza',name:'4 Fromages',price:12.90,desc:'Mozzarella, gorgonzola, chèvre, parmesan, emmental',img:'/images/four-cheese.png',tag:'Gourmandes'},
+ {id:'p4',type:'pizza',name:'Légumes Rôtis',price:12.50,desc:'Sauce tomate, mozzarella, poivrons, courgettes, aubergines, oignons rouges',img:'/images/veggie.png',veg:true,tag:'Végétariennes'},
+ {id:'p5',type:'pizza',name:'Diavolo',price:13.50,desc:'Sauce tomate épicée, mozzarella, chorizo, poivrons, piment',img:'/images/diavolo.png',hot:true,tag:'Épicées'},
 ];
 
 const S = {route:'home',type:'pizza',filter:'Toutes',selected:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),trackData:null,promo:null,promoChecking:false,justAddedKey:null};
