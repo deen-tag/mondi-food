@@ -15,14 +15,20 @@ input,select,textarea{font:inherit;color:inherit;background:var(--card2);border:
 #loginErr{color:var(--bad);font-size:11px}
 
 /* header */
-.aHeader{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:14px 16px;flex-wrap:wrap}
+.aHeader{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 16px 10px}
+.aHeaderTop{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:10px}
+.aHeaderActions{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .aLogo{font:800 13px 'Barlow Condensed';letter-spacing:1px;display:flex;align-items:center;gap:6px;color:var(--p2)}
 .aLogo b{color:var(--white);margin-left:4px;font-weight:800}
-.aTabs{display:flex;gap:6px;margin-left:auto}
-.aTabs button{padding:8px 12px;border-radius:9px;font-size:11px;font-weight:700;color:var(--muted);position:relative}
+.aTabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.aTabs::-webkit-scrollbar{display:none}
+.aTabs button{white-space:nowrap;padding:8px 12px;border-radius:9px;font-size:11px;font-weight:700;color:var(--muted);position:relative}
 .aTabs button.on{background:var(--p);color:#fff}
 .aTabs em{position:absolute;top:-6px;right:-6px;background:var(--bad);color:#fff;border-radius:50%;font:800 9px/1 Inter;padding:3px 5px;font-style:normal}
-.aLogout{color:var(--muted);width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+.aBell{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--card2);border:1px solid var(--line);transition:background .2s,border-color .2s}
+.aBell.on{background:var(--p);border-color:var(--p)}
+.aCloseBtn{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--muted);background:var(--card2);border:1px solid var(--line);transition:background .2s,color .2s}
+.aCloseBtn:hover{background:#fbe4ec;color:var(--bad);border-color:#f3b8c5}
 
 main{padding:16px}
 
@@ -34,7 +40,8 @@ main{padding:16px}
 .aStats b{display:block;font:800 24px 'Barlow Condensed';color:var(--p2)}
 .aStats small{color:var(--muted);font-size:9px}
 .aToolbar{margin-bottom:10px}
-.aFilters{display:flex;gap:6px;overflow-x:auto;margin-bottom:16px;padding-bottom:2px}
+.aFilters{display:flex;gap:6px;overflow-x:auto;margin-bottom:16px;padding-bottom:2px;scrollbar-width:none;-ms-overflow-style:none}
+.aFilters::-webkit-scrollbar{display:none}
 .aFilters button{white-space:nowrap;border:1px solid var(--line);background:var(--card2);border-radius:20px;padding:8px 13px;font-size:11px;color:var(--muted)}
 .aFilters .active{background:var(--p);border-color:var(--p);color:#fff}
 .aGroup{margin-bottom:22px}

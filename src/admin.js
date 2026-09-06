@@ -223,15 +223,19 @@ function header() {
   const news = AS.orders.filter(o => o.status === 'received').length;
   const pushOk = 'serviceWorker' in navigator && 'PushManager' in window;
   return `<header class="aHeader">
-  <span class="aLogo">${icon('fire', '', true)} MONDI FOOD <b>ADMIN</b></span>
+  <div class="aHeaderTop">
+   <span class="aLogo">${icon('fire', '', true)} MONDI FOOD <b>ADMIN</b></span>
+   <div class="aHeaderActions">
+    ${pushOk ? `<button class="aBell ${AS.pushSubscribed ? 'on' : ''}" data-toggle-push title="${AS.pushSubscribed ? 'Désactiver les notifications push' : 'Activer les notifications push'}">${AS.pushSubscribed ? '🔔' : '🔕'}</button>` : ''}
+    <button class="aCloseBtn" data-logout title="Déconnexion">${icon('close')}</button>
+   </div>
+  </div>
   <nav class="aTabs">
    <button data-view="dashboard" class="${AS.view === 'dashboard' ? 'on' : ''}">Dashboard${news ? `<em>${news}</em>` : ''}</button>
    <button data-view="drivers" class="${AS.view === 'drivers' ? 'on' : ''}">Livreurs</button>
    <button data-view="promo" class="${AS.view === 'promo' ? 'on' : ''}">Codes promo</button>
    <button data-view="history" class="${AS.view === 'history' ? 'on' : ''}">Historique</button>
   </nav>
-  ${pushOk ? `<button class="aLogout" data-toggle-push title="${AS.pushSubscribed ? 'Désactiver les notifications push' : 'Activer les notifications push'}">${AS.pushSubscribed ? '🔔' : '🔕'}</button>` : ''}
-  <button class="aLogout" data-logout>${icon('close')}</button>
   </header>`;
 }
 
