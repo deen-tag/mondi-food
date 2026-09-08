@@ -180,7 +180,7 @@ function product(){
 function builder(){
  const cfg=CUSTOM_CONFIG[S.builder.type];
  const price=builderPrice();
- return `<section class="builderPage"><button class="back" data-go="home">${icon('arrow-left')} <span>Retour</span></button>
+ return `<section class="builderPage"><button class="back" data-go="${S.builderFrom||'home'}">${icon('arrow-left')} <span>Retour</span></button>
 <i>FAIT MAISON, À TA FAÇON</i><h1>COMPOSE TA RECETTE</h1>
 <p class="builderIntro">Choisis ta base, ta sauce et tes garnitures. On prépare exactement comme tu veux.</p>
 <div class="switch"><button class="${S.builder.type==='pizza'?'active':''}" data-builder-type="pizza">Pizza</button><button class="${S.builder.type==='pannuezo'?'active':''}" data-builder-type="pannuezo">Pannuezo</button></div>
@@ -298,7 +298,7 @@ function bind(){
  // après chaque navigation, un addEventListener empilerait les gestionnaires à l'infini.
  document.querySelectorAll('[data-contact]').forEach(b=>b.onclick=()=>{S.contactOpen=true;contactSheet()});
  document.querySelectorAll('[data-night]').forEach(b=>b.onclick=()=>toast('Bientôt disponible — reviens vite !'));
- document.querySelectorAll('[data-open-builder]').forEach(b=>b.onclick=()=>{initBuilder(b.dataset.openBuilder);S.route='builder';render()});
+ document.querySelectorAll('[data-open-builder]').forEach(b=>b.onclick=()=>{initBuilder(b.dataset.openBuilder);S.builderFrom=S.route;S.route='builder';render()});
  document.querySelectorAll('[data-builder-type]').forEach(b=>b.onclick=()=>{initBuilder(b.dataset.builderType);render()});
  document.querySelectorAll('[data-builder-base]').forEach(b=>b.onclick=()=>{S.builder.base=b.dataset.builderBase;render()});
  document.querySelectorAll('[data-builder-sauce]').forEach(b=>b.onclick=()=>{S.builder.sauce=b.dataset.builderSauce;render()});
