@@ -12,6 +12,18 @@ export const MENU = [
   { id: 'p3', name: '4 Fromages', price: 12.90 },
   { id: 'p4', name: 'Légumes Rôtis', price: 12.50 },
   { id: 'p5', name: 'Diavolo', price: 13.50 },
+  { id: 'b1', name: 'Coca-Cola', price: 2.00 },
+  { id: 'b2', name: 'Coca-Cola Zéro', price: 2.00 },
+  { id: 'b3', name: 'Coca-Cola Cherry', price: 2.00 },
+  { id: 'b4', name: 'Fanta Orange', price: 2.00 },
+  { id: 'b5', name: 'Sprite', price: 2.00 },
+  { id: 'b6', name: 'Oasis Tropical', price: 2.00 },
+  { id: 'b7', name: 'Oasis Pomme Cassis Framboise', price: 2.00 },
+  { id: 'b8', name: 'Ice Tea Pêche', price: 2.00 },
+  { id: 'b9', name: 'Orangina', price: 2.00 },
+  { id: 'b10', name: 'Schweppes Agrumes', price: 2.00 },
+  { id: 'b11', name: 'Perrier', price: 2.00 },
+  { id: 'b12', name: 'Evian', price: 2.00 },
 ];
 
 export const OPTION_PRICES = {
