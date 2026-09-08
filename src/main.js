@@ -14,6 +14,33 @@ const P = [
  {id:'p5',type:'pizza',name:'Diavolo',price:13.50,desc:'Sauce tomate épicée, mozzarella, chorizo, poivrons, piment',img:'/images/diavolo.png',hot:true,tag:'Épicées'},
 ];
 
+// Catalogue du configurateur "Compose ta recette" — copie volontairement
+// séparée du backend (api/_menu.js), pour la même raison que P/MENU : le
+// prix affiché ici est indicatif, le prix payé est recalculé côté serveur.
+const CUSTOM_CONFIG = {
+ pizza:{label:'Pizza',img:'/images/pizza-card.png',basePrice:8.90,
+  bases:[{id:'fine',name:'Pâte fine',extra:0},{id:'epaisse',name:'Pâte épaisse',extra:0},{id:'sans-gluten',name:'Pâte sans gluten',extra:2}],
+  sauces:[{id:'tomate',name:'Sauce tomate',extra:0},{id:'creme',name:'Crème fraîche',extra:0},{id:'sans-sauce',name:'Sans sauce',extra:0}],
+  ingredients:[
+   {id:'mozzarella',name:'Mozzarella',price:1.5},{id:'chevre',name:'Chèvre',price:1.8},
+   {id:'gorgonzola',name:'Gorgonzola',price:1.8},{id:'jambon',name:'Jambon',price:1.8},
+   {id:'chorizo',name:'Chorizo',price:1.8},{id:'poulet',name:'Poulet rôti',price:2},
+   {id:'champignons',name:'Champignons',price:1},{id:'poivrons',name:'Poivrons',price:1},
+   {id:'oignons',name:'Oignons rouges',price:1},{id:'olives',name:'Olives',price:1},
+   {id:'roquette',name:'Roquette',price:1},{id:'piment',name:'Piment frais',price:0.8},
+  ]},
+ pannuezo:{label:'Pannuezo',img:'/images/pannuezo-card.png',basePrice:9.90,
+  bases:[{id:'classique',name:'Pain classique',extra:0},{id:'complet',name:'Pain complet',extra:0.8}],
+  sauces:[{id:'tomate',name:'Sauce tomate',extra:0},{id:'creme',name:'Crème fraîche',extra:0},{id:'epicee',name:'Sauce épicée',extra:0},{id:'sans-sauce',name:'Sans sauce',extra:0}],
+  ingredients:[
+   {id:'mozzarella',name:'Mozzarella',price:1.5},{id:'jambon',name:'Jambon fumé',price:1.8},
+   {id:'poulet',name:'Poulet rôti',price:2},{id:'chorizo',name:'Chorizo',price:1.8},
+   {id:'champignons',name:'Champignons',price:1},{id:'oignons',name:'Oignons caramélisés',price:1},
+   {id:'poivrons',name:'Poivrons',price:1},{id:'courgettes',name:'Courgettes grillées',price:1},
+   {id:'roquette',name:'Roquette',price:1},{id:'piment',name:'Piment',price:0.8},
+  ]},
+};
+
 // ⚠️ À REMPLACER par les vraies coordonnées avant mise en prod — voir bottom sheet "Nous contacter".
 // phone/whatsapp au format international. whatsapp sans "+" ni espaces (format attendu par wa.me).
 const CONTACT = {
@@ -23,7 +50,22 @@ const CONTACT = {
  email:'contact@mondifood.fr',
 };
 
-const S = {route:'home',type:'pizza',filter:'Toutes',selected:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),trackData:null,promo:null,promoChecking:false,promoDraft:'',justAddedKey:null,orderForm:{},opts:{cheese:false,spicy:false},contactOpen:false};
+const S = {route:'home',type:'pizza',filter:'Toutes',selected:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),trackData:null,promo:null,promoChecking:false,promoDraft:'',justAddedKey:null,orderForm:{},opts:{cheese:false,spicy:false},contactOpen:false,builder:{type:'pizza',base:'fine',sauce:'tomate',ingredients:[]}};
+
+// Réinitialise le configurateur pour un type donné (appelé à l'ouverture ou
+// au changement d'onglet Pizza/Pannuezo, pour éviter un id de base/sauce
+// orphelin d'un autre type, ex. 'fine' choisi puis bascule sur Pannuezo).
+function initBuilder(type){
+ const cfg=CUSTOM_CONFIG[type];
+ S.builder={type,base:cfg.bases[0].id,sauce:cfg.sauces[0].id,ingredients:[]};
+}
+function builderPrice(){
+ const cfg=CUSTOM_CONFIG[S.builder.type];
+ const base=cfg.bases.find(b=>b.id===S.builder.base);
+ const sauce=cfg.sauces.find(s=>s.id===S.builder.sauce);
+ const ing=S.builder.ingredients.map(id=>cfg.ingredients.find(i=>i.id===id)).filter(Boolean);
+ return Math.round((cfg.basePrice+base.extra+sauce.extra+ing.reduce((a,i)=>a+i.price,0))*100)/100;
+}
 let prevRoute=S.route,prevCount=null;
 const formatPrice = n => n.toFixed(2).replace('.',',')+' €';
 const count=()=>S.cart.reduce((a,x)=>a+x.qty,0);
@@ -79,6 +121,7 @@ function render(){
  if(S.route==='confirmation')s.innerHTML=confirmation();
  if(S.route==='track')s.innerHTML=track();
  if(S.route==='about')s.innerHTML=about();
+ if(S.route==='builder')s.innerHTML=builder();
 
  document.querySelector('nav')?.replaceWith(new DOMParser().parseFromString(nav(),'text/html').body.firstChild);
  if(S.route!==prevRoute){
@@ -106,6 +149,7 @@ function home(){return `
 <section class="homeTiles" id="categories">
 ${tile('pannuezo','/images/pannuezo-card.png','PANNUEZO','Ultra fondant · généreusement garni')}
 ${tile('pizza','/images/pizza-card.png','PIZZA','Pâte artisanale · ingrédients frais')}</section>
+<section class="builderPromoWrap"><button class="builderPromo" data-open-builder="pizza"><span class="builderPromoTag">NOUVEAU</span><h3>COMPOSE TA RECETTE</h3><p>Pâte, sauce et garnitures : choisis chaque ingrédient toi-même.</p><em>Créer ma recette ${icon('arrow-right')}</em></button></section>
 <section class="perks"><div><b>${icon('fire','',true)}</b><strong>Cuisson parfaite</strong><small>Doré & croustillant</small></div><div><b>${icon('check')}</b><strong>Ingrédients frais</strong><small>Sélectionnés avec soin</small></div><div><b>${icon('delivery')}</b><strong>Livraison rapide</strong><small>30–45 min</small></div></section>
 <section class="block"><div class="heading"><span><i>À LA CARTE</i><h2>Nos incontournables</h2></span><button data-go="menu">Tout voir ${icon('arrow-right')}</button></div><div class="railWrap"><div class="rail">${P.slice(0,4).map(mini).join('')}</div></div></section>
 <section class="nightBannerWrap"><button class="nightBanner" data-night><img src="/images/mondi-night-banner.jpg" alt="Mondi Night — Burgers & Pâtes, vendredi et samedi soir de 23h à 5h"><em class="soon">Bientôt disponible</em></button></section>`}
@@ -119,13 +163,26 @@ function menu(){
  return `<section class="menuTop"><button class="back" data-go="home">${icon('arrow-left')}</button><div class="crumb"><span class="crumbHome">Accueil</span><span class="crumbSep">›</span><span class="crumbCurrent">${S.type==='pizza'?'Pizza':'Pannuezo'}</span></div><div class="menuHero"><div><h1>${S.type==='pizza'?'PIZZA':'PANNUEZO'}</h1><span class="uline"></span><p>${S.type==='pizza'?'Pizzas artisanales cuites à la perfection avec des ingrédients frais et une pâte maison moelleuse et croustillante.':'Découvrez nos Pannuezo ultra fondants, généreusement garnis et préparés avec des ingrédients de qualité.'}</p></div><div class="menuHeroImg"><img src="${S.type==='pizza'?'/images/pizza-card.png':'/images/pannuezo-card.png'}"></div></div>
 <div class="featureRow"><span>${icon('fire','',true)} <b>Cuisson ${S.type==='pizza'?'au four':'parfaite'}</b><small>${S.type==='pizza'?'haute température':'Doré & croustillant'}</small></span><span>${icon('check')} <b>Ingrédients frais</b><small>Sélectionnés avec soin</small></span><span>${icon('clock')} <b>Livraison rapide</b><small>30–45 min</small></span></div></section>
 <div class="switch"><button class="${S.type==='pizza'?'active':''}" data-type="pizza" data-go="category">Pizza</button><button class="${S.type==='pannuezo'?'active':''}" data-type="pannuezo" data-go="category">Pannuezo</button></div>
-<section class="menuSection"><div class="heading"><span><i>NOS ${S.type==='pizza'?'PIZZAS':'PANNUEZO'}</i><h2>Choisis ton préféré</h2></span></div><div class="filters">${filters.map(f=>`<button class="${S.filter===f?'active':''}" data-filter="${f}">${f}</button>`).join('')}</div><div class="cards">${list.map(card).join('')}</div></section>${sticky()}`}
+<section class="menuSection"><div class="heading"><span><i>NOS ${S.type==='pizza'?'PIZZAS':'PANNUEZO'}</i><h2>Choisis ton préféré</h2></span></div><div class="filters">${filters.map(f=>`<button class="${S.filter===f?'active':''}" data-filter="${f}">${f}</button>`).join('')}</div><button class="builderCard" data-open-builder="${S.type}"><span class="builderCardIcon">${icon('plus')}</span><div><b>CRÉE TA RECETTE</b><small>Pâte, sauce et garnitures 100% personnalisées</small></div><em>${icon('arrow-right')}</em></button><div class="cards">${list.map(card).join('')}</div></section>${sticky()}`}
 
 function card(p){return `<article class="card"><button data-product="${p.id}" class="cardMain"><div class="thumb">${p.badge?`<em class="badge">${icon('star','',true)} ${p.badge}</em>`:''}<img src="${p.img}"></div><div class="copy"><h3>${p.name}</h3><p>${p.desc}</p><strong>${formatPrice(p.price)}</strong></div></button><button class="plus${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check'):icon('plus')}</button></article>`}
 
 function product(){
  const p=P.find(x=>x.id===S.selected); if(!p)return '';
  return `<section class="detail"><button class="back" data-go="menu">${icon('arrow-left')} <span>Retour au menu</span></button><div class="detailImg"><img src="${p.img}"><span>FRAIS · PRÉPARÉ À LA COMMANDE</span></div><div class="detailBody"><i>${p.type.toUpperCase()} · SIGNATURE</i><h1>${p.name}</h1><div class="stars">${stars(5)} <small>4,9 · Nos clients adorent</small></div><p class="desc">${p.desc}.</p><div class="detailPerks"><span>${icon('fire','',true)} Cuisson minute</span><span>${icon('check')} Ingrédients frais</span><span>${icon('delivery')} Livraison 30–45 min</span></div><div class="options"><h3>PERSONNALISE TA COMMANDE</h3><small>Ajoute une touche en plus</small><label>Fromage supplémentaire <b>+1,00 € <input type=checkbox id="optCheese" ${S.opts.cheese?'checked':''}></b></label><label>Base épicée <b>+0,50 € <input type=checkbox id="optSpicy" ${S.opts.spicy?'checked':''}></b></label></div><div class="buy"><div><small>Prix</small><strong>${formatPrice(p.price)}</strong></div><button class="cta${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check')+' AJOUTÉ':'AJOUTER AU PANIER '+icon('arrow-right')}</button></div></div></section>`}
+
+function builder(){
+ const cfg=CUSTOM_CONFIG[S.builder.type];
+ const price=builderPrice();
+ return `<section class="builderPage"><button class="back" data-go="home">${icon('arrow-left')} <span>Retour</span></button>
+<i>FAIT MAISON, À TA FAÇON</i><h1>COMPOSE TA RECETTE</h1>
+<p class="builderIntro">Choisis ta base, ta sauce et tes garnitures. On prépare exactement comme tu veux.</p>
+<div class="switch"><button class="${S.builder.type==='pizza'?'active':''}" data-builder-type="pizza">Pizza</button><button class="${S.builder.type==='pannuezo'?'active':''}" data-builder-type="pannuezo">Pannuezo</button></div>
+<div class="builderGroup"><h3>1. LA BASE</h3><div class="filters builderOptions">${cfg.bases.map(b=>`<button class="${S.builder.base===b.id?'active':''}" data-builder-base="${b.id}">${b.name}${b.extra?` +${formatPrice(b.extra)}`:''}</button>`).join('')}</div></div>
+<div class="builderGroup"><h3>2. LA SAUCE</h3><div class="filters builderOptions">${cfg.sauces.map(s=>`<button class="${S.builder.sauce===s.id?'active':''}" data-builder-sauce="${s.id}">${s.name}${s.extra?` +${formatPrice(s.extra)}`:''}</button>`).join('')}</div></div>
+<div class="builderGroup"><h3>3. LES GARNITURES</h3><small class="builderHint">Sélectionne autant d'ingrédients que tu veux</small><div class="builderIngredients">${cfg.ingredients.map(i=>`<label class="builderIng${S.builder.ingredients.includes(i.id)?' checked':''}"><input type="checkbox" data-builder-ing="${i.id}" ${S.builder.ingredients.includes(i.id)?'checked':''}><span>${i.name}</span><b>+${formatPrice(i.price)}</b></label>`).join('')}</div></div>
+<div class="builderSummary"><div><small>Prix</small><strong>${formatPrice(price)}</strong></div><button class="cta" data-builder-add>AJOUTER AU PANIER ${icon('arrow-right')}</button></div>
+</section>`}
 
 function cart(){
  if(!S.cart.length)return `<section class="empty"><div>${icon('cart')}</div><i>TON PANIER</i><h1>IL EST VIDE.</h1><p>Ajoute une pizza ou un pannuezo et on s’occupe du reste.</p><button class="cta" data-go="menu">DÉCOUVRIR LE MENU ${icon('arrow-right')}</button></section>`;
@@ -184,6 +241,28 @@ function add(id){
  render();
  setTimeout(()=>{if(S.justAddedKey===id){S.justAddedKey=null;render()}},1000);
 }
+function addCustom(){
+ const {type,base,sauce,ingredients}=S.builder;
+ const cfg=CUSTOM_CONFIG[type];
+ const baseObj=cfg.bases.find(b=>b.id===base);
+ const sauceObj=cfg.sauces.find(s=>s.id===sauce);
+ const ingObjs=ingredients.map(id=>cfg.ingredients.find(i=>i.id===id)).filter(Boolean);
+ const price=Math.round((cfg.basePrice+baseObj.extra+sauceObj.extra+ingObjs.reduce((a,i)=>a+i.price,0))*100)/100;
+ const opts=[baseObj.name,sauceObj.name,...ingObjs.map(i=>i.name)];
+ const sortedIng=[...ingredients].sort();
+ // Une même combinaison base+sauce+ingrédients regroupe la quantité au lieu de
+ // dupliquer la ligne dans le panier (même logique que add() pour les options).
+ const key=`custom-${type}:${base}:${sauce}:${sortedIng.join(',')}`;
+ let x=S.cart.find(x=>x.key===key);
+ if(x){x.qty++}
+ else{
+  S.cart.push({id:`custom-${type}`,key,name:`${cfg.label} personnalisée`,img:cfg.img,type,price,opts,qty:1,custom:{baseId:base,sauceId:sauce,ingredientIds:sortedIng}});
+ }
+ save();
+ toast('Ajouté au panier');
+ S.route='cart';
+ render();
+}
 function qty(key,d){let x=S.cart.find(x=>x.key===key);if(!x)return;x.qty+=d;if(x.qty<1)S.cart=S.cart.filter(y=>y.key!==key);if(S.promo){S.promo=null;toast('Code promo retiré (panier modifié), réapplique-le si besoin')}save();render()}
 function toast(t){
  let e=document.querySelector('#toast');if(!e)return;
@@ -213,6 +292,17 @@ function bind(){
  // après chaque navigation, un addEventListener empilerait les gestionnaires à l'infini.
  document.querySelectorAll('[data-contact]').forEach(b=>b.onclick=()=>{S.contactOpen=true;contactSheet()});
  document.querySelectorAll('[data-night]').forEach(b=>b.onclick=()=>toast('Bientôt disponible — reviens vite !'));
+ document.querySelectorAll('[data-open-builder]').forEach(b=>b.onclick=()=>{initBuilder(b.dataset.openBuilder);S.route='builder';render()});
+ document.querySelectorAll('[data-builder-type]').forEach(b=>b.onclick=()=>{initBuilder(b.dataset.builderType);render()});
+ document.querySelectorAll('[data-builder-base]').forEach(b=>b.onclick=()=>{S.builder.base=b.dataset.builderBase;render()});
+ document.querySelectorAll('[data-builder-sauce]').forEach(b=>b.onclick=()=>{S.builder.sauce=b.dataset.builderSauce;render()});
+ document.querySelectorAll('[data-builder-ing]').forEach(cb=>cb.addEventListener('change',e=>{
+  const id=cb.dataset.builderIng;
+  if(e.target.checked){if(!S.builder.ingredients.includes(id))S.builder.ingredients.push(id)}
+  else S.builder.ingredients=S.builder.ingredients.filter(x=>x!==id);
+  render();
+ }));
+ document.querySelector('[data-builder-add]')?.addEventListener('click',()=>addCustom());
  document.querySelectorAll('[data-scroll]').forEach(b=>b.onclick=()=>{document.getElementById(b.dataset.scroll)?.scrollIntoView({behavior:'smooth',block:'start'})});
  document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{
   const code=b.dataset.copy;
@@ -259,7 +349,7 @@ function bind(){
     const res=await fetch('/api/orders',{
      method:'POST',
      headers:{'Content-Type':'application/json'},
-     body:JSON.stringify({cart:S.cart.map(x=>({id:x.id,opts:x.opts,qty:x.qty})),customer:d,promoCode})
+     body:JSON.stringify({cart:S.cart.map(x=>({id:x.id,opts:x.opts,qty:x.qty,custom:x.custom})),customer:d,promoCode})
     });
     const data=await res.json();
     if(!res.ok)throw new Error(data.error||'Commande refusée');
@@ -280,7 +370,7 @@ function bind(){
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-     cart:S.cart.map(x=>({id:x.id,opts:x.opts,qty:x.qty})),
+     cart:S.cart.map(x=>({id:x.id,opts:x.opts,qty:x.qty,custom:x.custom})),
      customer:d,
      promoCode
     })
