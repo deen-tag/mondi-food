@@ -3,6 +3,8 @@
 Site de livraison (Pannuezo & Pizza) : frontend Vite + backend serverless Vercel
 (Stripe pour le paiement en ligne, Firestore pour les commandes et l'admin).
 
+_Dernière mise à jour de ce README : 8 septembre 2026._
+
 ## 📌 État du projet
 
 ### ✅ Fait
@@ -25,6 +27,10 @@ Site de livraison (Pannuezo & Pizza) : frontend Vite + backend serverless Vercel
 - **Connexion admin testée et fonctionnelle** sur `/admin.html`.
 - Le nombre de fonctions serverless a été ramené sous la limite de 12 du plan Vercel
   Hobby (11 fonctions actuellement, voir "Fonctions serverless & limite Hobby").
+- Images de la catégorie **Boissons** nettoyées : fond transparent (au lieu du fond
+  blanc/gris d'origine) et suppression du texte "Nom / XX cl" incrusté dans les photos,
+  pour les 12 boissons du menu (`public/images/boissons/*.png`) ainsi que l'image de
+  vignette/en-tête de la catégorie (`public/images/boissons-category.png`).
 
 ### ⚠️ À faire
 1. Se connecter sur `/admin.html` et ajouter un premier livreur, pour que `/driver.html`
@@ -36,12 +42,11 @@ Site de livraison (Pannuezo & Pizza) : frontend Vite + backend serverless Vercel
 4. Avant de passer en paiements réels : voir "Passer en production" plus bas.
 5. **Ajouter un bouton "changer le mot de passe" directement dans `/admin.html`**, pour que
    le restaurant puisse le modifier lui-même sans passer par Vercel. Pas encore fait.
-6. **Nettoyage** : `main.js` et `style.css` à la racine du projet sont des restes non
-   utilisés (le site charge `/src/main.js` et `/src/style.css`, jamais ces deux-là — voir
-   `vite.config.js` et les `<script>` de `index.html`). À supprimer un jour pour éviter
-   toute confusion, sans urgence puisqu'ils n'ont aucun effet sur le site actuel.
-7. **Rotation de clés à prévoir** : voir "Sécurité" ci-dessous, `FIREBASE_SERVICE_ACCOUNT`
+6. **Rotation de clés à prévoir** : voir "Sécurité" ci-dessous, `FIREBASE_SERVICE_ACCOUNT`
    à régénérer par précaution quand possible.
+
+> ~~Nettoyage `main.js`/`style.css` à la racine~~ : fait — ces fichiers n'existent plus à
+> la racine du projet, seuls `/src/main.js` et `/src/style.css` sont présents.
 
 ### 🔐 Sécurité — rappel
 - Le contenu complet de `FIREBASE_SERVICE_ACCOUNT` a été partagé en clair dans une
