@@ -19,6 +19,88 @@ export const OPTION_PRICES = {
   'Base épicée': 0.50,
 };
 
+// Catalogue du configurateur "Compose ta recette" — copie serveur de src/main.js
+// (CUSTOM_CONFIG). Les prix envoyés par le client ne sont JAMAIS utilisés : on
+// ne retient que les identifiants choisis (baseId/sauceId/ingredientIds) et on
+// recalcule tout ici.
+export const CUSTOM_MENU = {
+  pizza: {
+    label: 'Pizza',
+    basePrice: 8.90,
+    bases: [
+      { id: 'fine', name: 'Pâte fine', extra: 0 },
+      { id: 'epaisse', name: 'Pâte épaisse', extra: 0 },
+      { id: 'sans-gluten', name: 'Pâte sans gluten', extra: 2 },
+    ],
+    sauces: [
+      { id: 'tomate', name: 'Sauce tomate', extra: 0 },
+      { id: 'creme', name: 'Crème fraîche', extra: 0 },
+      { id: 'sans-sauce', name: 'Sans sauce', extra: 0 },
+    ],
+    ingredients: [
+      { id: 'mozzarella', name: 'Mozzarella', price: 1.5 },
+      { id: 'chevre', name: 'Chèvre', price: 1.8 },
+      { id: 'gorgonzola', name: 'Gorgonzola', price: 1.8 },
+      { id: 'jambon', name: 'Jambon', price: 1.8 },
+      { id: 'chorizo', name: 'Chorizo', price: 1.8 },
+      { id: 'poulet', name: 'Poulet rôti', price: 2 },
+      { id: 'champignons', name: 'Champignons', price: 1 },
+      { id: 'poivrons', name: 'Poivrons', price: 1 },
+      { id: 'oignons', name: 'Oignons rouges', price: 1 },
+      { id: 'olives', name: 'Olives', price: 1 },
+      { id: 'roquette', name: 'Roquette', price: 1 },
+      { id: 'piment', name: 'Piment frais', price: 0.8 },
+    ],
+  },
+  pannuezo: {
+    label: 'Pannuezo',
+    basePrice: 9.90,
+    bases: [
+      { id: 'classique', name: 'Pain classique', extra: 0 },
+      { id: 'complet', name: 'Pain complet', extra: 0.8 },
+    ],
+    sauces: [
+      { id: 'tomate', name: 'Sauce tomate', extra: 0 },
+      { id: 'creme', name: 'Crème fraîche', extra: 0 },
+      { id: 'epicee', name: 'Sauce épicée', extra: 0 },
+      { id: 'sans-sauce', name: 'Sans sauce', extra: 0 },
+    ],
+    ingredients: [
+      { id: 'mozzarella', name: 'Mozzarella', price: 1.5 },
+      { id: 'jambon', name: 'Jambon fumé', price: 1.8 },
+      { id: 'poulet', name: 'Poulet rôti', price: 2 },
+      { id: 'chorizo', name: 'Chorizo', price: 1.8 },
+      { id: 'champignons', name: 'Champignons', price: 1 },
+      { id: 'oignons', name: 'Oignons caramélisés', price: 1 },
+      { id: 'poivrons', name: 'Poivrons', price: 1 },
+      { id: 'courgettes', name: 'Courgettes grillées', price: 1 },
+      { id: 'roquette', name: 'Roquette', price: 1 },
+      { id: 'piment', name: 'Piment', price: 0.8 },
+    ],
+  },
+};
+
+// Recalcule le prix d'une ligne "recette personnalisée" à partir des seuls
+// identifiants envoyés par le client (line.id = 'custom-pizza'|'custom-pannuezo',
+// line.custom = { baseId, sauceId, ingredientIds }).
+function priceCustomLine(line) {
+  const type = line.id === 'custom-pizza' ? 'pizza' : 'pannuezo';
+  const cfg = CUSTOM_MENU[type];
+  const custom = line.custom || {};
+  const base = cfg.bases.find((b) => b.id === custom.baseId);
+  const sauce = cfg.sauces.find((s) => s.id === custom.sauceId);
+  if (!base || !sauce) throw new Error('Recette personnalisée invalide');
+  const ingredientIds = Array.isArray(custom.ingredientIds) ? custom.ingredientIds : [];
+  const ingredients = ingredientIds
+    .map((id) => cfg.ingredients.find((i) => i.id === id))
+    .filter(Boolean);
+  const extra = base.extra + sauce.extra + ingredients.reduce((a, i) => a + i.price, 0);
+  const unitPrice = Math.round((cfg.basePrice + extra) * 100) / 100;
+  const opts = [base.name, sauce.name, ...ingredients.map((i) => i.name)];
+  const qty = Math.max(1, Math.min(20, parseInt(line.qty, 10) || 1));
+  return { name: `${cfg.label} personnalisée`, opts, unitPrice, qty };
+}
+
 export const DELIVERY_FEE = 2.50;
 export const FREE_DELIVERY_THRESHOLD = 25;
 
@@ -29,6 +111,9 @@ export function priceCart(clientCart) {
     throw new Error('Panier vide ou invalide');
   }
   const items = clientCart.map((line) => {
+    if (line.id === 'custom-pizza' || line.id === 'custom-pannuezo') {
+      return priceCustomLine(line);
+    }
     const product = MENU.find((p) => p.id === line.id);
     if (!product) throw new Error(`Produit inconnu: ${line.id}`);
     const opts = Array.isArray(line.opts) ? line.opts.filter((o) => o in OPTION_PRICES) : [];
