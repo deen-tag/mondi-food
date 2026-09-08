@@ -124,7 +124,12 @@ function render(){
  if(S.route==='builder')s.innerHTML=builder();
 
  document.querySelector('nav')?.replaceWith(new DOMParser().parseFromString(nav(),'text/html').body.firstChild);
- if(S.route!==prevRoute){
+ // On ne remonte en haut de page QUE si la route a réellement changé (navigation).
+ // Sinon un simple re-render déclenché par une interaction sur place (coche un
+ // ingrédient, clique un filtre, +/- une quantité...) fait sauter le scroll en
+ // haut malgré soi.
+ const routeChanged=S.route!==prevRoute;
+ if(routeChanged){
   document.querySelector('nav .on i')?.animate([{transform:'scale(1)'},{transform:'scale(1.3)'},{transform:'scale(1)'}],{duration:280,easing:'cubic-bezier(.2,.8,.2,1)'});
   prevRoute=S.route;
  }
@@ -135,7 +140,8 @@ function render(){
  prevCount=c;
  const headerCartB=document.querySelector('.cartIcon b');
  if(headerCartB)headerCartB.textContent=c;
- bind();initReveal();scrollTo(0,0);
+ bind();initReveal();
+ if(routeChanged)scrollTo(0,0);
 }
 
 function home(){return `
