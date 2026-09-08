@@ -10,6 +10,7 @@ const PATHS = {
   check: "<circle cx='12' cy='12' r='9'/><path d='m8 12 2.6 2.6L16.5 9'/>",
   clock: "<circle cx='12' cy='12' r='8.5'/><path d='M12 7v5l3 2'/>",
   close: "<path d='m6 6 12 12M18 6 6 18'/>",
+  copy: "<rect x='9' y='9' width='11' height='11' rx='2'/><path d='M5 15V5a2 2 0 0 1 2-2h10'/>",
   delivery: "<path d='M3 6h11v11H3z'/><path d='M14 10h4l3 3v4h-7z'/><circle cx='7' cy='19' r='2'/><circle cx='18' cy='19' r='2'/>",
   fire: "<path d='M13 3c.5 3-2 4.5-2 7 0 1.5 1 2.5 2.5 2.5C16 12.5 17 10 16 8c3 2 4 4.2 4 7a8 8 0 0 1-16 0c0-4.5 3.2-7.7 6.8-10.5-.3 2.2.3 3.5 1.2 4.5C13 7 13.5 5 13 3Z'/>",
   home: "<path d='M3 10.5 12 3l9 7.5'/><path d='M5.5 9.5V21h13V9.5'/><path d='M9.5 21v-6h5v6'/>",
