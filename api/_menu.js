@@ -24,6 +24,14 @@ export const MENU = [
   { id: 'b10', name: 'Schweppes Agrumes', price: 2.00 },
   { id: 'b11', name: 'Perrier', price: 2.00 },
   { id: 'b12', name: 'Evian', price: 2.00 },
+  { id: 'd1', name: 'Tiramisu Classique', price: 5.90 },
+  { id: 'd2', name: 'Tiramisu Nutella', price: 6.50 },
+  { id: 'd3', name: 'Fondant au Chocolat', price: 5.50 },
+  { id: 'd4', name: 'Cheesecake', price: 5.90 },
+  { id: 'd5', name: 'Cookie 3 Chocolats', price: 3.90 },
+  { id: 'd6', name: 'Cookie Nutella', price: 4.50 },
+  { id: 'd7', name: 'Pizza Nutella', price: 7.90 },
+  { id: 'd8', name: 'Pizza Nutella & Kinder', price: 8.90 },
 ];
 
 export const OPTION_PRICES = {
