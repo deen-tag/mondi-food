@@ -107,6 +107,7 @@ function home(){return `
 ${tile('pannuezo','/images/pannuezo-card.png','PANNUEZO','Ultra fondant · généreusement garni')}
 ${tile('pizza','/images/pizza-card.png','PIZZA','Pâte artisanale · ingrédients frais')}</section>
 <section class="perks"><div><b>${icon('fire','',true)}</b><strong>Cuisson parfaite</strong><small>Doré & croustillant</small></div><div><b>${icon('check')}</b><strong>Ingrédients frais</strong><small>Sélectionnés avec soin</small></div><div><b>${icon('delivery')}</b><strong>Livraison rapide</strong><small>30–45 min</small></div></section>
+<section class="nightBannerWrap"><button class="nightBanner" data-night><img src="/images/mondi-night-banner.jpg" alt="Mondi Night — Burgers & Pâtes, vendredi et samedi soir de 23h à 5h"><em class="soon">Bientôt disponible</em></button></section>
 <section class="block"><div class="heading"><span><i>À LA CARTE</i><h2>Nos incontournables</h2></span><button data-go="menu">Tout voir ${icon('arrow-right')}</button></div><div class="railWrap"><div class="rail">${P.slice(0,4).map(mini).join('')}</div></div></section>`}
 
 function tile(type,img,title,sub){return `<button class="tile" data-type="${type}" data-go="category"><div class="tileText"><i>${type==='pizza'?'PÂTE ARTISANALE':'SIGNATURE'}</i><h3>${title}</h3><p>${sub}</p></div><div class="tileImg"><img src="${img}"></div><span>Découvrir <i>${icon('arrow-right')}</i></span></button>`}
@@ -211,6 +212,7 @@ function bind(){
  // .onclick= (pas addEventListener) car le header n'est jamais recréé — bind() tourne
  // après chaque navigation, un addEventListener empilerait les gestionnaires à l'infini.
  document.querySelectorAll('[data-contact]').forEach(b=>b.onclick=()=>{S.contactOpen=true;contactSheet()});
+ document.querySelectorAll('[data-night]').forEach(b=>b.onclick=()=>toast('Bientôt disponible — reviens vite !'));
  // On sauvegarde chaque frappe dans S.orderForm pour que les infos client survivent
  // aux re-render du formulaire (ex: application d'un code promo, qui redessine tout le HTML).
  document.querySelector('#order')?.addEventListener('input',e=>{
