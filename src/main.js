@@ -167,7 +167,7 @@ function home(){return `
 <section class="homeTiles" id="categories">
 ${tile('pannuezo','/images/pannuezo-card.png','PANNUEZO','Ultra fondant · généreusement garni')}
 ${tile('pizza','/images/pizza-card.png','PIZZA','Pâte artisanale · ingrédients frais')}
-${tile('boisson','/images/boissons/coca-cola.png','BOISSONS','Fraîches, servies avec ta commande')}</section>
+${tile('boisson','/images/boissons-category.png','BOISSONS','Fraîches, servies avec ta commande')}</section>
 <section class="builderPromoWrap"><button class="builderPromo" data-open-builder="pizza"><span class="builderPromoTag">NOUVEAU</span><h3>COMPOSE TA RECETTE</h3><p>Pâte, sauce et garnitures : choisis chaque ingrédient toi-même.</p><em>Créer ma recette ${icon('arrow-right')}</em></button></section>
 <section class="perks"><div><b>${icon('fire','',true)}</b><strong>Cuisson parfaite</strong><small>Doré & croustillant</small></div><div><b>${icon('check')}</b><strong>Ingrédients frais</strong><small>Sélectionnés avec soin</small></div><div><b>${icon('delivery')}</b><strong>Livraison rapide</strong><small>30–45 min</small></div></section>
 <section class="block"><div class="heading"><span><i>À LA CARTE</i><h2>Nos incontournables</h2></span><button data-go="menu">Tout voir ${icon('arrow-right')}</button></div><div class="railWrap"><div class="rail">${P.slice(0,4).map(mini).join('')}</div></div></section>
@@ -179,7 +179,7 @@ function mini(p){return `<article class="mini">${p.badge?`<em class="badge">${ic
 const TYPE_META = {
  pizza:{label:'Pizza',title:'PIZZA',plural:'PIZZAS',heroImg:'/images/pizza-card.png',desc:'Pizzas artisanales cuites à la perfection avec des ingrédients frais et une pâte maison moelleuse et croustillante.',cook:'au four',cookSub:'haute température',filters:['Toutes','Classiques','Gourmandes','Épicées','Végétariennes']},
  pannuezo:{label:'Pannuezo',title:'PANNUEZO',plural:'PANNUEZO',heroImg:'/images/pannuezo-card.png',desc:'Découvrez nos Pannuezo ultra fondants, généreusement garnis et préparés avec des ingrédients de qualité.',cook:'parfaite',cookSub:'Doré & croustillant',filters:['Toutes','Classiques','Gourmands','Épicés','Végétariens']},
- boisson:{label:'Boissons',title:'BOISSONS',plural:'BOISSONS',heroImg:'/images/boissons/coca-cola.png',desc:'Sodas, jus et eaux bien fraîches, prêts à accompagner ta commande.',cook:'fraîche',cookSub:'Servie glacée',filters:['Toutes']},
+ boisson:{label:'Boissons',title:'BOISSONS',plural:'BOISSONS',heroImg:'/images/boissons-category.png',desc:'Sodas, jus et eaux bien fraîches, prêts à accompagner ta commande.',cook:'fraîche',cookSub:'Servie glacée',filters:['Toutes']},
 };
 function menu(){
  const meta=TYPE_META[S.type];
