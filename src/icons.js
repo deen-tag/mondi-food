@@ -20,6 +20,7 @@ const PATHS = {
   lock: "<rect x='4' y='10' width='16' height='10' rx='2'/><path d='M7 10V7a5 5 0 0 1 10 0v3'/>",
   menu: "<path d='M4 5h16M4 12h16M4 19h16'/>",
   minus: "<path d='M5 12h14'/>",
+  moon: "<path d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z'/>",
   'payment-card': "<rect x='3' y='5' width='18' height='14' rx='2'/><path d='M3 9h18M7 15h4'/>",
   mail: "<rect x='3' y='5' width='18' height='14' rx='2'/><path d='m4 6.5 8 6 8-6'/>",
   phone: "<path d='M7 3h3l1.5 4-2 1.5a13 13 0 0 0 6 6l1.5-2 4 1.5v3c0 1.1-.9 2-2 2C10.7 19 5 13.3 5 6c0-1.7.9-3 2-3Z'/>",

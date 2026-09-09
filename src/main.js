@@ -1,6 +1,8 @@
 
 import './style.css';
 import { icon, stars } from './icons.js';
+import { BOISSONS, DESSERTS } from './shared-products.js';
+import { isNightOpen, nextOpeningLabel } from './night-schedule.js';
 
 const P = [
  {id:'m1',type:'pannuezo',name:'L’Original',price:12.90,desc:'Sauce tomate maison, mozzarella fondante, jambon fumé, origan',img:'/images/pannuezo-original.png',badge:'LE PLUS POPULAIRE',tag:'Classiques'},
@@ -12,26 +14,8 @@ const P = [
  {id:'p3',type:'pizza',name:'4 Fromages',price:12.90,desc:'Mozzarella, gorgonzola, chèvre, parmesan, emmental',img:'/images/four-cheese.png',tag:'Gourmandes'},
  {id:'p4',type:'pizza',name:'Légumes Rôtis',price:12.50,desc:'Sauce tomate, mozzarella, poivrons, courgettes, aubergines, oignons rouges',img:'/images/veggie.png',veg:true,tag:'Végétariennes'},
  {id:'p5',type:'pizza',name:'Diavolo',price:13.50,desc:'Sauce tomate épicée, mozzarella, chorizo, poivrons, piment',img:'/images/diavolo.png',hot:true,tag:'Épicées'},
- {id:'b1',type:'boisson',name:'Coca-Cola',price:2.00,desc:'33 cl',img:'/images/boissons/coca-cola.png'},
- {id:'b2',type:'boisson',name:'Coca-Cola Zéro',price:2.00,desc:'33 cl',img:'/images/boissons/coca-cola-zero.png'},
- {id:'b3',type:'boisson',name:'Coca-Cola Cherry',price:2.00,desc:'33 cl',img:'/images/boissons/coca-cola-cherry.png'},
- {id:'b4',type:'boisson',name:'Fanta Orange',price:2.00,desc:'33 cl',img:'/images/boissons/fanta-orange.png'},
- {id:'b5',type:'boisson',name:'Sprite',price:2.00,desc:'33 cl',img:'/images/boissons/sprite.png'},
- {id:'b6',type:'boisson',name:'Oasis Tropical',price:2.00,desc:'33 cl',img:'/images/boissons/oasis-tropical.png'},
- {id:'b7',type:'boisson',name:'Oasis Pomme Cassis Framboise',price:2.00,desc:'33 cl',img:'/images/boissons/oasis-pomme-cassis-framboise.png'},
- {id:'b8',type:'boisson',name:'Ice Tea Pêche',price:2.00,desc:'33 cl',img:'/images/boissons/ice-tea-peche.png'},
- {id:'b9',type:'boisson',name:'Orangina',price:2.00,desc:'33 cl',img:'/images/boissons/orangina.png'},
- {id:'b10',type:'boisson',name:'Schweppes Agrumes',price:2.00,desc:'33 cl',img:'/images/boissons/schweppes-agrumes.png'},
- {id:'b11',type:'boisson',name:'Perrier',price:2.00,desc:'33 cl',img:'/images/boissons/perrier.png'},
- {id:'b12',type:'boisson',name:'Evian',price:2.00,desc:'50 cl',img:'/images/boissons/evian.png'},
- {id:'d1',type:'dessert',name:'Tiramisu Classique',price:5.90,desc:'Mascarpone crémeux, biscuit imbibé au café, cacao',img:'/images/desserts/tiramisu-classique.png',tag:'Tiramisu'},
- {id:'d2',type:'dessert',name:'Tiramisu Nutella',price:6.50,desc:'Mascarpone crémeux, biscuit, noisettes, coulis Nutella',img:'/images/desserts/tiramisu-nutella.png',tag:'Tiramisu'},
- {id:'d3',type:'dessert',name:'Fondant au Chocolat',price:5.50,desc:'Cœur coulant au chocolat noir, servi tiède',img:'/images/desserts/fondant-chocolat.png',tag:'Gourmands'},
- {id:'d4',type:'dessert',name:'Cheesecake',price:5.90,desc:'Cheesecake New-Yorkais, coulis de fruits rouges',img:'/images/desserts/cheesecake.png',tag:'Gourmands'},
- {id:'d5',type:'dessert',name:'Cookie 3 Chocolats',price:3.90,desc:'Chocolat noir, lait et blanc, moelleux au cœur',img:'/images/desserts/cookie-3-chocolats.png',tag:'Cookies'},
- {id:'d6',type:'dessert',name:'Cookie Nutella',price:4.50,desc:'Cœur fondant au Nutella, noisettes',img:'/images/desserts/cookie-nutella.png',tag:'Cookies'},
- {id:'d7',type:'dessert',name:'Pizza Nutella',price:7.90,desc:'Pâte briochée, Nutella, éclats de noisettes, banane',img:'/images/desserts/pizza-nutella.png',tag:'Pizzas sucrées'},
- {id:'d8',type:'dessert',name:'Pizza Nutella & Kinder',price:8.90,desc:'Pâte briochée, Nutella, Kinder, fraises',img:'/images/desserts/pizza-nutella-kinder.png',tag:'Pizzas sucrées'},
+ ...BOISSONS,
+ ...DESSERTS,
 ];
 
 // Catalogue du configurateur "Compose ta recette" — copie volontairement
@@ -178,7 +162,7 @@ ${tile('dessert','/images/desserts-category.png','DESSERTS','Gourmands, faits po
 <section class="builderPromoWrap"><button class="builderPromo" data-open-builder="pizza"><span class="builderPromoTag">NOUVEAU</span><h3>COMPOSE TA RECETTE</h3><p>Pâte, sauce et garnitures : choisis chaque ingrédient toi-même.</p><em>Créer ma recette ${icon('arrow-right')}</em></button></section>
 <section class="perks"><div><b>${icon('fire','',true)}</b><strong>Cuisson parfaite</strong><small>Doré & croustillant</small></div><div><b>${icon('check')}</b><strong>Ingrédients frais</strong><small>Sélectionnés avec soin</small></div><div><b>${icon('delivery')}</b><strong>Livraison rapide</strong><small>30–45 min</small></div></section>
 <section class="block"><div class="heading"><span><i>À LA CARTE</i><h2>Nos incontournables</h2></span><button data-go="menu">Tout voir ${icon('arrow-right')}</button></div><div class="railWrap"><div class="rail">${P.slice(0,4).map(mini).join('')}</div></div></section>
-<section class="nightBannerWrap"><button class="nightBanner" data-night><img src="/images/mondi-night-banner.jpg" alt="Mondi Night — Burgers & Pâtes, vendredi et samedi soir de 23h à 5h"><em class="soon">Bientôt disponible</em></button></section>`}
+<section class="nightBannerWrap"><a class="nightBanner${isNightOpen()?' live':''}" href="/night.html"><img src="/images/mondi-night-banner.jpg" alt="Mondi Night — Burgers, pâtes et galettes, vendredi et samedi soir de 23h à 5h"><em class="soon">${isNightOpen()?'OUVERT MAINTENANT':nextOpeningLabel()}</em></a></section>`}
 
 function tile(type,img,title,sub){const kicker=type==='pizza'?'PÂTE ARTISANALE':type==='boisson'?'SANS ALCOOL':type==='dessert'?'FAIT MAISON':'SIGNATURE';return `<button class="tile" data-type="${type}" data-go="category"><div class="tileText"><i>${kicker}</i><h3>${title}</h3><p>${sub}</p></div><div class="tileImg"><img src="${img}"></div><span>Découvrir <i>${icon('arrow-right')}</i></span></button>`}
 function mini(p){return `<article class="mini">${p.badge?`<em class="badge">${icon('star','',true)} ${p.badge}</em>`:''}<button class="miniMain" data-product="${p.id}"><img src="${p.img}"><b>${p.name}</b><strong>${formatPrice(p.price)}</strong></button><button class="miniAdd${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check')+' Ajouté':icon('plus')+' Ajouter'}</button></article>`}
@@ -328,7 +312,6 @@ function bind(){
  // .onclick= (pas addEventListener) car le header n'est jamais recréé — bind() tourne
  // après chaque navigation, un addEventListener empilerait les gestionnaires à l'infini.
  document.querySelectorAll('[data-contact]').forEach(b=>b.onclick=()=>{S.contactOpen=true;contactSheet()});
- document.querySelectorAll('[data-night]').forEach(b=>b.onclick=()=>toast('Bientôt disponible — reviens vite !'));
  document.querySelectorAll('[data-open-builder]').forEach(b=>b.onclick=()=>{initBuilder(b.dataset.openBuilder);S.builderFrom=S.route;S.route='builder';render()});
  document.querySelectorAll('[data-builder-type]').forEach(b=>b.onclick=()=>{initBuilder(b.dataset.builderType);render()});
  document.querySelectorAll('[data-builder-base]').forEach(b=>b.onclick=()=>{S.builder.base=b.dataset.builderBase;render()});
@@ -448,4 +431,10 @@ async function handleStripeReturn(){
  return true;
 }
 
+// Arrivée depuis night.html ("Voir le panier") : on ouvre directement le panier,
+// qui est partagé entre les deux pages via le même localStorage 'fd_cart'.
+if(new URLSearchParams(window.location.search).get('view')==='cart'){
+ S.route='cart';
+ window.history.replaceState({},'',window.location.pathname);
+}
 handleStripeReturn().then(()=>shell());
