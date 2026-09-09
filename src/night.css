@@ -14,9 +14,7 @@ button,a{font:inherit;color:inherit;cursor:pointer;text-decoration:none}
 
 /* hero */
 .nHero{text-align:center;padding:22px 24px 6px}
-.nMoon{width:56px;height:56px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(178,59,255,.14);color:var(--n-accent);font-size:26px;filter:drop-shadow(0 0 14px rgba(178,59,255,.55));animation:nGlow 3.4s ease-in-out infinite}
-@keyframes nGlow{50%{filter:drop-shadow(0 0 22px rgba(178,59,255,.85))}}
-.nHero h1{font:900 52px/.85 'Barlow Condensed';letter-spacing:1px;margin:0 0 10px;text-transform:uppercase;background:linear-gradient(120deg,#fff,#e7cbff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.nLogo{max-width:220px;width:70%;height:auto;margin:0 auto 16px;display:block;filter:drop-shadow(0 0 22px rgba(178,59,255,.45));mix-blend-mode:screen}
 .nHero p{margin:0 0 16px;color:var(--n-muted);font-size:12px;letter-spacing:.3px}
 .nPill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--n-line);background:var(--n-card);padding:8px 16px;border-radius:30px;font:800 10px Inter;letter-spacing:.5px}
 .nPill.live{border-color:rgba(56,224,122,.4)}

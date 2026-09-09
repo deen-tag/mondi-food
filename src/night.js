@@ -48,9 +48,9 @@ function render(){
  bind();
 }
 
-function header(){return `<header class="nHeader"><a href="/">${icon('arrow-left')}</a><span class="nWordmark">MONDI NIGHT</span><a class="nCart" href="/index.html?view=cart">${icon('cart')}<b>${count()}</b></a></header>`}
+function header(){return `<header class="nHeader"><a href="/">${icon('arrow-left')}</a><span></span><a class="nCart" href="/index.html?view=cart">${icon('cart')}<b>${count()}</b></a></header>`}
 
-function hero(){const open=isNightOpen();return `<section class="nHero"><div class="nMoon">${icon('moon')}</div><h1>Mondi Night</h1><p>Vendredi &amp; samedi · 23h → 05h</p><span class="nPill ${open?'live':'wait'}"><b></b>${open?'OUVERT MAINTENANT':nextOpeningLabel()}</span></section>`}
+function hero(){const open=isNightOpen();return `<section class="nHero"><img class="nLogo" src="/images/night/logo.png" alt="Mondi Night"><p>Vendredi &amp; samedi · 23h → 05h</p><span class="nPill ${open?'live':'wait'}"><b></b>${open?'OUVERT MAINTENANT':nextOpeningLabel()}</span></section>`}
 
 function cats(){return `<nav class="nCats">${CATS.map(c=>`<button class="${S.cat===c.type?'active':''}" data-cat="${c.type}">${c.label}</button>`).join('')}</nav>`}
 
