@@ -8,6 +8,7 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         admin: resolve(__dirname, 'admin.html'),
         driver: resolve(__dirname, 'driver.html'),
+        night: resolve(__dirname, 'night.html'),
       },
     },
   },
