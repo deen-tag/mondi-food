@@ -113,7 +113,7 @@ export default async function handler(req, res) {
     // (le paiement en ligne passe par Stripe puis le webhook, jamais par cette route).
     try {
       const { cart, customer, promoCode } = body;
-      const { items, subtotal, delivery, total: baseTotal } = priceCart(cart);
+      const { items, subtotal, delivery, total: baseTotal } = await priceCart(cart);
 
       let discount = 0;
       let appliedPromo = null;

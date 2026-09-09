@@ -12,7 +12,7 @@ export default async function handler(req, res) {
 
   try {
     const { cart, customer, promoCode } = req.body || {};
-    const { items, subtotal, delivery, total } = priceCart(cart);
+    const { items, subtotal, delivery, total } = await priceCart(cart);
 
     let discounts;
     let appliedPromo = null;
