@@ -166,7 +166,7 @@ function render(){
 
 function home(){return `
 <section class="homeHero">
-<div class="heroImgWrap"><img class="heroBanner" src="/images/hero-100-livraison.jpg" alt="100% Livraison — Mondi Food"><button class="cta heroCta" data-scroll="categories">VOIR LA CARTE <span>${icon('arrow-right')}</span></button></div>
+<img class="heroBanner" src="/images/hero-100-livraison.jpg" alt="100% Livraison — Mondi Food">
 <div class="delivery">${icon('delivery')} Livraison rapide <em></em> 30–45 min</div>
 </section>
 <section class="welcome"><div><span>OFFRE DE BIENVENUE</span><h3>-10% SUR VOTRE 1ÈRE COMMANDE</h3><div class="promoCopyRow"><b>WELCOME10</b><button class="copyBtn" data-copy="WELCOME10">${icon('copy')} COPIER</button></div></div><strong>%</strong></section>
