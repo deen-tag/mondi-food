@@ -166,8 +166,7 @@ function render(){
 
 function home(){return `
 <section class="homeHero">
-<span class="kicker">PANNUEZO & PIZZA</span><h1>100%<br>LIVRAISON</h1>
-<p>Dark kitchen · saveurs intenses · livré chez vous</p>
+<img class="heroBanner" src="/images/hero-100-livraison.jpg" alt="100% Livraison — Mondi Food">
 <button class="cta" data-scroll="categories">VOIR LA CARTE <span>${icon('arrow-right')}</span></button>
 <div class="delivery">${icon('delivery')} Livraison rapide <em></em> 30–45 min</div>
 </section>
