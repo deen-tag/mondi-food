@@ -24,24 +24,28 @@ button,a{font:inherit;color:inherit;cursor:pointer;text-decoration:none}
 .nPill.wait b{width:7px;height:7px;border-radius:50%;background:var(--n-amber)}
 @keyframes liveDot{70%{box-shadow:0 0 0 6px rgba(56,224,122,0)}100%{box-shadow:0 0 0 0 rgba(56,224,122,0)}}
 
-/* category chips */
-.nCats{display:flex;gap:8px;overflow-x:auto;padding:20px 14px 4px;scrollbar-width:none;-ms-overflow-style:none;position:sticky;top:0;background:linear-gradient(var(--n-bg) 65%,transparent);z-index:5}
+/* category chips — même comportement que .switch du site principal : défile
+   avec la page (pas collant), onglet actif en couleur unie */
+.nCats{display:flex;gap:8px;overflow-x:auto;padding:17px 14px 5px;scrollbar-width:none;-ms-overflow-style:none}
 .nCats::-webkit-scrollbar{display:none}
-.nCats button{flex-shrink:0;border:1px solid var(--n-line);background:var(--n-card);color:var(--n-muted);border-radius:30px;padding:10px 16px;font-size:11px;font-weight:700;letter-spacing:.3px;white-space:nowrap;transition:border-color .2s,color .2s,background .2s}
-.nCats button.active{background:linear-gradient(120deg,var(--n-accent),var(--n-accent2));color:#fff;border-color:transparent}
+.nCats button{flex-shrink:0;border:1px solid var(--n-line);background:var(--n-card);color:var(--n-muted);border-radius:30px;padding:9px 16px;font-size:11px;white-space:nowrap}
+.nCats button.active{background:var(--n-accent);border-color:var(--n-accent);color:#fff}
 
-/* cards */
-.nCards{display:grid;gap:14px;padding:16px 14px 4px}
-.nCard{background:var(--n-card);border:1px solid var(--n-line);border-radius:18px;overflow:hidden;box-shadow:0 10px 26px rgba(0,0,0,.35)}
-.nCard .nImg{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#241634}
-.nCard .nBody{padding:14px 16px 16px}
-.nCard h3{font:800 24px 'Barlow Condensed';text-transform:uppercase;margin:0 0 5px;letter-spacing:.2px}
-.nCard p{margin:0 0 12px;color:var(--n-muted);font-size:11.5px;line-height:1.55}
-.nCardRow{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.nCardRow strong{font:800 17px Inter;color:#fff}
-.nAdd{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:30px;padding:10px 16px;font:800 11px Inter;letter-spacing:.2px;color:#fff;background:linear-gradient(120deg,var(--n-accent),var(--n-accent2));box-shadow:0 8px 20px rgba(178,59,255,.35)}
-.nAdd.added{background:linear-gradient(120deg,#1f9d63,#27b473)}
-.nWait{display:inline-block;border:1px dashed var(--n-line);color:var(--n-muted);border-radius:30px;padding:9px 14px;font:700 9.5px Inter;letter-spacing:.2px;text-align:center}
+/* cards — même logique que .card/.cardMain du site principal : miniature à
+   gauche, texte à droite, bouton rond en bas à droite */
+.nCards{display:grid;gap:10px;padding:16px 14px 4px}
+.nCard{min-height:135px;position:relative;border:1px solid var(--n-line);background:var(--n-card);border-radius:15px;box-shadow:0 6px 18px rgba(0,0,0,.35);display:grid;grid-template-columns:110px 1fr;gap:11px;padding:7px}
+.nThumb{border-radius:11px;overflow:hidden;background:radial-gradient(circle at 50% 32%,#2c1a44,#170e24 72%)}
+.nThumb img{width:100%;height:120px;object-fit:contain;padding:8px;display:block}
+.nCopy{padding:4px 40px 5px 0;min-width:0}
+.nCopy h3{font:800 21px 'Barlow Condensed';text-transform:uppercase;margin:5px 0 4px;letter-spacing:.2px}
+.nCopy p{margin:0 0 7px;color:var(--n-muted);font-size:9.5px;line-height:1.45}
+.nCopy strong{display:block;color:#fff;font-size:14px}
+.nWaitNote{display:block;color:var(--n-amber);font-size:8px;margin-top:3px;letter-spacing:.1px}
+.nPlus{position:absolute;right:10px;bottom:13px;width:36px;height:36px;border:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(120deg,var(--n-accent),var(--n-accent2));color:#fff;box-shadow:0 8px 18px rgba(178,59,255,.35)}
+.nPlus .icon{width:1.15em;height:1.15em}
+.nPlus.added{background:linear-gradient(120deg,#1f9d63,#27b473)}
+.nWaitBadge{position:absolute;right:10px;bottom:13px;width:36px;height:36px;border-radius:50%;border:1px dashed var(--n-line);color:var(--n-muted);display:flex;align-items:center;justify-content:center}
 
 /* sticky cart bar */
 .nSticky{position:fixed;z-index:40;bottom:16px;left:14px;right:14px;max-width:492px;margin:0 auto;background:var(--n-card);border:1px solid var(--n-line);border-radius:16px;padding:10px;display:flex;align-items:center;gap:10px;box-shadow:0 14px 34px rgba(0,0,0,.5)}

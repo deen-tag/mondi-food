@@ -56,9 +56,14 @@ function cats(){return `<nav class="nCats">${CATS.map(c=>`<button class="${S.cat
 
 function cards(){const list=N.filter(p=>p.type===S.cat);return `<section class="nCards">${list.map(card).join('')}</section>`}
 
-function card(p){const open=isNightOpen();const addBtn=open?`<button class="nAdd${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check')+' Ajouté':icon('plus')+' Ajouter'}</button>`:`<span class="nWait">Dispo ven &amp; sam dès 23h</span>`;
-return `<article class="nCard"><img class="nImg" src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.style.display='none'">
-<div class="nBody"><h3>${p.name}</h3><p>${p.desc}</p><div class="nCardRow"><strong>${formatPrice(p.price)}</strong>${addBtn}</div></div></article>`}
+function card(p){
+ const open=isNightOpen();
+ const justAdded=S.justAddedKey===p.id;
+ const action=open
+  ?`<button class="nPlus${justAdded?' added':''}" data-add="${p.id}">${justAdded?icon('check'):icon('plus')}</button>`
+  :`<span class="nWaitBadge" title="Disponible vendredi et samedi dès 23h">${icon('moon')}</span>`;
+ return `<article class="nCard"><div class="nThumb"><img src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.style.display='none'"></div><div class="nCopy"><h3>${p.name}</h3><p>${p.desc}</p><strong>${formatPrice(p.price)}</strong>${open?'':'<small class="nWaitNote">Dispo ven & sam dès 23h</small>'}</div>${action}</article>`;
+}
 
 function sticky(){return S.cart.length?`<div class="nSticky"><span class="nStickyBag">${icon('cart')}</span><span class="nStickyInfo"><b>${count()} articles</b><small>${formatPrice(total())}</small></span><a href="/index.html?view=cart">Voir le panier ${icon('arrow-right')}</a></div>`:''}
 
