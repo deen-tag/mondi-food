@@ -32,6 +32,23 @@ export const MENU = [
   { id: 'd6', name: 'Cookie Nutella', price: 4.50 },
   { id: 'd7', name: 'Pizza Nutella', price: 7.90 },
   { id: 'd8', name: 'Pizza Nutella & Kinder', price: 8.90 },
+  // Mondi Night — vendredi & samedi, 23h → 5h (voir night.html / src/night.js)
+  { id: 'nb1', name: 'Burger Le Classique', price: 11.90 },
+  { id: 'nb2', name: 'Burger Le Cheese', price: 12.90 },
+  { id: 'nb3', name: 'Burger Le Bacon', price: 13.90 },
+  { id: 'nb4', name: 'Burger Le Chicken', price: 13.90 },
+  { id: 'nb5', name: 'Burger Le Montagnard', price: 14.90 },
+  { id: 'nb6', name: 'Burger Le Spécial Mondi', price: 15.90 },
+  { id: 'np1', name: 'Penne Bolognaise', price: 11.90 },
+  { id: 'np2', name: 'Penne Carbonara', price: 12.90 },
+  { id: 'np3', name: 'Penne Poulet Crème', price: 13.90 },
+  { id: 'np4', name: 'Penne 4 Fromages', price: 13.90 },
+  { id: 'np5', name: 'Penne Épicées', price: 13.90 },
+  { id: 'ng1', name: 'Galette La Complète', price: 11.90 },
+  { id: 'ng2', name: 'Galette Jambon Fromage', price: 10.90 },
+  { id: 'ng3', name: 'Galette Poulet Fromage', price: 12.90 },
+  { id: 'ng4', name: 'Galette Poulet Curry', price: 13.90 },
+  { id: 'ng5', name: 'Galette 3 Fromages', price: 12.90 },
 ];
 
 export const OPTION_PRICES = {
