@@ -18,6 +18,10 @@ const AS = {
   activeCount: null, // dernier compteur "ping" connu (received+preparing+delivering)
   globalStats: null, // { totalOrders, totalRevenue } depuis toujours, chargé une fois
   pushSubscribed: false, // abonné aux notifs push (Service Worker) ?
+  menu: null, // catalogue { categories, products, configurators, settings }, chargé à la demande
+  menuSub: 'categories', // sous-onglet de "Menu" : categories | products | builder | settings
+  menuProductFilter: 'all',
+  menuForm: null, // { kind:'category'|'product', data:{...} } pendant une création/édition
 };
 
 const formatPrice = n => (+n).toFixed(2).replace('.', ',') + ' €';
@@ -176,6 +180,18 @@ async function loadGlobalStats() {
   } catch {}
 }
 
+// Chargé à l'ouverture de l'onglet Menu (pas de polling : le gérant recharge lui-même
+// via les actions ci-dessous, pas besoin de re-tirer Firestore en continu).
+async function loadMenu(force) {
+  if (AS.menu && !force) { renderRoot(); return; }
+  try {
+    AS.menu = await api('/api/menu');
+    renderRoot();
+  } catch (err) {
+    alert(err.message || 'Impossible de charger le menu.');
+  }
+}
+
 function checkNewOrders() {
   const fresh = AS.orders.filter(o => o.status === 'received');
   let isNew = false;
@@ -238,6 +254,7 @@ function header() {
   </div>
   <nav class="aTabs">
    <button data-view="dashboard" class="${AS.view === 'dashboard' ? 'on' : ''}">Dashboard${news ? `<em>${news}</em>` : ''}</button>
+   <button data-view="menu" class="${AS.view === 'menu' ? 'on' : ''}">Menu</button>
    <button data-view="drivers" class="${AS.view === 'drivers' ? 'on' : ''}">Livreurs</button>
    <button data-view="promo" class="${AS.view === 'promo' ? 'on' : ''}">Codes promo</button>
    <button data-view="history" class="${AS.view === 'history' ? 'on' : ''}">Historique</button>
@@ -247,6 +264,7 @@ function header() {
 
 function screen() {
   if (AS.view === 'order') return orderView();
+  if (AS.view === 'menu') return menuView();
   if (AS.view === 'drivers') return driversView();
   if (AS.view === 'promo') return promoView();
   if (AS.view === 'history') return historyView();
@@ -443,6 +461,177 @@ function promoView() {
   </div>`;
 }
 
+// ---------- Menu (catalogue) ----------
+function slugifyClient(s) {
+  return String(s).toLowerCase().trim()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'item';
+}
+function categoryLabel(slug) {
+  return AS.menu?.categories.find(c => c.slug === slug)?.label || slug;
+}
+// Les photos restent celles déjà présentes sur le site (pas d'upload) : le gérant
+// choisit parmi toutes les images déjà utilisées par un produit du catalogue.
+function imageOptions(current) {
+  const set = new Set((AS.menu?.products || []).map(p => p.img));
+  if (current) set.add(current);
+  return [...set].sort().map(src => `<option value="${src}" ${src === current ? 'selected' : ''}>${src}</option>`).join('');
+}
+// Bases/sauces/ingrédients des configurateurs édités en texte, une option par ligne
+// ("Nom;supplément" ou "Nom;prix") — plus simple et plus fiable qu'un formulaire à
+// lignes dynamiques pour ce genre de petites listes.
+function linesToOptions(text, key) {
+  return String(text || '').split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+    const [name, val] = line.split(';').map(s => (s || '').trim());
+    const num = Math.max(0, Number(val) || 0);
+    const id = slugifyClient(name);
+    return key === 'extra' ? { id, name, extra: num } : { id, name, price: num };
+  });
+}
+function optionsToLines(list, key) {
+  return (list || []).map(o => `${o.name};${o[key]}`).join('\n');
+}
+
+function menuView() {
+  if (!AS.menu) return `<p class="aEmpty">Chargement du menu…</p>`;
+  const tabs = [['categories', 'Catégories'], ['products', 'Produits'], ['builder', 'Compose ta recette'], ['settings', 'Réglages']];
+  return `<h1 class="aTitle">MENU</h1>
+  <div class="aFilters">${tabs.map(([k, l]) => `<button data-menu-sub="${k}" class="${AS.menuSub === k ? 'active' : ''}">${l}</button>`).join('')}</div>
+  ${AS.menuSub === 'categories' ? menuCategoriesView() : ''}
+  ${AS.menuSub === 'products' ? menuProductsView() : ''}
+  ${AS.menuSub === 'builder' ? menuBuilderView() : ''}
+  ${AS.menuSub === 'settings' ? menuSettingsView() : ''}`;
+}
+
+function menuCategoriesView() {
+  const form = AS.menuForm?.kind === 'category' ? categoryFormHtml(AS.menuForm.data) : '';
+  const list = AS.menu.categories.slice().sort((a, b) => (a.order || 0) - (b.order || 0)).map(c => `
+   <div class="aDriverCard">
+    <div><b>${c.label}</b><small>${c.kind === 'configurator' ? 'Configurateur' : 'Produits'} · ${(c.sites || []).map(s => s === 'main' ? 'Site principal' : 'Mondi Night').join(', ')}${c.active === false ? ' · Désactivée' : ''}</small></div>
+    <div class="aPromoActions">
+     <button class="ghost small" data-cat-toggle="${c.slug}">${c.active === false ? 'Activer' : 'Désactiver'}</button>
+     <button class="ghost small" data-cat-edit="${c.slug}">Modifier</button>
+     <button class="ghost small danger solid" data-cat-delete="${c.slug}">Supprimer</button>
+    </div>
+   </div>`).join('') || `<p class="aEmpty">Aucune catégorie.</p>`;
+  return `<div class="aDrivers">${list}</div>
+  ${form || `<div class="aBox"><h3>Nouvelle catégorie</h3><button class="cta small" data-cat-new>+ AJOUTER UNE CATÉGORIE</button></div>`}`;
+}
+
+function categoryFormHtml(d) {
+  const editing = !!d.slug;
+  const sites = d.sites || ['main'];
+  return `<div class="aBox">
+   <h3>${editing ? 'Modifier la catégorie' : 'Nouvelle catégorie'}</h3>
+   <form id="categoryForm">
+    <label>Nom<input name="label" required maxlength="60" value="${d.label || ''}"></label>
+    <label>Type
+     <select name="kind">
+      <option value="products" ${d.kind !== 'configurator' ? 'selected' : ''}>Liste de produits</option>
+      <option value="configurator" ${d.kind === 'configurator' ? 'selected' : ''}>Configurateur (compose ta recette)</option>
+     </select>
+    </label>
+    <label><input type="checkbox" name="siteMain" ${sites.includes('main') ? 'checked' : ''}> Visible sur le site principal</label>
+    <label><input type="checkbox" name="siteNight" ${sites.includes('night') ? 'checked' : ''}> Visible sur Mondi Night</label>
+    <div class="aRow">
+     <button class="cta small" type="submit">${editing ? 'ENREGISTRER' : 'CRÉER'}</button>
+     <button type="button" class="ghost small" id="cancelMenuForm">Annuler</button>
+    </div>
+   </form>
+  </div>`;
+}
+
+function menuProductsView() {
+  const cats = AS.menu.categories.filter(c => c.kind === 'products');
+  const filter = AS.menuProductFilter;
+  const products = AS.menu.products
+    .filter(p => filter === 'all' || p.categoryId === filter)
+    .slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  const form = AS.menuForm?.kind === 'product' ? productFormHtml(AS.menuForm.data) : '';
+  const list = products.map(p => `
+   <div class="aDriverCard aProdCard">
+    <div class="prodThumb"><img src="${p.img}" alt="" loading="lazy"></div>
+    <div><b>${p.name}</b><small>${categoryLabel(p.categoryId)} · ${formatPrice(p.price)}${p.active === false ? ' · Masqué' : ''}</small></div>
+    <div class="aPromoActions">
+     <button class="ghost small" data-prod-toggle="${p.id}">${p.active === false ? 'Afficher' : 'Masquer'}</button>
+     <button class="ghost small" data-prod-edit="${p.id}">Modifier</button>
+     <button class="ghost small danger solid" data-prod-delete="${p.id}">Supprimer</button>
+    </div>
+   </div>`).join('') || `<p class="aEmpty">Aucun produit dans cette catégorie.</p>`;
+  return `<div class="aToolbar"><select id="menuProductFilter">
+   <option value="all" ${filter === 'all' ? 'selected' : ''}>Toutes les catégories</option>
+   ${cats.map(c => `<option value="${c.slug}" ${filter === c.slug ? 'selected' : ''}>${c.label}</option>`).join('')}
+  </select></div>
+  <div class="aDrivers">${list}</div>
+  ${form || `<div class="aBox"><h3>Nouveau produit</h3>${cats.length ? `<button class="cta small" data-prod-new>+ AJOUTER UN PRODUIT</button>` : `<p class="aMuted">Crée d'abord une catégorie de type "Liste de produits".</p>`}</div>`}`;
+}
+
+function productFormHtml(d) {
+  const editing = !!d.id;
+  const cats = AS.menu.categories.filter(c => c.kind === 'products');
+  return `<div class="aBox">
+   <h3>${editing ? 'Modifier le produit' : 'Nouveau produit'}</h3>
+   <form id="productForm">
+    <label>Catégorie
+     <select name="categoryId" required>${cats.map(c => `<option value="${c.slug}" ${d.categoryId === c.slug ? 'selected' : ''}>${c.label}</option>`).join('')}</select>
+    </label>
+    <label>Nom<input name="name" required maxlength="100" value="${d.name || ''}"></label>
+    <label>Prix (€)<input name="price" type="number" step="0.01" min="0" required value="${d.price ?? ''}"></label>
+    <label>Description<textarea name="desc" rows="2" maxlength="300">${d.desc || ''}</textarea></label>
+    <label>Photo<select name="img">${imageOptions(d.img)}</select></label>
+    <div class="two">
+     <label>Badge (optionnel)<input name="badge" maxlength="40" placeholder="Ex. SIGNATURE" value="${d.badge || ''}"></label>
+     <label>Tag / filtre (optionnel)<input name="tag" maxlength="40" placeholder="Ex. Classiques" value="${d.tag || ''}"></label>
+    </div>
+    <div class="two">
+     <label><input type="checkbox" name="hot" ${d.hot ? 'checked' : ''}> Épicé</label>
+     <label><input type="checkbox" name="veg" ${d.veg ? 'checked' : ''}> Végétarien</label>
+    </div>
+    <div class="aRow">
+     <button class="cta small" type="submit">${editing ? 'ENREGISTRER' : 'CRÉER'}</button>
+     <button type="button" class="ghost small" id="cancelMenuForm">Annuler</button>
+    </div>
+   </form>
+  </div>`;
+}
+
+function menuBuilderView() {
+  const list = AS.menu.configurators;
+  if (!list.length) return `<p class="aEmpty">Aucun configurateur "Compose ta recette".</p>`;
+  return list.map(cfg => `<div class="aBox">
+   <h3>${cfg.label}${cfg.active === false ? ' (désactivé)' : ''}</h3>
+   <form class="cfgForm" data-cfg="${cfg.id}">
+    <label>Nom affiché<input name="label" required maxlength="60" value="${cfg.label}"></label>
+    <label>Prix de base (€)<input name="basePrice" type="number" step="0.01" min="0" required value="${cfg.basePrice}"></label>
+    <label><input type="checkbox" name="active" ${cfg.active !== false ? 'checked' : ''}> Configurateur actif (visible sur le site)</label>
+    <label>Bases <small class="aMuted">— une par ligne, format "Nom;supplément en €"</small><textarea name="bases" rows="3">${optionsToLines(cfg.bases, 'extra')}</textarea></label>
+    <label>Sauces <small class="aMuted">— une par ligne, format "Nom;supplément en €"</small><textarea name="sauces" rows="3">${optionsToLines(cfg.sauces, 'extra')}</textarea></label>
+    <label>Ingrédients <small class="aMuted">— un par ligne, format "Nom;prix en €"</small><textarea name="ingredients" rows="8">${optionsToLines(cfg.ingredients, 'price')}</textarea></label>
+    <button class="cta small" type="submit">ENREGISTRER</button>
+   </form>
+  </div>`).join('');
+}
+
+function menuSettingsView() {
+  const s = AS.menu.settings || {};
+  const op = s.optionPrices || {};
+  return `<div class="aBox">
+   <h3>Livraison</h3>
+   <form id="settingsForm">
+    <div class="two">
+     <label>Frais de livraison (€)<input name="deliveryFee" type="number" step="0.01" min="0" value="${s.deliveryFee ?? 2.5}"></label>
+     <label>Livraison offerte dès (€)<input name="freeDeliveryThreshold" type="number" step="0.01" min="0" value="${s.freeDeliveryThreshold ?? 25}"></label>
+    </div>
+    <h3>Options payantes (fiche produit)</h3>
+    <div class="two">
+     <label>Fromage supplémentaire (€)<input name="cheese" type="number" step="0.01" min="0" value="${op['Fromage supplémentaire'] ?? 1}"></label>
+     <label>Base épicée (€)<input name="spicy" type="number" step="0.01" min="0" value="${op['Base épicée'] ?? 0.5}"></label>
+    </div>
+    <button class="cta small" type="submit">ENREGISTRER</button>
+   </form>
+  </div>`;
+}
+
 // ---------- Historique ----------
 function historyView() {
   const all = AS.orders;
@@ -514,6 +703,7 @@ function bind() {
   document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
     AS.view = b.dataset.view; AS.selected = null; renderRoot();
     if (AS.view === 'history') loadGlobalStats();
+    if (AS.view === 'menu') loadMenu();
   }));
   document.querySelectorAll('[data-filter]').forEach(b => b.addEventListener('click', () => { AS.filter = b.dataset.filter; renderRoot(); }));
   document.querySelectorAll('[data-open]').forEach(el => el.addEventListener('click', () => { AS.selected = el.dataset.open; AS.view = 'order'; renderRoot(); }));
@@ -568,6 +758,121 @@ function bind() {
     try {
       await api('/api/orders', { method: 'POST', body: JSON.stringify({ action: 'promo-create', ...d }) });
       refresh();
+    } catch (err) { alert(err.message || 'Erreur'); }
+  });
+
+  // ---- Menu ----
+  document.querySelectorAll('[data-menu-sub]').forEach(b => b.addEventListener('click', () => {
+    AS.menuSub = b.dataset.menuSub; AS.menuForm = null; renderRoot();
+  }));
+  document.querySelector('#menuProductFilter')?.addEventListener('change', e => {
+    AS.menuProductFilter = e.target.value; renderRoot();
+  });
+  document.querySelector('#cancelMenuForm')?.addEventListener('click', () => { AS.menuForm = null; renderRoot(); });
+
+  document.querySelector('[data-cat-new]')?.addEventListener('click', () => {
+    AS.menuForm = { kind: 'category', data: { sites: ['main'], kind: 'products' } }; renderRoot();
+  });
+  document.querySelectorAll('[data-cat-edit]').forEach(b => b.addEventListener('click', () => {
+    const c = AS.menu.categories.find(x => x.slug === b.dataset.catEdit);
+    AS.menuForm = { kind: 'category', data: { ...c } }; renderRoot();
+  }));
+  document.querySelectorAll('[data-cat-toggle]').forEach(b => b.addEventListener('click', async () => {
+    const c = AS.menu.categories.find(x => x.slug === b.dataset.catToggle);
+    try {
+      await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'category', action: 'update', slug: c.slug, active: c.active === false }) });
+      await loadMenu(true);
+    } catch (err) { alert(err.message || 'Erreur'); }
+  }));
+  document.querySelectorAll('[data-cat-delete]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm('Supprimer cette catégorie ?')) return;
+    try {
+      await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'category', action: 'delete', slug: b.dataset.catDelete }) });
+      await loadMenu(true);
+    } catch (err) { alert(err.message || 'Erreur'); }
+  }));
+  document.querySelector('#categoryForm')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const d = Object.fromEntries(new FormData(e.target));
+    const editing = AS.menuForm?.data?.slug;
+    const sites = [d.siteMain ? 'main' : null, d.siteNight ? 'night' : null].filter(Boolean);
+    if (!sites.length) { alert('Choisis au moins un site (principal et/ou Mondi Night).'); return; }
+    try {
+      await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'category', action: editing ? 'update' : 'create', slug: editing, label: d.label, kind: d.kind, sites }) });
+      AS.menuForm = null; await loadMenu(true);
+    } catch (err) { alert(err.message || 'Erreur'); }
+  });
+
+  document.querySelector('[data-prod-new]')?.addEventListener('click', () => {
+    const firstCat = AS.menu.categories.find(c => c.kind === 'products');
+    AS.menuForm = { kind: 'product', data: { categoryId: AS.menuProductFilter !== 'all' ? AS.menuProductFilter : firstCat?.slug, active: true } }; renderRoot();
+  });
+  document.querySelectorAll('[data-prod-edit]').forEach(b => b.addEventListener('click', () => {
+    const p = AS.menu.products.find(x => x.id === b.dataset.prodEdit);
+    AS.menuForm = { kind: 'product', data: { ...p } }; renderRoot();
+  }));
+  document.querySelectorAll('[data-prod-toggle]').forEach(b => b.addEventListener('click', async () => {
+    const p = AS.menu.products.find(x => x.id === b.dataset.prodToggle);
+    try {
+      await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'product', action: 'update', id: p.id, active: p.active === false }) });
+      await loadMenu(true);
+    } catch (err) { alert(err.message || 'Erreur'); }
+  }));
+  document.querySelectorAll('[data-prod-delete]').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm('Supprimer définitivement ce produit ?')) return;
+    try {
+      await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'product', action: 'delete', id: b.dataset.prodDelete }) });
+      await loadMenu(true);
+    } catch (err) { alert(err.message || 'Erreur'); }
+  }));
+  document.querySelector('#productForm')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const d = Object.fromEntries(new FormData(e.target));
+    const editing = AS.menuForm?.data?.id;
+    try {
+      await api('/api/menu', {
+        method: 'POST',
+        body: JSON.stringify({
+          resource: 'product', action: editing ? 'update' : 'create', id: editing,
+          categoryId: d.categoryId, name: d.name, price: Number(d.price), desc: d.desc,
+          img: d.img, badge: d.badge || null, tag: d.tag || null, hot: !!d.hot, veg: !!d.veg,
+        }),
+      });
+      AS.menuForm = null; await loadMenu(true);
+    } catch (err) { alert(err.message || 'Erreur'); }
+  });
+
+  document.querySelectorAll('.cfgForm').forEach(f => f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const d = Object.fromEntries(new FormData(f));
+    try {
+      await api('/api/menu', {
+        method: 'POST',
+        body: JSON.stringify({
+          resource: 'configurator', action: 'update', id: f.dataset.cfg,
+          label: d.label, basePrice: Number(d.basePrice), active: !!d.active,
+          bases: linesToOptions(d.bases, 'extra'), sauces: linesToOptions(d.sauces, 'extra'), ingredients: linesToOptions(d.ingredients, 'price'),
+        }),
+      });
+      await loadMenu(true);
+      alert('Configurateur mis à jour.');
+    } catch (err) { alert(err.message || 'Erreur'); }
+  }));
+
+  document.querySelector('#settingsForm')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const d = Object.fromEntries(new FormData(e.target));
+    try {
+      await api('/api/menu', {
+        method: 'POST',
+        body: JSON.stringify({
+          resource: 'settings', action: 'update',
+          deliveryFee: Number(d.deliveryFee), freeDeliveryThreshold: Number(d.freeDeliveryThreshold),
+          optionPrices: { 'Fromage supplémentaire': Number(d.cheese), 'Base épicée': Number(d.spicy) },
+        }),
+      });
+      await loadMenu(true);
+      alert('Réglages enregistrés.');
     } catch (err) { alert(err.message || 'Erreur'); }
   });
 }

@@ -116,3 +116,11 @@ main{padding:16px}
 .aHistRow span:nth-child(3){color:var(--muted)}
 
 @media(max-width:640px){.aHistRow{grid-template-columns:50px 1fr auto;grid-template-areas:'id date status' 'name name total'}.aHistRow span:nth-child(2){grid-area:date}.aHistRow span:nth-child(3){grid-area:name}.aHistRow b{grid-area:total}.aHistRow span:last-child{grid-area:status}}
+
+/* Onglet Menu : vignette produit dans la liste (aDriverCard étendue à 3 colonnes) */
+.aProdCard{gap:10px}
+.aProdCard .prodThumb{width:44px;height:44px;flex:0 0 44px;border-radius:8px;overflow:hidden;background:var(--line)}
+.aProdCard .prodThumb img{width:100%;height:100%;object-fit:cover;display:block}
+.aProdCard>div:nth-child(2){flex:1;min-width:0}
+.aBox .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aBox .two label{margin-bottom:0}

@@ -1,49 +1,62 @@
 
 import './style.css';
 import { icon, stars } from './icons.js';
-import { BOISSONS, DESSERTS } from './shared-products.js';
 import { isNightOpen, nextOpeningLabel } from './night-schedule.js';
+import { loadCatalog } from './menu-client.js';
 
-const P = [
- {id:'m1',type:'pannuezo',name:'L’Original',price:12.90,desc:'Sauce tomate maison, mozzarella fondante, jambon fumé, origan',img:'/images/pannuezo-original.png',badge:'LE PLUS POPULAIRE',tag:'Classiques'},
- {id:'m2',type:'pannuezo',name:'Poulet Crémeux',price:13.90,desc:'Crème fraîche, mozzarella, poulet rôti, champignons, oignons caramélisés',img:'/images/pannuezo-poulet.png',tag:'Gourmands'},
- {id:'m3',type:'pannuezo',name:'Diavolo',price:13.50,desc:'Sauce tomate épicée, mozzarella, chorizo, poivrons, piment',img:'/images/pannuezo-diavolo.png',hot:true,tag:'Épicés'},
- {id:'m4',type:'pannuezo',name:'Végétarien',price:12.90,desc:'Sauce tomate, mozzarella, courgettes grillées, poivrons, champignons, roquette',img:'/images/pannuezo-vege.png',veg:true,tag:'Végétariens'},
- {id:'p1',type:'pizza',name:'Margherita',price:11.90,desc:'Sauce tomate maison, mozzarella fior di latte, basilic frais, huile d’olive',img:'/images/margherita.png',badge:'LA PLUS POPULAIRE',tag:'Classiques'},
- {id:'p2',type:'pizza',name:'Pepperoni',price:12.90,desc:'Sauce tomate, mozzarella, pepperoni, origan',img:'/images/pepperoni.png',tag:'Classiques'},
- {id:'p3',type:'pizza',name:'4 Fromages',price:12.90,desc:'Mozzarella, gorgonzola, chèvre, parmesan, emmental',img:'/images/four-cheese.png',tag:'Gourmandes'},
- {id:'p4',type:'pizza',name:'Légumes Rôtis',price:12.50,desc:'Sauce tomate, mozzarella, poivrons, courgettes, aubergines, oignons rouges',img:'/images/veggie.png',veg:true,tag:'Végétariennes'},
- {id:'p5',type:'pizza',name:'Diavolo',price:13.50,desc:'Sauce tomate épicée, mozzarella, chorizo, poivrons, piment',img:'/images/diavolo.png',hot:true,tag:'Épicées'},
- ...BOISSONS,
- ...DESSERTS,
-];
+// Le catalogue (produits, catégories, configurateurs) n'est plus codé en dur ici :
+// il est chargé depuis /api/menu (source Firestore, éditable par le gérant dans
+// l'admin). CATALOG est rempli par boot() avant le premier rendu ; P, CATEGORIES et
+// CUSTOM_CONFIG sont dérivés dynamiquement à chaque fois qu'on en a besoin.
+let CATALOG = null;
 
-// Catalogue du configurateur "Compose ta recette" — copie volontairement
-// séparée du backend (api/_menu.js), pour la même raison que P/MENU : le
-// prix affiché ici est indicatif, le prix payé est recalculé côté serveur.
-const CUSTOM_CONFIG = {
- pizza:{label:'Pizza',img:'/images/pizza-card.png',basePrice:8.90,
-  bases:[{id:'fine',name:'Pâte fine',extra:0},{id:'epaisse',name:'Pâte épaisse',extra:0},{id:'sans-gluten',name:'Pâte sans gluten',extra:2}],
-  sauces:[{id:'tomate',name:'Sauce tomate',extra:0},{id:'creme',name:'Crème fraîche',extra:0},{id:'sans-sauce',name:'Sans sauce',extra:0}],
-  ingredients:[
-   {id:'mozzarella',name:'Mozzarella',price:1.5},{id:'chevre',name:'Chèvre',price:1.8},
-   {id:'gorgonzola',name:'Gorgonzola',price:1.8},{id:'jambon',name:'Jambon',price:1.8},
-   {id:'chorizo',name:'Chorizo',price:1.8},{id:'poulet',name:'Poulet rôti',price:2},
-   {id:'champignons',name:'Champignons',price:1},{id:'poivrons',name:'Poivrons',price:1},
-   {id:'oignons',name:'Oignons rouges',price:1},{id:'olives',name:'Olives',price:1},
-   {id:'roquette',name:'Roquette',price:1},{id:'piment',name:'Piment frais',price:0.8},
-  ]},
- pannuezo:{label:'Pannuezo',img:'/images/pannuezo-card.png',basePrice:9.90,
-  bases:[{id:'classique',name:'Pain classique',extra:0},{id:'complet',name:'Pain complet',extra:0.8}],
-  sauces:[{id:'tomate',name:'Sauce tomate',extra:0},{id:'creme',name:'Crème fraîche',extra:0},{id:'epicee',name:'Sauce épicée',extra:0},{id:'sans-sauce',name:'Sans sauce',extra:0}],
-  ingredients:[
-   {id:'mozzarella',name:'Mozzarella',price:1.5},{id:'jambon',name:'Jambon fumé',price:1.8},
-   {id:'poulet',name:'Poulet rôti',price:2},{id:'chorizo',name:'Chorizo',price:1.8},
-   {id:'champignons',name:'Champignons',price:1},{id:'oignons',name:'Oignons caramélisés',price:1},
-   {id:'poivrons',name:'Poivrons',price:1},{id:'courgettes',name:'Courgettes grillées',price:1},
-   {id:'roquette',name:'Roquette',price:1},{id:'piment',name:'Piment',price:0.8},
-  ]},
+// Équivalent de l'ancien tableau P : tous les produits du site principal (catégories
+// actives, de type "produits", dont sites contient 'main'), avec .type = slug de
+// catégorie pour ne rien casser dans le reste du fichier (card(), product(), etc.
+// utilisent p.type comme avant).
+function mainCategories(){
+ if(!CATALOG)return [];
+ return CATALOG.categories
+  .filter(c=>c.active!==false && c.kind==='products' && Array.isArray(c.sites) && c.sites.includes('main'))
+  .sort((a,b)=>(a.order||0)-(b.order||0));
+}
+function P(){
+ if(!CATALOG)return [];
+ const slugs=new Set(mainCategories().map(c=>c.slug));
+ return CATALOG.products.filter(p=>p.active!==false && slugs.has(p.categoryId)).map(p=>({...p,type:p.categoryId}));
+}
+// Configurateurs "Compose ta recette", indexés par type (pizza/pannuezo), actifs
+// uniquement — édités depuis l'admin (onglet Menu > Configurateurs).
+function CUSTOM_CONFIG(){
+ const out={};
+ if(CATALOG)CATALOG.configurators.forEach(c=>{if(c.active!==false)out[c.id]=c});
+ return out;
+}
+// Habillage (titre, description, filtres) d'une catégorie pour l'écran menu().
+// Une poignée de catégories connues gardent un texte soigné écrit à la main ; toute
+// nouvelle catégorie créée par le gérant reçoit un habillage générique automatique.
+const TYPE_META_OVERRIDES = {
+ pizza:{heroImg:'/images/pizza-card.png',desc:'Pizzas artisanales cuites à la perfection avec des ingrédients frais et une pâte maison moelleuse et croustillante.',cook:'au four',cookSub:'haute température'},
+ pannuezo:{heroImg:'/images/pannuezo-card.png',desc:'Découvrez nos Pannuezo ultra fondants, généreusement garnis et préparés avec des ingrédients de qualité.',cook:'parfaite',cookSub:'Doré & croustillant'},
+ boisson:{heroImg:'/images/boissons-category.png',desc:'Sodas, jus et eaux bien fraîches, prêts à accompagner ta commande.',cook:'fraîche',cookSub:'Servie glacée'},
+ dessert:{heroImg:'/images/desserts-category.png',desc:'Tiramisus, cookies moelleux, pizzas sucrées et fondants gourmands pour finir en beauté.',cook:'gourmande',cookSub:'Fait maison'},
 };
+function typeMeta(slug){
+ const cat=mainCategories().find(c=>c.slug===slug)||{label:slug,slug};
+ const prods=P().filter(p=>p.type===slug);
+ const tags=[...new Set(prods.map(p=>p.tag).filter(Boolean))];
+ const ov=TYPE_META_OVERRIDES[slug]||{};
+ return {
+  label:cat.label,
+  title:cat.label.toUpperCase(),
+  plural:cat.label.toUpperCase(),
+  heroImg:ov.heroImg||prods[0]?.img||'/images/logo.png',
+  desc:ov.desc||`Découvre notre sélection ${cat.label.toLowerCase()}, préparée avec soin.`,
+  cook:ov.cook||'parfaite',
+  cookSub:ov.cookSub||'Préparé avec soin',
+  filters:tags.length?['Toutes',...tags]:['Toutes'],
+ };
+}
 
 // ⚠️ À REMPLACER par les vraies coordonnées avant mise en prod — voir bottom sheet "Nous contacter".
 // phone/whatsapp au format international. whatsapp sans "+" ni espaces (format attendu par wa.me).
@@ -60,11 +73,11 @@ const S = {route:'home',type:'pizza',filter:'Toutes',selected:null,cart:JSON.par
 // au changement d'onglet Pizza/Pannuezo, pour éviter un id de base/sauce
 // orphelin d'un autre type, ex. 'fine' choisi puis bascule sur Pannuezo).
 function initBuilder(type){
- const cfg=CUSTOM_CONFIG[type];
+ const cfg=CUSTOM_CONFIG()[type];
  S.builder={type,base:cfg.bases[0].id,sauce:cfg.sauces[0].id,ingredients:[]};
 }
 function builderPrice(){
- const cfg=CUSTOM_CONFIG[S.builder.type];
+ const cfg=CUSTOM_CONFIG()[S.builder.type];
  const base=cfg.bases.find(b=>b.id===S.builder.base);
  const sauce=cfg.sauces.find(s=>s.id===S.builder.sauce);
  const ing=S.builder.ingredients.map(id=>cfg.ingredients.find(i=>i.id===id)).filter(Boolean);
@@ -89,6 +102,8 @@ async function loadTrack(){
  if(S.route==='track')render();
 }
 const save=()=>localStorage.setItem('fd_cart',JSON.stringify(S.cart));
+
+function loadingShell(hasError){document.querySelector('#root').innerHTML=`<div class="phone"><main id="screen"><section class="simple"><i>MONDI FOOD</i><h1>${hasError?'CONNEXION IMPOSSIBLE':'CHARGEMENT…'}</h1><p>${hasError?'Impossible de charger le menu. Vérifie ta connexion et recharge la page.':'Un instant, on prépare le menu.'}</p></section></main></div>`}
 
 function shell(){document.querySelector('#root').innerHTML=`
 <div class="phone">
@@ -155,50 +170,41 @@ function home(){return `
 </section>
 <section class="welcome"><div><span>OFFRE DE BIENVENUE</span><h3>-10% SUR VOTRE 1ÈRE COMMANDE</h3><div class="promoCopyRow"><b>WELCOME10</b><button class="copyBtn" data-copy="WELCOME10">${icon('copy')} COPIER</button></div></div><strong>%</strong></section>
 <section class="homeTiles" id="categories">
-${tile('pannuezo','/images/pannuezo-card.png','PANNUEZO','Ultra fondant · généreusement garni')}
-${tile('pizza','/images/pizza-card.png','PIZZA','Pâte artisanale · ingrédients frais')}
-${tile('boisson','/images/boissons-category.png','BOISSONS','Fraîches, servies avec ta commande')}
-${tile('dessert','/images/desserts-category.png','DESSERTS','Gourmands, faits pour se faire plaisir')}</section>
-<section class="builderPromoWrap"><button class="builderPromo" data-open-builder="pizza"><span class="builderPromoTag">NOUVEAU</span><h3>COMPOSE TA RECETTE</h3><p>Pâte, sauce et garnitures : choisis chaque ingrédient toi-même.</p><em>Créer ma recette ${icon('arrow-right')}</em></button></section>
+${mainCategories().map(c=>tile(c.slug,typeMeta(c.slug).heroImg,c.label.toUpperCase(),`Découvre notre sélection ${c.label.toLowerCase()}`)).join('')}</section>
+${Object.keys(CUSTOM_CONFIG()).length?`<section class="builderPromoWrap"><button class="builderPromo" data-open-builder="${Object.keys(CUSTOM_CONFIG())[0]}"><span class="builderPromoTag">NOUVEAU</span><h3>COMPOSE TA RECETTE</h3><p>Pâte, sauce et garnitures : choisis chaque ingrédient toi-même.</p><em>Créer ma recette ${icon('arrow-right')}</em></button></section>`:''}
 <section class="perks"><div><b>${icon('fire','',true)}</b><strong>Cuisson parfaite</strong><small>Doré & croustillant</small></div><div><b>${icon('check')}</b><strong>Ingrédients frais</strong><small>Sélectionnés avec soin</small></div><div><b>${icon('delivery')}</b><strong>Livraison rapide</strong><small>30–45 min</small></div></section>
-<section class="block"><div class="heading"><span><i>À LA CARTE</i><h2>Nos incontournables</h2></span><button data-go="menu">Tout voir ${icon('arrow-right')}</button></div><div class="railWrap"><div class="rail">${P.slice(0,4).map(mini).join('')}</div></div></section>
+<section class="block"><div class="heading"><span><i>À LA CARTE</i><h2>Nos incontournables</h2></span><button data-go="menu">Tout voir ${icon('arrow-right')}</button></div><div class="railWrap"><div class="rail">${P().slice(0,4).map(mini).join('')}</div></div></section>
 <section class="nightBannerWrap"><a class="nightBanner${isNightOpen()?' live':''}" href="/night.html"><img src="/images/mondi-night-banner.jpg" alt="Mondi Night — Burgers, pâtes et galettes, vendredi et samedi soir de 23h à 5h"><em class="soon">${isNightOpen()?'OUVERT MAINTENANT':nextOpeningLabel()}</em></a></section>`}
 
 function tile(type,img,title,sub){const kicker=type==='pizza'?'PÂTE ARTISANALE':type==='boisson'?'SANS ALCOOL':type==='dessert'?'FAIT MAISON':'SIGNATURE';return `<button class="tile" data-type="${type}" data-go="category"><div class="tileText"><i>${kicker}</i><h3>${title}</h3><p>${sub}</p></div><div class="tileImg"><img src="${img}"></div><span>Découvrir <i>${icon('arrow-right')}</i></span></button>`}
 function mini(p){return `<article class="mini">${p.badge?`<em class="badge">${icon('star','',true)} ${p.badge}</em>`:''}<button class="miniMain" data-product="${p.id}"><img src="${p.img}"><b>${p.name}</b><strong>${formatPrice(p.price)}</strong></button><button class="miniAdd${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check')+' Ajouté':icon('plus')+' Ajouter'}</button></article>`}
 
-const TYPE_META = {
- pizza:{label:'Pizza',title:'PIZZA',plural:'PIZZAS',heroImg:'/images/pizza-card.png',desc:'Pizzas artisanales cuites à la perfection avec des ingrédients frais et une pâte maison moelleuse et croustillante.',cook:'au four',cookSub:'haute température',filters:['Toutes','Classiques','Gourmandes','Épicées','Végétariennes']},
- pannuezo:{label:'Pannuezo',title:'PANNUEZO',plural:'PANNUEZO',heroImg:'/images/pannuezo-card.png',desc:'Découvrez nos Pannuezo ultra fondants, généreusement garnis et préparés avec des ingrédients de qualité.',cook:'parfaite',cookSub:'Doré & croustillant',filters:['Toutes','Classiques','Gourmands','Épicés','Végétariens']},
- boisson:{label:'Boissons',title:'BOISSONS',plural:'BOISSONS',heroImg:'/images/boissons-category.png',desc:'Sodas, jus et eaux bien fraîches, prêts à accompagner ta commande.',cook:'fraîche',cookSub:'Servie glacée',filters:['Toutes']},
- dessert:{label:'Desserts',title:'DESSERTS',plural:'DESSERTS',heroImg:'/images/desserts-category.png',desc:'Tiramisus, cookies moelleux, pizzas sucrées et fondants gourmands pour finir en beauté.',cook:'gourmande',cookSub:'Fait maison',filters:['Toutes','Tiramisu','Cookies','Pizzas sucrées','Gourmands']},
-};
 function menu(){
- const meta=TYPE_META[S.type];
- const list=P.filter(x=>x.type===S.type).filter(x=>S.filter==='Toutes'||x.tag===S.filter);
+ const meta=typeMeta(S.type);
+ const list=P().filter(x=>x.type===S.type).filter(x=>S.filter==='Toutes'||x.tag===S.filter);
  return `<section class="menuTop"><button class="back" data-go="home">${icon('arrow-left')}</button><div class="crumb"><span class="crumbHome">Accueil</span><span class="crumbSep">›</span><span class="crumbCurrent">${meta.label}</span></div><div class="menuHero"><div><h1>${meta.title}</h1><span class="uline"></span><p>${meta.desc}</p></div><div class="menuHeroImg"><img src="${meta.heroImg}"></div></div>
 <div class="featureRow"><span>${icon('fire','',true)} <b>Cuisson ${meta.cook}</b><small>${meta.cookSub}</small></span><span>${icon('check')} <b>Ingrédients frais</b><small>Sélectionnés avec soin</small></span><span>${icon('clock')} <b>Livraison rapide</b><small>30–45 min</small></span></div></section>
-<div class="switch"><button class="${S.type==='pizza'?'active':''}" data-type="pizza" data-go="category">Pizza</button><button class="${S.type==='pannuezo'?'active':''}" data-type="pannuezo" data-go="category">Pannuezo</button><button class="${S.type==='boisson'?'active':''}" data-type="boisson" data-go="category">Boissons</button><button class="${S.type==='dessert'?'active':''}" data-type="dessert" data-go="category">Desserts</button></div>
-<section class="menuSection"><div class="heading"><span><i>NOS ${meta.plural}</i><h2>Choisis ton préféré</h2></span></div>${meta.filters.length>1?`<div class="filters">${meta.filters.map(f=>`<button class="${S.filter===f?'active':''}" data-filter="${f}">${f}</button>`).join('')}</div>`:''}${S.type!=='boisson'&&S.type!=='dessert'?`<button class="builderCard" data-open-builder="${S.type}"><span class="builderCardIcon">${icon('plus')}</span><div><b>CRÉE TA RECETTE</b><small>Pâte, sauce et garnitures 100% personnalisées</small></div><em>${icon('arrow-right')}</em></button>`:''}<div class="cards">${list.map(card).join('')}</div></section>${sticky()}`}
+<div class="switch">${mainCategories().map(c=>`<button class="${S.type===c.slug?'active':''}" data-type="${c.slug}" data-go="category">${c.label}</button>`).join('')}</div>
+<section class="menuSection"><div class="heading"><span><i>NOS ${meta.plural}</i><h2>Choisis ton préféré</h2></span></div>${meta.filters.length>1?`<div class="filters">${meta.filters.map(f=>`<button class="${S.filter===f?'active':''}" data-filter="${f}">${f}</button>`).join('')}</div>`:''}${CUSTOM_CONFIG()[S.type]?`<button class="builderCard" data-open-builder="${S.type}"><span class="builderCardIcon">${icon('plus')}</span><div><b>CRÉE TA RECETTE</b><small>Pâte, sauce et garnitures 100% personnalisées</small></div><em>${icon('arrow-right')}</em></button>`:''}<div class="cards">${list.map(card).join('')}</div></section>${sticky()}`}
 
 function card(p){return `<article class="card"><button data-product="${p.id}" class="cardMain"><div class="thumb">${p.badge?`<em class="badge">${icon('star','',true)} ${p.badge}</em>`:''}<img src="${p.img}"></div><div class="copy"><h3>${p.name}</h3><p>${p.desc}</p><strong>${formatPrice(p.price)}</strong></div></button><button class="plus${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check'):icon('plus')}</button></article>`}
 
 function product(){
- const p=P.find(x=>x.id===S.selected); if(!p)return '';
+ const p=P().find(x=>x.id===S.selected); if(!p)return '';
  const isDrink=p.type==='boisson';
  const isDessert=p.type==='dessert';
  const canCustomize=!isDrink&&!isDessert;
  const heroLabel=isDrink?'SERVIE BIEN FRAÎCHE':isDessert?'FAIT MAISON · GOURMAND':'FRAIS · PRÉPARÉ À LA COMMANDE';
- return `<section class="detail"><button class="back" data-go="menu">${icon('arrow-left')} <span>Retour au menu</span></button><div class="detailImg"><img src="${p.img}"><span>${heroLabel}</span></div><div class="detailBody"><i>${p.type.toUpperCase()}${canCustomize?' · SIGNATURE':''}</i><h1>${p.name}</h1><div class="stars">${stars(5)} <small>4,9 · Nos clients adorent</small></div><p class="desc">${p.desc}.</p><div class="detailPerks">${canCustomize?`<span>${icon('fire','',true)} Cuisson minute</span><span>${icon('check')} Ingrédients frais</span><span>${icon('delivery')} Livraison 30–45 min</span>`:`<span>${icon('check')} ${isDrink?'100% fraîche':'Fait maison'}</span><span>${icon('delivery')} Livraison 30–45 min</span>`}</div>${canCustomize?`<div class="options"><h3>PERSONNALISE TA COMMANDE</h3><small>Ajoute une touche en plus</small><label>Fromage supplémentaire <b>+1,00 € <input type=checkbox id="optCheese" ${S.opts.cheese?'checked':''}></b></label><label>Base épicée <b>+0,50 € <input type=checkbox id="optSpicy" ${S.opts.spicy?'checked':''}></b></label></div>`:''}<div class="buy"><div><small>Prix</small><strong>${formatPrice(p.price)}</strong></div><button class="cta${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check')+' AJOUTÉ':'AJOUTER AU PANIER '+icon('arrow-right')}</button></div></div></section>`}
+ return `<section class="detail"><button class="back" data-go="menu">${icon('arrow-left')} <span>Retour au menu</span></button><div class="detailImg"><img src="${p.img}"><span>${heroLabel}</span></div><div class="detailBody"><i>${typeMeta(p.type).label.toUpperCase()}${canCustomize?' · SIGNATURE':''}</i><h1>${p.name}</h1><div class="stars">${stars(5)} <small>4,9 · Nos clients adorent</small></div><p class="desc">${p.desc}.</p><div class="detailPerks">${canCustomize?`<span>${icon('fire','',true)} Cuisson minute</span><span>${icon('check')} Ingrédients frais</span><span>${icon('delivery')} Livraison 30–45 min</span>`:`<span>${icon('check')} ${isDrink?'100% fraîche':'Fait maison'}</span><span>${icon('delivery')} Livraison 30–45 min</span>`}</div>${canCustomize?`<div class="options"><h3>PERSONNALISE TA COMMANDE</h3><small>Ajoute une touche en plus</small><label>Fromage supplémentaire <b>+1,00 € <input type=checkbox id="optCheese" ${S.opts.cheese?'checked':''}></b></label><label>Base épicée <b>+0,50 € <input type=checkbox id="optSpicy" ${S.opts.spicy?'checked':''}></b></label></div>`:''}<div class="buy"><div><small>Prix</small><strong>${formatPrice(p.price)}</strong></div><button class="cta${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check')+' AJOUTÉ':'AJOUTER AU PANIER '+icon('arrow-right')}</button></div></div></section>`}
 
 
 function builder(){
- const cfg=CUSTOM_CONFIG[S.builder.type];
+ const cfg=CUSTOM_CONFIG()[S.builder.type];
  const price=builderPrice();
  return `<section class="builderPage"><button class="back" data-go="${S.builderFrom||'home'}">${icon('arrow-left')} <span>Retour</span></button>
 <i>FAIT MAISON, À TA FAÇON</i><h1>COMPOSE TA RECETTE</h1>
 <p class="builderIntro">Choisis ta base, ta sauce et tes garnitures. On prépare exactement comme tu veux.</p>
-<div class="switch"><button class="${S.builder.type==='pizza'?'active':''}" data-builder-type="pizza">Pizza</button><button class="${S.builder.type==='pannuezo'?'active':''}" data-builder-type="pannuezo">Pannuezo</button></div>
+<div class="switch">${Object.entries(CUSTOM_CONFIG()).map(([id,c])=>`<button class="${S.builder.type===id?'active':''}" data-builder-type="${id}">${c.label}</button>`).join('')}</div>
 <div class="builderGroup"><h3>1. LA BASE</h3><div class="filters builderOptions">${cfg.bases.map(b=>`<button class="${S.builder.base===b.id?'active':''}" data-builder-base="${b.id}">${b.name}${b.extra?` +${formatPrice(b.extra)}`:''}</button>`).join('')}</div></div>
 <div class="builderGroup"><h3>2. LA SAUCE</h3><div class="filters builderOptions">${cfg.sauces.map(s=>`<button class="${S.builder.sauce===s.id?'active':''}" data-builder-sauce="${s.id}">${s.name}${s.extra?` +${formatPrice(s.extra)}`:''}</button>`).join('')}</div></div>
 <div class="builderGroup"><h3>3. LES GARNITURES</h3><small class="builderHint">Sélectionne autant d'ingrédients que tu veux</small><div class="builderIngredients">${cfg.ingredients.map(i=>`<label class="builderIng${S.builder.ingredients.includes(i.id)?' checked':''}"><input type="checkbox" data-builder-ing="${i.id}" ${S.builder.ingredients.includes(i.id)?'checked':''}><span>${i.name}</span><b>+${formatPrice(i.price)}</b></label>`).join('')}</div></div>
@@ -241,7 +247,7 @@ function account(){return `<section class="simple left"><i>ESPACE CLIENT</i><h1>
 function sticky(){return S.cart.length?`<div class=sticky><span class="stickyBag">${icon('cart')}</span><span class="stickyInfo"><b>${count()} articles</b><small>${formatPrice(total())}</small></span><button class="cta pill" data-go=cart>VOIR LE PANIER ${icon('arrow-right')}</button></div>`:''}
 
 function add(id){
- let p=P.find(x=>x.id===id);
+ let p=P().find(x=>x.id===id);
  let extra=0,opts=[];
  // Les options (fromage/épicé) ne s'appliquent que depuis la fiche produit du même
  // article — pas depuis un "+" rapide sur une carte du menu, sinon une option cochée
@@ -264,7 +270,7 @@ function add(id){
 }
 function addCustom(){
  const {type,base,sauce,ingredients}=S.builder;
- const cfg=CUSTOM_CONFIG[type];
+ const cfg=CUSTOM_CONFIG()[type];
  const baseObj=cfg.bases.find(b=>b.id===base);
  const sauceObj=cfg.sauces.find(s=>s.id===sauce);
  const ingObjs=ingredients.map(id=>cfg.ingredients.find(i=>i.id===id)).filter(Boolean);
@@ -437,4 +443,21 @@ if(new URLSearchParams(window.location.search).get('view')==='cart'){
  S.route='cart';
  window.history.replaceState({},'',window.location.pathname);
 }
-handleStripeReturn().then(()=>shell());
+async function boot(){
+ loadingShell(false);
+ try{
+  CATALOG=await loadCatalog();
+ }catch{
+  loadingShell(true);
+  return;
+ }
+ // Si le type par défaut ('pizza') a été supprimé/désactivé par le gérant, on
+ // retombe sur la première catégorie disponible pour ne pas afficher une page vide.
+ if(!mainCategories().some(c=>c.slug===S.type)){
+  S.type=mainCategories()[0]?.slug||S.type;
+  S.builder.type=S.type;
+ }
+ await handleStripeReturn();
+ shell();
+}
+boot();
