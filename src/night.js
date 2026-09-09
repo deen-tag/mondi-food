@@ -44,28 +44,26 @@ const save = () => localStorage.setItem('fd_cart',JSON.stringify(S.cart));
 
 function render(){
  const root=document.querySelector('#root');
- if(!isNightOpen()){root.innerHTML=closedScreen();bind();return}
  root.innerHTML=`<div class="nightApp">${header()}${hero()}${cats()}${cards()}${sticky()}<div id="nToast"></div></div>`;
  bind();
 }
 
 function header(){return `<header class="nHeader"><a href="/">${icon('arrow-left')}</a><span class="nWordmark">MONDI NIGHT</span><a class="nCart" href="/index.html?view=cart">${icon('cart')}<b>${count()}</b></a></header>`}
 
-function hero(){return `<section class="nHero"><div class="nMoon">${icon('moon')}</div><h1>Mondi Night</h1><p>Vendredi &amp; samedi · 23h → 05h</p><span class="nPill live"><b></b>OUVERT MAINTENANT</span></section>`}
-
-function closedScreen(){return `<div class="nightApp"><header class="nHeader"><a href="/">${icon('arrow-left')}</a><span class="nWordmark">MONDI NIGHT</span><a class="nCart" href="/index.html?view=cart">${icon('cart')}<b>${count()}</b></a></header>
-<section class="nClosed"><div class="nMoon">${icon('moon')}</div><h1>C'est fermé pour l'instant</h1><p>Mondi Night, c'est burgers, pâtes et galettes le vendredi et le samedi soir, de 23h à 5h du matin.</p><span class="nPill wait"><b></b>${nextOpeningLabel()}</span><br><a class="nGhost" href="/">Retour à l'accueil</a></section></div>`}
+function hero(){const open=isNightOpen();return `<section class="nHero"><div class="nMoon">${icon('moon')}</div><h1>Mondi Night</h1><p>Vendredi &amp; samedi · 23h → 05h</p><span class="nPill ${open?'live':'wait'}"><b></b>${open?'OUVERT MAINTENANT':nextOpeningLabel()}</span></section>`}
 
 function cats(){return `<nav class="nCats">${CATS.map(c=>`<button class="${S.cat===c.type?'active':''}" data-cat="${c.type}">${c.label}</button>`).join('')}</nav>`}
 
 function cards(){const list=N.filter(p=>p.type===S.cat);return `<section class="nCards">${list.map(card).join('')}</section>`}
 
-function card(p){return `<article class="nCard"><img class="nImg" src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.style.display='none'">
-<div class="nBody"><h3>${p.name}</h3><p>${p.desc}</p><div class="nCardRow"><strong>${formatPrice(p.price)}</strong><button class="nAdd${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check')+' Ajouté':icon('plus')+' Ajouter'}</button></div></div></article>`}
+function card(p){const open=isNightOpen();const addBtn=open?`<button class="nAdd${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check')+' Ajouté':icon('plus')+' Ajouter'}</button>`:`<span class="nWait">Dispo ven &amp; sam dès 23h</span>`;
+return `<article class="nCard"><img class="nImg" src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.style.display='none'">
+<div class="nBody"><h3>${p.name}</h3><p>${p.desc}</p><div class="nCardRow"><strong>${formatPrice(p.price)}</strong>${addBtn}</div></div></article>`}
 
 function sticky(){return S.cart.length?`<div class="nSticky"><span class="nStickyBag">${icon('cart')}</span><span class="nStickyInfo"><b>${count()} articles</b><small>${formatPrice(total())}</small></span><a href="/index.html?view=cart">Voir le panier ${icon('arrow-right')}</a></div>`:''}
 
 function add(id){
+ if(!isNightOpen())return;
  const p=N.find(x=>x.id===id);
  if(!p)return;
  let x=S.cart.find(x=>x.key===id);
