@@ -173,11 +173,19 @@ function home(){return `
 ${mainCategories().map(c=>tile(c.slug,typeMeta(c.slug).heroImg,c.label.toUpperCase(),`Découvre notre sélection ${c.label.toLowerCase()}`)).join('')}</section>
 ${Object.keys(CUSTOM_CONFIG()).length?`<section class="builderPromoWrap"><button class="builderPromo" data-open-builder="${Object.keys(CUSTOM_CONFIG())[0]}"><span class="builderPromoTag">NOUVEAU</span><h3>COMPOSE TA RECETTE</h3><p>Pâte, sauce et garnitures : choisis chaque ingrédient toi-même.</p><em>Créer ma recette ${icon('arrow-right')}</em></button></section>`:''}
 <section class="perks"><div><b>${icon('fire','',true)}</b><strong>Cuisson parfaite</strong><small>Doré & croustillant</small></div><div><b>${icon('check')}</b><strong>Ingrédients frais</strong><small>Sélectionnés avec soin</small></div><div><b>${icon('delivery')}</b><strong>Livraison rapide</strong><small>30–45 min</small></div></section>
-<section class="block"><div class="heading"><span><i>À LA CARTE</i><h2>Nos incontournables</h2></span><button data-go="menu">Tout voir ${icon('arrow-right')}</button></div><div class="railWrap"><div class="rail">${P().slice(0,4).map(mini).join('')}</div></div></section>
+<section class="block"><div class="heading"><span><i>À LA CARTE</i><h2>Nos incontournables</h2></span><button data-go="menu">Tout voir ${icon('arrow-right')}</button></div><div class="railWrap"><div class="rail">${featuredProducts().map(mini).join('')}</div></div></section>
 <section class="nightBannerWrap"><a class="nightBanner${isNightOpen()?' live':''}" href="/night.html"><img src="/images/mondi-night-banner.jpg" alt="Mondi Night — Burgers, pâtes et galettes, vendredi et samedi soir de 23h à 5h"><em class="soon">${isNightOpen()?'OUVERT MAINTENANT':nextOpeningLabel()}</em></a></section>`}
 
 function tile(type,img,title,sub){const kicker=type==='pizza'?'PÂTE ARTISANALE':type==='boisson'?'SANS ALCOOL':type==='dessert'?'FAIT MAISON':'SIGNATURE';return `<button class="tile" data-type="${type}" data-go="category"><div class="tileText"><i>${kicker}</i><h3>${title}</h3><p>${sub}</p></div><div class="tileImg"><img src="${img}"></div><span>Découvrir <i>${icon('arrow-right')}</i></span></button>`}
-function mini(p){return `<article class="mini">${p.badge?`<em class="badge">${icon('star','',true)} ${p.badge}</em>`:''}<button class="miniMain" data-product="${p.id}"><img src="${p.img}"><b>${p.name}</b><strong>${formatPrice(p.price)}</strong></button><button class="miniAdd${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check')+' Ajouté':icon('plus')+' Ajouter'}</button></article>`}
+function productBadge(p){return p.badge || (p.popular ? 'POPULAIRE' : null)}
+function featuredProducts(){
+ // "Nos incontournables" (accueil) : les produits marqués "populaire" dans l'admin.
+ // Si le gérant n'en a coché aucun, on retombe sur les 4 premiers pour ne jamais
+ // afficher une section vide.
+ const popular=P().filter(p=>p.popular);
+ return (popular.length?popular:P()).slice(0,8);
+}
+function mini(p){return `<article class="mini">${productBadge(p)?`<em class="badge">${icon('star','',true)} ${productBadge(p)}</em>`:''}<button class="miniMain" data-product="${p.id}"><img src="${p.img}"><b>${p.name}</b><strong>${formatPrice(p.price)}</strong></button><button class="miniAdd${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check')+' Ajouté':icon('plus')+' Ajouter'}</button></article>`}
 
 function menu(){
  const meta=typeMeta(S.type);
@@ -187,7 +195,7 @@ function menu(){
 <div class="switch">${mainCategories().map(c=>`<button class="${S.type===c.slug?'active':''}" data-type="${c.slug}" data-go="category">${c.label}</button>`).join('')}</div>
 <section class="menuSection"><div class="heading"><span><i>NOS ${meta.plural}</i><h2>Choisis ton préféré</h2></span></div>${meta.filters.length>1?`<div class="filters">${meta.filters.map(f=>`<button class="${S.filter===f?'active':''}" data-filter="${f}">${f}</button>`).join('')}</div>`:''}${CUSTOM_CONFIG()[S.type]?`<button class="builderCard" data-open-builder="${S.type}"><span class="builderCardIcon">${icon('plus')}</span><div><b>CRÉE TA RECETTE</b><small>Pâte, sauce et garnitures 100% personnalisées</small></div><em>${icon('arrow-right')}</em></button>`:''}<div class="cards">${list.map(card).join('')}</div></section>${sticky()}`}
 
-function card(p){return `<article class="card"><button data-product="${p.id}" class="cardMain"><div class="thumb">${p.badge?`<em class="badge">${icon('star','',true)} ${p.badge}</em>`:''}<img src="${p.img}"></div><div class="copy"><h3>${p.name}</h3><p>${p.desc}</p><strong>${formatPrice(p.price)}</strong></div></button><button class="plus${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check'):icon('plus')}</button></article>`}
+function card(p){return `<article class="card"><button data-product="${p.id}" class="cardMain"><div class="thumb">${productBadge(p)?`<em class="badge">${icon('star','',true)} ${productBadge(p)}</em>`:''}<img src="${p.img}"></div><div class="copy"><h3>${p.name}</h3><p>${p.desc}</p><strong>${formatPrice(p.price)}</strong></div></button><button class="plus${S.justAddedKey===p.id?' added':''}" data-add="${p.id}">${S.justAddedKey===p.id?icon('check'):icon('plus')}</button></article>`}
 
 function product(){
  const p=P().find(x=>x.id===S.selected); if(!p)return '';

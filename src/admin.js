@@ -551,7 +551,7 @@ function menuProductsView() {
   const list = products.map(p => `
    <div class="aDriverCard aProdCard">
     <div class="prodThumb"><img src="${p.img}" alt="" loading="lazy"></div>
-    <div><b>${p.name}</b><small>${categoryLabel(p.categoryId)} · ${formatPrice(p.price)}${p.active === false ? ' · Masqué' : ''}</small></div>
+    <div><b>${p.name}</b><small>${categoryLabel(p.categoryId)} · ${formatPrice(p.price)}${p.popular ? ' · ⭐ Populaire' : ''}${p.active === false ? ' · Masqué' : ''}</small></div>
     <div class="aPromoActions">
      <button class="ghost small" data-prod-toggle="${p.id}">${p.active === false ? 'Afficher' : 'Masquer'}</button>
      <button class="ghost small" data-prod-edit="${p.id}">Modifier</button>
@@ -587,6 +587,7 @@ function productFormHtml(d) {
      <label><input type="checkbox" name="hot" ${d.hot ? 'checked' : ''}> Épicé</label>
      <label><input type="checkbox" name="veg" ${d.veg ? 'checked' : ''}> Végétarien</label>
     </div>
+    <label><input type="checkbox" name="popular" ${d.popular ? 'checked' : ''}> ⭐ Populaire <small class="aMuted">— affiche une pastille sur la carte et met ce produit en avant dans "Nos incontournables" sur la page d'accueil</small></label>
     <div class="aRow">
      <button class="cta small" type="submit">${editing ? 'ENREGISTRER' : 'CRÉER'}</button>
      <button type="button" class="ghost small" id="cancelMenuForm">Annuler</button>
@@ -835,7 +836,7 @@ function bind() {
         body: JSON.stringify({
           resource: 'product', action: editing ? 'update' : 'create', id: editing,
           categoryId: d.categoryId, name: d.name, price: Number(d.price), desc: d.desc,
-          img: d.img, badge: d.badge || null, tag: d.tag || null, hot: !!d.hot, veg: !!d.veg,
+          img: d.img, badge: d.badge || null, tag: d.tag || null, hot: !!d.hot, veg: !!d.veg, popular: !!d.popular,
         }),
       });
       AS.menuForm = null; await loadMenu(true);
