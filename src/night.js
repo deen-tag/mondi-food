@@ -3,7 +3,7 @@ import { icon } from './icons.js';
 import { isNightOpen, nextOpeningLabel } from './night-schedule.js';
 import { loadCatalog } from './menu-client.js';
 
-const S = {cat:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),justAddedKey:null,catalog:null,loadError:false};
+const S = {cat:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),justAddedKey:null,catalog:null,loadError:false,contactOpen:false};
 const formatPrice = n => n.toFixed(2).replace('.',',')+' €';
 const count = () => S.cart.reduce((a,x)=>a+x.qty,0);
 const total = () => S.cart.reduce((a,x)=>a+x.price*x.qty,0);
@@ -30,13 +30,18 @@ function render(){
   root.innerHTML=`<div class="nightApp"><section class="nHero"><img class="nLogo" src="/images/night/logo.png" alt="Mondi Night"><p>${S.loadError?'Impossible de charger le menu, réessaie dans un instant.':'Chargement du menu…'}</p></section></div>`;
   return;
  }
- root.innerHTML=`<div class="nightApp">${header()}${hero()}${cats()}${cards()}${sticky()}<div id="nToast"></div></div>`;
+ root.innerHTML=`<div class="nightApp">${header()}${hero()}${cats()}${cards()}${sticky()}<div id="nToast"></div></div>${nContactSheet()}`;
  bind();
 }
 
-// ⚠️ Même numéro placeholder que CONTACT.phoneHref dans main.js — à remplacer par le vrai numéro avant mise en prod.
-const NIGHT_PHONE_HREF='+33600000000';
-function header(){return `<header class="nHeader"><a class="nPhone" href="tel:${NIGHT_PHONE_HREF}">${icon('phone')}</a><a class="nHomeLogo" href="/"><img src="/images/night/logo.png" alt="Mondi Night"></a><a class="nCart" href="/index.html?view=cart">${icon('cart')}<b>${count()}</b></a></header>`}
+// ⚠️ Mêmes coordonnées placeholder que CONTACT dans main.js — à remplacer par les vraies avant mise en prod.
+const CONTACT = {
+ phone:'+33 6 00 00 00 00',
+ phoneHref:'+33600000000',
+ whatsapp:'33600000000',
+ email:'contact@mondifood.fr',
+};
+function header(){return `<header class="nHeader"><button class="nPhone" data-contact>${icon('phone')}</button><a class="nHomeLogo" href="/"><img src="/images/night/logo.png" alt="Mondi Night"></a><a class="nCart" href="/index.html?view=cart">${icon('cart')}<b>${count()}</b></a></header>`}
 
 function hero(){const open=isNightOpen();return `<section class="nHero"><p>Vendredi &amp; samedi · 23h → 05h</p><span class="nPill ${open?'live':'wait'}"><b></b>${open?'OUVERT MAINTENANT':nextOpeningLabel()}</span></section>`}
 
@@ -54,6 +59,15 @@ function card(p){
 }
 
 function sticky(){return S.cart.length?`<div class="nSticky"><span class="nStickyBag">${icon('cart')}</span><span class="nStickyInfo"><b>${count()} articles</b><small>${formatPrice(total())}</small></span><a href="/index.html?view=cart">Voir le panier ${icon('arrow-right')}</a></div>`:''}
+
+function nContactSheet(){
+ if(!S.contactOpen)return '';
+ return `<div class="nSheetWrap"><div class="nSheetBackdrop" data-contact-close></div><div class="nSheetPanel"><div class="nSheetHandle"></div><button class="nSheetClose" data-contact-close>${icon('close')}</button><h2>NOUS CONTACTER</h2><p class="nSheetSub">Une question sur ta commande ? On te répond vite.</p><div class="nContactLinks">
+<a class="nContactRow" href="tel:${CONTACT.phoneHref}">${icon('phone')}<div><b>Téléphone</b><small>${CONTACT.phone}</small></div></a>
+<a class="nContactRow" href="https://wa.me/${CONTACT.whatsapp}" target="_blank" rel="noopener">${icon('phone')}<div><b>WhatsApp</b><small>Réponse rapide</small></div></a>
+<a class="nContactRow" href="mailto:${CONTACT.email}">${icon('mail')}<div><b>Email</b><small>${CONTACT.email}</small></div></a>
+</div></div></div>`;
+}
 
 function add(id){
  if(!isNightOpen())return;
@@ -77,6 +91,8 @@ function toast(t){
 function bind(){
  document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{S.cat=b.dataset.cat;render()});
  document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>add(b.dataset.add));
+ document.querySelectorAll('[data-contact]').forEach(b=>b.onclick=()=>{S.contactOpen=true;render()});
+ document.querySelectorAll('[data-contact-close]').forEach(b=>b.onclick=()=>{S.contactOpen=false;render()});
 }
 
 async function boot(){

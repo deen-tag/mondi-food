@@ -7,7 +7,7 @@ button,a{font:inherit;color:inherit;cursor:pointer;text-decoration:none}
 
 /* header — même logique que le header du site principal : téléphone / logo / panier, en icônes plates sans fond ni cercle */
 .nHeader{display:grid;grid-template-columns:44px 1fr 44px;align-items:start;padding:14px 14px}
-.nHeader a{display:flex;align-items:center;justify-content:center;color:var(--n-text)}
+.nHeader a,.nHeader button{display:flex;align-items:center;justify-content:center;color:var(--n-text);border:0;background:none;padding:0}
 .nHeader .nPhone svg,.nHeader .nCart svg{width:22px;height:22px}
 .nHeader .nHomeLogo img{max-width:220px;width:70%;height:auto;display:block;margin:0 auto;filter:drop-shadow(0 0 22px rgba(178,59,255,.45))}
 .nHeader .nCart{position:relative}
@@ -59,3 +59,19 @@ button,a{font:inherit;color:inherit;cursor:pointer;text-decoration:none}
 
 @media(min-width:700px){body{padding:20px}.nightApp{border:1px solid var(--n-line);border-radius:28px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* fiche contact — même comportement que la sheetWrap du site principal, en thème sombre */
+.nSheetWrap{position:fixed;inset:0;z-index:50}
+.nSheetBackdrop{position:absolute;inset:0;background:rgba(5,2,10,.6);animation:nSheetFade .25s ease}
+.nSheetPanel{position:absolute;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:var(--n-card);border:1px solid var(--n-line);border-radius:22px 22px 0 0;padding:10px 22px 30px;box-shadow:0 -10px 40px rgba(0,0,0,.5);animation:nSheetUp .3s cubic-bezier(.2,.8,.2,1)}
+.nSheetHandle{width:36px;height:4px;background:var(--n-line);border-radius:3px;margin:8px auto 16px}
+.nSheetClose{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.06);border:0;display:flex;align-items:center;justify-content:center;color:var(--n-muted);font-size:15px}
+.nSheetPanel h2{font:800 26px 'Barlow Condensed';letter-spacing:.5px;margin:4px 0 3px;color:var(--n-text)}
+.nSheetSub{color:var(--n-muted);font-size:12px;margin:0 0 18px}
+.nContactLinks{display:flex;flex-direction:column;gap:10px}
+.nContactRow{display:flex;align-items:center;gap:13px;border:1px solid var(--n-line);border-radius:14px;padding:13px 15px;text-decoration:none;color:var(--n-text);font-size:19px}
+.nContactRow:active{background:rgba(255,255,255,.05)}
+.nContactRow b{display:block;font-size:14px}
+.nContactRow small{display:block;color:var(--n-muted);font-size:11px;margin-top:1px}
+@keyframes nSheetFade{from{opacity:0}to{opacity:1}}
+@keyframes nSheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
