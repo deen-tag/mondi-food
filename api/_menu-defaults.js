@@ -19,12 +19,12 @@ export const DEFAULT_CATEGORIES = [
 
 export const DEFAULT_PRODUCTS = [
   // Pannuezo (site principal)
-  { id: 'm1', categoryId: 'pannuezo', name: 'L’Original', price: 12.90, desc: 'Sauce tomate maison, mozzarella fondante, jambon fumé, origan', img: '/images/pannuezo-original.png', badge: 'LE PLUS POPULAIRE', tag: 'Classiques', order: 10 },
+  { id: 'm1', categoryId: 'pannuezo', name: 'L’Original', price: 12.90, desc: 'Sauce tomate maison, mozzarella fondante, jambon fumé, origan', img: '/images/pannuezo-original.png', badge: 'LE PLUS POPULAIRE', tag: 'Classiques', popular: true, order: 10 },
   { id: 'm2', categoryId: 'pannuezo', name: 'Poulet Crémeux', price: 13.90, desc: 'Crème fraîche, mozzarella, poulet rôti, champignons, oignons caramélisés', img: '/images/pannuezo-poulet.png', tag: 'Gourmands', order: 20 },
   { id: 'm3', categoryId: 'pannuezo', name: 'Diavolo', price: 13.50, desc: 'Sauce tomate épicée, mozzarella, chorizo, poivrons, piment', img: '/images/pannuezo-diavolo.png', hot: true, tag: 'Épicés', order: 30 },
   { id: 'm4', categoryId: 'pannuezo', name: 'Végétarien', price: 12.90, desc: 'Sauce tomate, mozzarella, courgettes grillées, poivrons, champignons, roquette', img: '/images/pannuezo-vege.png', veg: true, tag: 'Végétariens', order: 40 },
   // Pizza (site principal)
-  { id: 'p1', categoryId: 'pizza', name: 'Margherita', price: 11.90, desc: 'Sauce tomate maison, mozzarella fior di latte, basilic frais, huile d’olive', img: '/images/margherita.png', badge: 'LA PLUS POPULAIRE', tag: 'Classiques', order: 10 },
+  { id: 'p1', categoryId: 'pizza', name: 'Margherita', price: 11.90, desc: 'Sauce tomate maison, mozzarella fior di latte, basilic frais, huile d’olive', img: '/images/margherita.png', badge: 'LA PLUS POPULAIRE', tag: 'Classiques', popular: true, order: 10 },
   { id: 'p2', categoryId: 'pizza', name: 'Pepperoni', price: 12.90, desc: 'Sauce tomate, mozzarella, pepperoni, origan', img: '/images/pepperoni.png', tag: 'Classiques', order: 20 },
   { id: 'p3', categoryId: 'pizza', name: '4 Fromages', price: 12.90, desc: 'Mozzarella, gorgonzola, chèvre, parmesan, emmental', img: '/images/four-cheese.png', tag: 'Gourmandes', order: 30 },
   { id: 'p4', categoryId: 'pizza', name: 'Légumes Rôtis', price: 12.50, desc: 'Sauce tomate, mozzarella, poivrons, courgettes, aubergines, oignons rouges', img: '/images/veggie.png', veg: true, tag: 'Végétariennes', order: 40 },
@@ -70,7 +70,7 @@ export const DEFAULT_PRODUCTS = [
   { id: 'd6', categoryId: 'dessert', name: 'Cookie Nutella', price: 4.50, desc: 'Cœur fondant au Nutella, noisettes', img: '/images/desserts/cookie-nutella.png', tag: 'Cookies', order: 60 },
   { id: 'd7', categoryId: 'dessert', name: 'Pizza Nutella', price: 7.90, desc: 'Pâte briochée, Nutella, éclats de noisettes, banane', img: '/images/desserts/pizza-nutella.png', tag: 'Pizzas sucrées', order: 70 },
   { id: 'd8', categoryId: 'dessert', name: 'Pizza Nutella & Kinder', price: 8.90, desc: 'Pâte briochée, Nutella, Kinder, fraises', img: '/images/desserts/pizza-nutella-kinder.png', tag: 'Pizzas sucrées', order: 80 },
-].map((p) => ({ badge: null, tag: null, hot: false, veg: false, active: true, ...p }));
+].map((p) => ({ badge: null, tag: null, hot: false, veg: false, popular: false, active: true, ...p }));
 
 // Configurateurs "Compose ta recette" — deux entrées fixes (pizza / pannuezo),
 // id de doc = clé utilisée par priceCart pour 'custom-pizza' / 'custom-pannuezo'.

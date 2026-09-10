@@ -149,6 +149,7 @@ export async function createProduct(input) {
     tag: input.tag ? String(input.tag).slice(0, 40) : null,
     hot: !!input.hot,
     veg: !!input.veg,
+    popular: !!input.popular,
     active: input.active !== false,
     order: Number.isFinite(input.order) ? input.order : 999,
   };
@@ -164,7 +165,7 @@ export async function updateProduct(id, patch) {
   const ref = db.collection(COLLECTIONS.products).doc(id);
   const snap = await ref.get();
   if (!snap.exists) throw new Error('Produit introuvable');
-  const allowed = ['categoryId', 'name', 'price', 'desc', 'img', 'badge', 'tag', 'hot', 'veg', 'active', 'order'];
+  const allowed = ['categoryId', 'name', 'price', 'desc', 'img', 'badge', 'tag', 'hot', 'veg', 'popular', 'active', 'order'];
   const clean = {};
   for (const k of allowed) {
     if (!(k in patch)) continue;
