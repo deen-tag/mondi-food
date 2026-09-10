@@ -34,7 +34,9 @@ function render(){
  bind();
 }
 
-function header(){return `<header class="nHeader"><a href="/">${icon('arrow-left')}</a><span></span><a class="nCart" href="/index.html?view=cart">${icon('cart')}<b>${count()}</b></a></header>`}
+// ⚠️ Même numéro placeholder que CONTACT.phoneHref dans main.js — à remplacer par le vrai numéro avant mise en prod.
+const NIGHT_PHONE_HREF='+33600000000';
+function header(){return `<header class="nHeader"><a class="nPhone" href="tel:${NIGHT_PHONE_HREF}">${icon('phone')}</a><a class="nHomeLogo" href="/"><img src="/logo.png" alt="Mondi Food"></a><a class="nCart" href="/index.html?view=cart">${icon('cart')}<b>${count()}</b></a></header>`}
 
 function hero(){const open=isNightOpen();return `<section class="nHero"><img class="nLogo" src="/images/night/logo.png" alt="Mondi Night"><p>Vendredi &amp; samedi · 23h → 05h</p><span class="nPill ${open?'live':'wait'}"><b></b>${open?'OUVERT MAINTENANT':nextOpeningLabel()}</span></section>`}
 
