@@ -124,3 +124,9 @@ main{padding:16px}
 .aProdCard>div:nth-child(2){flex:1;min-width:0}
 .aBox .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .aBox .two label{margin-bottom:0}
+
+/* Cases à cocher des formulaires (elles héritaient à tort du width:100% des champs
+   texte, ce qui les affichait en gros carré vide au-dessus du libellé). */
+.aBox label.checkRow{display:flex;align-items:flex-start;gap:8px}
+.aBox label.checkRow input[type=checkbox]{width:16px;height:16px;flex:0 0 16px;margin:2px 0 0;padding:0;accent-color:var(--p)}
+.aBox label.checkRow small{display:block;margin-top:2px}

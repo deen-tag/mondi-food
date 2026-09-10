@@ -531,8 +531,8 @@ function categoryFormHtml(d) {
       <option value="configurator" ${d.kind === 'configurator' ? 'selected' : ''}>Configurateur (compose ta recette)</option>
      </select>
     </label>
-    <label><input type="checkbox" name="siteMain" ${sites.includes('main') ? 'checked' : ''}> Visible sur le site principal</label>
-    <label><input type="checkbox" name="siteNight" ${sites.includes('night') ? 'checked' : ''}> Visible sur Mondi Night</label>
+    <label class="checkRow"><input type="checkbox" name="siteMain" ${sites.includes('main') ? 'checked' : ''}> Visible sur le site principal</label>
+    <label class="checkRow"><input type="checkbox" name="siteNight" ${sites.includes('night') ? 'checked' : ''}> Visible sur Mondi Night</label>
     <div class="aRow">
      <button class="cta small" type="submit">${editing ? 'ENREGISTRER' : 'CRÉER'}</button>
      <button type="button" class="ghost small" id="cancelMenuForm">Annuler</button>
@@ -584,10 +584,10 @@ function productFormHtml(d) {
      <label>Tag / filtre (optionnel)<input name="tag" maxlength="40" placeholder="Ex. Classiques" value="${d.tag || ''}"></label>
     </div>
     <div class="two">
-     <label><input type="checkbox" name="hot" ${d.hot ? 'checked' : ''}> Épicé</label>
-     <label><input type="checkbox" name="veg" ${d.veg ? 'checked' : ''}> Végétarien</label>
+     <label class="checkRow"><input type="checkbox" name="hot" ${d.hot ? 'checked' : ''}> Épicé</label>
+     <label class="checkRow"><input type="checkbox" name="veg" ${d.veg ? 'checked' : ''}> Végétarien</label>
     </div>
-    <label><input type="checkbox" name="popular" ${d.popular ? 'checked' : ''}> ⭐ Populaire <small class="aMuted">— affiche une pastille sur la carte et met ce produit en avant dans "Nos incontournables" sur la page d'accueil</small></label>
+    <label class="checkRow"><input type="checkbox" name="popular" ${d.popular ? 'checked' : ''}> ⭐ Populaire <small class="aMuted">— affiche une pastille sur la carte et met ce produit en avant dans "Nos incontournables" sur la page d'accueil</small></label>
     <div class="aRow">
      <button class="cta small" type="submit">${editing ? 'ENREGISTRER' : 'CRÉER'}</button>
      <button type="button" class="ghost small" id="cancelMenuForm">Annuler</button>
@@ -604,7 +604,7 @@ function menuBuilderView() {
    <form class="cfgForm" data-cfg="${cfg.id}">
     <label>Nom affiché<input name="label" required maxlength="60" value="${cfg.label}"></label>
     <label>Prix de base (€)<input name="basePrice" type="number" step="0.01" min="0" required value="${cfg.basePrice}"></label>
-    <label><input type="checkbox" name="active" ${cfg.active !== false ? 'checked' : ''}> Configurateur actif (visible sur le site)</label>
+    <label class="checkRow"><input type="checkbox" name="active" ${cfg.active !== false ? 'checked' : ''}> Configurateur actif (visible sur le site)</label>
     <label>Bases <small class="aMuted">— une par ligne, format "Nom;supplément en €"</small><textarea name="bases" rows="3">${optionsToLines(cfg.bases, 'extra')}</textarea></label>
     <label>Sauces <small class="aMuted">— une par ligne, format "Nom;supplément en €"</small><textarea name="sauces" rows="3">${optionsToLines(cfg.sauces, 'extra')}</textarea></label>
     <label>Ingrédients <small class="aMuted">— un par ligne, format "Nom;prix en €"</small><textarea name="ingredients" rows="8">${optionsToLines(cfg.ingredients, 'price')}</textarea></label>
