@@ -36,9 +36,9 @@ function render(){
 
 // ⚠️ Même numéro placeholder que CONTACT.phoneHref dans main.js — à remplacer par le vrai numéro avant mise en prod.
 const NIGHT_PHONE_HREF='+33600000000';
-function header(){return `<header class="nHeader"><a class="nPhone" href="tel:${NIGHT_PHONE_HREF}">${icon('phone')}</a><span></span><a class="nCart" href="/index.html?view=cart">${icon('cart')}<b>${count()}</b></a></header>`}
+function header(){return `<header class="nHeader"><a class="nPhone" href="tel:${NIGHT_PHONE_HREF}">${icon('phone')}</a><a class="nHomeLogo" href="/"><img src="/images/night/logo.png" alt="Mondi Night"></a><a class="nCart" href="/index.html?view=cart">${icon('cart')}<b>${count()}</b></a></header>`}
 
-function hero(){const open=isNightOpen();return `<section class="nHero"><img class="nLogo" src="/images/night/logo.png" alt="Mondi Night"><p>Vendredi &amp; samedi · 23h → 05h</p><span class="nPill ${open?'live':'wait'}"><b></b>${open?'OUVERT MAINTENANT':nextOpeningLabel()}</span></section>`}
+function hero(){const open=isNightOpen();return `<section class="nHero"><p>Vendredi &amp; samedi · 23h → 05h</p><span class="nPill ${open?'live':'wait'}"><b></b>${open?'OUVERT MAINTENANT':nextOpeningLabel()}</span></section>`}
 
 function cats(){const list=nightCategories();return `<nav class="nCats">${list.map(c=>`<button class="${S.cat===c.slug?'active':''}" data-cat="${c.slug}">${c.label}</button>`).join('')}</nav>`}
 

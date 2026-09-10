@@ -6,15 +6,16 @@ button,a{font:inherit;color:inherit;cursor:pointer;text-decoration:none}
 .nightApp{max-width:520px;min-height:100vh;margin:auto;position:relative;padding-bottom:110px;background:radial-gradient(circle at 50% -10%,#2a1440 0,var(--n-bg) 60%);overflow:hidden}
 
 /* header — même logique que le header du site principal : téléphone / logo / panier, en icônes plates sans fond ni cercle */
-.nHeader{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;padding:16px 14px 2px}
+.nHeader{display:grid;grid-template-columns:44px 1fr 44px;align-items:start;padding:14px 14px}
 .nHeader a{display:flex;align-items:center;justify-content:center;color:var(--n-text)}
 .nHeader .nPhone svg,.nHeader .nCart svg{width:22px;height:22px}
+.nHeader .nHomeLogo img{max-width:220px;width:70%;height:auto;display:block;margin:0 auto;filter:drop-shadow(0 0 22px rgba(178,59,255,.45))}
 .nHeader .nCart{position:relative}
 .nHeader .nCart b{position:absolute;top:-4px;right:-4px;background:var(--n-accent);color:#fff;border-radius:50%;font:800 9px Inter;min-width:17px;text-align:center;padding:2px}
 .nWordmark{text-align:center;font:800 13px 'Barlow Condensed';letter-spacing:3px;color:var(--n-muted)}
 
 /* hero */
-.nHero{text-align:center;padding:4px 24px 6px}
+.nHero{text-align:center;padding:12px 24px 10px}
 .nLogo{max-width:220px;width:70%;height:auto;margin:0 auto 16px;display:block;filter:drop-shadow(0 0 22px rgba(178,59,255,.45))}
 .nHero p{margin:0 0 16px;color:var(--n-muted);font-size:12px;letter-spacing:.3px}
 .nPill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--n-line);background:var(--n-card);padding:8px 16px;border-radius:30px;font:800 10px Inter;letter-spacing:.5px}
