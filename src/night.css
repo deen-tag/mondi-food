@@ -9,7 +9,6 @@ button,a{font:inherit;color:inherit;cursor:pointer;text-decoration:none}
 .nHeader{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;padding:16px 14px 2px}
 .nHeader a{display:flex;align-items:center;justify-content:center;color:var(--n-text)}
 .nHeader .nPhone svg,.nHeader .nCart svg{width:22px;height:22px}
-.nHeader .nHomeLogo img{height:36px;width:auto;object-fit:contain}
 .nHeader .nCart{position:relative}
 .nHeader .nCart b{position:absolute;top:-4px;right:-4px;background:var(--n-accent);color:#fff;border-radius:50%;font:800 9px Inter;min-width:17px;text-align:center;padding:2px}
 .nWordmark{text-align:center;font:800 13px 'Barlow Condensed';letter-spacing:3px;color:var(--n-muted)}
