@@ -467,9 +467,6 @@ function slugifyClient(s) {
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'item';
 }
-function categoryLabel(slug) {
-  return AS.menu?.categories.find(c => c.slug === slug)?.label || slug;
-}
 // Les photos restent celles déjà présentes sur le site (pas d'upload) : le gérant
 // choisit parmi toutes les images déjà utilisées par un produit du catalogue.
 function imageOptions(current) {
@@ -503,19 +500,24 @@ function menuView() {
   ${AS.menuSub === 'settings' ? menuSettingsView() : ''}`;
 }
 
-function menuCategoriesView() {
-  const form = AS.menuForm?.kind === 'category' ? categoryFormHtml(AS.menuForm.data) : '';
-  const list = AS.menu.categories.slice().sort((a, b) => (a.order || 0) - (b.order || 0)).map(c => `
-   <div class="aDriverCard">
+function categoryRow(c) {
+  return `<div class="aDriverCard">
     <div><b>${c.label}</b><small>${c.kind === 'configurator' ? 'Configurateur' : 'Produits'} · ${(c.sites || []).map(s => s === 'main' ? 'Site principal' : 'Mondi Night').join(', ')}${c.active === false ? ' · Désactivée' : ''}</small></div>
     <div class="aPromoActions">
      <button class="ghost small" data-cat-toggle="${c.slug}">${c.active === false ? 'Activer' : 'Désactiver'}</button>
      <button class="ghost small" data-cat-edit="${c.slug}">Modifier</button>
      <button class="ghost small danger solid" data-cat-delete="${c.slug}">Supprimer</button>
     </div>
-   </div>`).join('') || `<p class="aEmpty">Aucune catégorie.</p>`;
-  return `<div class="aDrivers">${list}</div>
-  ${form || `<div class="aBox"><h3>Nouvelle catégorie</h3><button class="cta small" data-cat-new>+ AJOUTER UNE CATÉGORIE</button></div>`}`;
+   </div>`;
+}
+
+function menuCategoriesView() {
+  const editingSlug = AS.menuForm?.kind === 'category' ? AS.menuForm.data.slug : null;
+  const creating = AS.menuForm?.kind === 'category' && !editingSlug;
+  const newBox = `<div class="aBox">${creating ? categoryFormHtml(AS.menuForm.data) : `<button class="cta small" data-cat-new>+ AJOUTER UNE CATÉGORIE</button>`}</div>`;
+  const list = AS.menu.categories.slice().sort((a, b) => (a.order || 0) - (b.order || 0))
+    .map(c => categoryRow(c) + (editingSlug === c.slug ? categoryFormHtml(AS.menuForm.data) : '')).join('') || `<p class="aEmpty">Aucune catégorie.</p>`;
+  return `${newBox}<div class="aDrivers">${list}</div>`;
 }
 
 function categoryFormHtml(d) {
@@ -541,29 +543,40 @@ function categoryFormHtml(d) {
   </div>`;
 }
 
-function menuProductsView() {
-  const cats = AS.menu.categories.filter(c => c.kind === 'products');
-  const filter = AS.menuProductFilter;
-  const products = AS.menu.products
-    .filter(p => filter === 'all' || p.categoryId === filter)
-    .slice().sort((a, b) => (a.order || 0) - (b.order || 0));
-  const form = AS.menuForm?.kind === 'product' ? productFormHtml(AS.menuForm.data) : '';
-  const list = products.map(p => `
-   <div class="aDriverCard aProdCard">
+function productRow(p) {
+  return `<div class="aDriverCard aProdCard">
     <div class="prodThumb"><img src="${p.img}" alt="" loading="lazy"></div>
-    <div><b>${p.name}</b><small>${categoryLabel(p.categoryId)} · ${formatPrice(p.price)}${p.popular ? ' · ⭐ Populaire' : ''}${p.active === false ? ' · Masqué' : ''}</small></div>
+    <div><b>${p.name}</b><small>${formatPrice(p.price)}${p.popular ? ' · ⭐ Populaire' : ''}${p.active === false ? ' · Masqué' : ''}</small></div>
     <div class="aPromoActions">
      <button class="ghost small" data-prod-toggle="${p.id}">${p.active === false ? 'Afficher' : 'Masquer'}</button>
      <button class="ghost small" data-prod-edit="${p.id}">Modifier</button>
      <button class="ghost small danger solid" data-prod-delete="${p.id}">Supprimer</button>
     </div>
-   </div>`).join('') || `<p class="aEmpty">Aucun produit dans cette catégorie.</p>`;
-  return `<div class="aToolbar"><select id="menuProductFilter">
+   </div>`;
+}
+
+function menuProductsView() {
+  const cats = AS.menu.categories.filter(c => c.kind === 'products').slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  const filter = AS.menuProductFilter;
+  const editingId = AS.menuForm?.kind === 'product' ? AS.menuForm.data.id : null;
+  const creating = AS.menuForm?.kind === 'product' && !editingId;
+  const newBox = `<div class="aBox">${creating ? productFormHtml(AS.menuForm.data) : (cats.length ? `<button class="cta small" data-prod-new>+ AJOUTER UN PRODUIT</button>` : `<p class="aMuted">Crée d'abord une catégorie de type "Liste de produits".</p>`)}</div>`;
+  // Groupé par catégorie (dans l'ordre du site) plutôt que mélangé : plus facile à
+  // s'y retrouver quand il y a des pizzas, boissons et desserts ensemble. Le
+  // formulaire d'édition s'affiche juste sous le produit cliqué, pas en bas de page.
+  const visibleCats = filter === 'all' ? cats : cats.filter(c => c.slug === filter);
+  const groups = visibleCats.map(c => {
+    const products = AS.menu.products.filter(p => p.categoryId === c.slug).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+    if (!products.length) return '';
+    const rows = products.map(p => productRow(p) + (editingId === p.id ? productFormHtml(AS.menuForm.data) : '')).join('');
+    return `<h3 class="aGroupTitle">${c.label} <em>${products.length}</em></h3><div class="aDrivers">${rows}</div>`;
+  }).join('') || `<p class="aEmpty">Aucun produit dans cette catégorie.</p>`;
+  return `${newBox}
+  <div class="aToolbar"><select id="menuProductFilter">
    <option value="all" ${filter === 'all' ? 'selected' : ''}>Toutes les catégories</option>
    ${cats.map(c => `<option value="${c.slug}" ${filter === c.slug ? 'selected' : ''}>${c.label}</option>`).join('')}
   </select></div>
-  <div class="aDrivers">${list}</div>
-  ${form || `<div class="aBox"><h3>Nouveau produit</h3>${cats.length ? `<button class="cta small" data-prod-new>+ AJOUTER UN PRODUIT</button>` : `<p class="aMuted">Crée d'abord une catégorie de type "Liste de produits".</p>`}</div>`}`;
+  ${groups}`;
 }
 
 function productFormHtml(d) {
@@ -771,12 +784,17 @@ function bind() {
   });
   document.querySelector('#cancelMenuForm')?.addEventListener('click', () => { AS.menuForm = null; renderRoot(); });
 
+  function openMenuForm() {
+    renderRoot();
+    document.querySelector('#categoryForm, #productForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   document.querySelector('[data-cat-new]')?.addEventListener('click', () => {
-    AS.menuForm = { kind: 'category', data: { sites: ['main'], kind: 'products' } }; renderRoot();
+    AS.menuForm = { kind: 'category', data: { sites: ['main'], kind: 'products' } }; openMenuForm();
   });
   document.querySelectorAll('[data-cat-edit]').forEach(b => b.addEventListener('click', () => {
     const c = AS.menu.categories.find(x => x.slug === b.dataset.catEdit);
-    AS.menuForm = { kind: 'category', data: { ...c } }; renderRoot();
+    AS.menuForm = { kind: 'category', data: { ...c } }; openMenuForm();
   }));
   document.querySelectorAll('[data-cat-toggle]').forEach(b => b.addEventListener('click', async () => {
     const c = AS.menu.categories.find(x => x.slug === b.dataset.catToggle);
@@ -806,11 +824,11 @@ function bind() {
 
   document.querySelector('[data-prod-new]')?.addEventListener('click', () => {
     const firstCat = AS.menu.categories.find(c => c.kind === 'products');
-    AS.menuForm = { kind: 'product', data: { categoryId: AS.menuProductFilter !== 'all' ? AS.menuProductFilter : firstCat?.slug, active: true } }; renderRoot();
+    AS.menuForm = { kind: 'product', data: { categoryId: AS.menuProductFilter !== 'all' ? AS.menuProductFilter : firstCat?.slug, active: true } }; openMenuForm();
   });
   document.querySelectorAll('[data-prod-edit]').forEach(b => b.addEventListener('click', () => {
     const p = AS.menu.products.find(x => x.id === b.dataset.prodEdit);
-    AS.menuForm = { kind: 'product', data: { ...p } }; renderRoot();
+    AS.menuForm = { kind: 'product', data: { ...p } }; openMenuForm();
   }));
   document.querySelectorAll('[data-prod-toggle]').forEach(b => b.addEventListener('click', async () => {
     const p = AS.menu.products.find(x => x.id === b.dataset.prodToggle);
