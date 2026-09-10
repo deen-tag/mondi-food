@@ -21,7 +21,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .aHeaderActions{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .aLogo{font:800 13px 'Barlow Condensed';letter-spacing:1px;display:flex;align-items:center;gap:6px;color:var(--p2)}
 .aLogo b{color:var(--white);margin-left:4px;font-weight:800}
-.aTabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent 100%)}
+.aTabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent 100%);padding-top:8px;margin-top:-8px}
 .aTabs::-webkit-scrollbar{display:none}
 .aTabs button{white-space:nowrap;padding:8px 12px;border-radius:9px;font-size:11px;font-weight:700;color:var(--muted);position:relative}
 .aTabs button.on{background:var(--p);color:#fff}
