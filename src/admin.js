@@ -467,12 +467,14 @@ function slugifyClient(s) {
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'item';
 }
-// Les photos restent celles déjà présentes sur le site (pas d'upload) : le gérant
-// choisit parmi toutes les images déjà utilisées par un produit du catalogue.
+// Les photos restent celles déjà présentes sur le site (pas d'upload) : le champ
+// suggère les images déjà utilisées par un produit du catalogue, mais reste un texte
+// libre pour pouvoir saisir un chemin qui n'est encore utilisé par aucun produit
+// (ex. une image tout juste ajoutée au dépôt).
 function imageOptions(current) {
   const set = new Set((AS.menu?.products || []).map(p => p.img));
   if (current) set.add(current);
-  return [...set].sort().map(src => `<option value="${src}" ${src === current ? 'selected' : ''}>${src}</option>`).join('');
+  return [...set].sort().map(src => `<option value="${src}">${src}</option>`).join('');
 }
 // Bases/sauces/ingrédients des configurateurs édités en texte, une option par ligne
 // ("Nom;supplément" ou "Nom;prix") — plus simple et plus fiable qu'un formulaire à
@@ -487,6 +489,80 @@ function linesToOptions(text, key) {
 }
 function optionsToLines(list, key) {
   return (list || []).map(o => `${o.name};${o[key]}`).join('\n');
+}
+
+// ---------- Sélecteur visuel d'images (depuis le dépôt GitHub) ----------
+// Le champ Photo reste un texte libre (voir imageOptions), mais ce sélecteur permet
+// de parcourir en vignettes tout ce qui existe réellement dans public/images/ sur
+// GitHub — y compris une image tout juste poussée, avant même que le site ne soit
+// redéployé — plutôt que de devoir taper le chemin à la main.
+const GITHUB_REPO = 'deen-tag/mondi-food';
+const GITHUB_BRANCH = 'main';
+let githubImagesCache = null; // caché en mémoire le temps de la session admin
+
+async function fetchGithubImages(force) {
+  if (githubImagesCache && !force) return githubImagesCache;
+  const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/git/trees/${GITHUB_BRANCH}?recursive=1`);
+  if (!res.ok) throw new Error(res.status === 403 ? 'Limite de requêtes GitHub atteinte, réessaie dans un instant.' : `Impossible de contacter GitHub (${res.status})`);
+  const data = await res.json();
+  const exts = /\.(png|jpe?g|webp|gif)$/i;
+  githubImagesCache = (data.tree || [])
+    .filter(e => e.type === 'blob' && e.path.startsWith('public/images/') && exts.test(e.path))
+    .map(e => ({
+      sitePath: '/' + e.path.replace(/^public\//, ''),
+      name: e.path.split('/').pop(),
+      raw: `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${e.path}`,
+    }))
+    .sort((a, b) => a.sitePath.localeCompare(b.sitePath));
+  return githubImagesCache;
+}
+
+function closeImagePicker() {
+  document.querySelector('#imgPickerOverlay')?.remove();
+}
+
+async function openImagePicker(onPick) {
+  closeImagePicker();
+  const overlay = document.createElement('div');
+  overlay.id = 'imgPickerOverlay';
+  overlay.className = 'aModalOverlay';
+  overlay.innerHTML = `<div class="aModal">
+    <div class="aModalHead"><b>Choisir une image (GitHub)</b><button type="button" class="ghost small" id="imgPickerClose">Fermer</button></div>
+    <input id="imgPickerSearch" placeholder="Rechercher un fichier…" class="aModalSearch">
+    <div id="imgPickerGrid" class="aImgGrid"><p class="aEmpty">Chargement depuis GitHub…</p></div>
+    <button type="button" class="ghost small" id="imgPickerRefresh">Actualiser depuis GitHub</button>
+   </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeImagePicker(); });
+  overlay.querySelector('#imgPickerClose').addEventListener('click', closeImagePicker);
+
+  function renderGrid(images, filter) {
+    const grid = overlay.querySelector('#imgPickerGrid');
+    const q = (filter || '').toLowerCase();
+    const filtered = images.filter(i => i.sitePath.toLowerCase().includes(q));
+    if (!filtered.length) { grid.innerHTML = '<p class="aEmpty">Aucune image trouvée.</p>'; return; }
+    grid.innerHTML = filtered.map(i => `<button type="button" class="aImgTile" data-pick="${i.sitePath}" title="${i.sitePath}">
+      <img src="${i.raw}" loading="lazy" alt="${i.name}"><small>${i.name}</small>
+     </button>`).join('');
+    grid.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => {
+      onPick(b.dataset.pick);
+      closeImagePicker();
+    }));
+  }
+
+  async function load(force) {
+    try {
+      const images = await fetchGithubImages(force);
+      renderGrid(images, overlay.querySelector('#imgPickerSearch').value);
+    } catch (err) {
+      overlay.querySelector('#imgPickerGrid').innerHTML = `<p class="aEmpty">${err.message || 'Erreur de chargement.'}</p>`;
+    }
+  }
+  overlay.querySelector('#imgPickerSearch').addEventListener('input', e => {
+    if (githubImagesCache) renderGrid(githubImagesCache, e.target.value);
+  });
+  overlay.querySelector('#imgPickerRefresh').addEventListener('click', () => load(true));
+  load(false);
 }
 
 function menuView() {
@@ -514,7 +590,7 @@ function categoryRow(c) {
 function menuCategoriesView() {
   const editingSlug = AS.menuForm?.kind === 'category' ? AS.menuForm.data.slug : null;
   const creating = AS.menuForm?.kind === 'category' && !editingSlug;
-  const newBox = `<div class="aBox">${creating ? categoryFormHtml(AS.menuForm.data) : `<button class="cta small" data-cat-new>+ AJOUTER UNE CATÉGORIE</button>`}</div>`;
+  const newBox = `<div class="aBox">${creating ? categoryFormHtml(AS.menuForm.data) : `<button class="cta small" data-cat-new>+ AJOUTER UNE CATÉGORIE</button> <button class="ghost small" data-menu-sync>Synchroniser les catégories/produits du code</button>`}</div>`;
   const list = AS.menu.categories.slice().sort((a, b) => (a.order || 0) - (b.order || 0))
     .map(c => categoryRow(c) + (editingSlug === c.slug ? categoryFormHtml(AS.menuForm.data) : '')).join('') || `<p class="aEmpty">Aucune catégorie.</p>`;
   return `${newBox}<div class="aDrivers">${list}</div>`;
@@ -591,7 +667,13 @@ function productFormHtml(d) {
     <label>Nom<input name="name" required maxlength="100" value="${d.name || ''}"></label>
     <label>Prix (€)<input name="price" type="number" step="0.01" min="0" required value="${d.price ?? ''}"></label>
     <label>Description<textarea name="desc" rows="2" maxlength="300">${d.desc || ''}</textarea></label>
-    <label>Photo<select name="img">${imageOptions(d.img)}</select></label>
+    <label>Photo
+     <div class="aImgFieldRow">
+      <input name="img" list="imgOptions" value="${d.img || ''}" placeholder="/images/night/burger-bacon.png">
+      <button type="button" class="ghost small" data-pick-img>Parcourir GitHub</button>
+     </div>
+     <datalist id="imgOptions">${imageOptions(d.img)}</datalist>
+    </label>
     <div class="two">
      <label>Badge (optionnel)<input name="badge" maxlength="40" placeholder="Ex. SIGNATURE" value="${d.badge || ''}"></label>
      <label>Tag / filtre (optionnel)<input name="tag" maxlength="40" placeholder="Ex. Classiques" value="${d.tag || ''}"></label>
@@ -783,6 +865,12 @@ function bind() {
     AS.menuProductFilter = e.target.value; renderRoot();
   });
   document.querySelector('#cancelMenuForm')?.addEventListener('click', () => { AS.menuForm = null; renderRoot(); });
+  document.querySelector('[data-pick-img]')?.addEventListener('click', () => {
+    openImagePicker(path => {
+      const input = document.querySelector('#categoryForm [name="img"], #productForm [name="img"]');
+      if (input) input.value = path;
+    });
+  });
 
   function openMenuForm() {
     renderRoot();
@@ -791,6 +879,18 @@ function bind() {
 
   document.querySelector('[data-cat-new]')?.addEventListener('click', () => {
     AS.menuForm = { kind: 'category', data: { sites: ['main'], kind: 'products' } }; openMenuForm();
+  });
+  document.querySelector('[data-menu-sync]')?.addEventListener('click', async (e) => {
+    const btn = e.target; btn.disabled = true; btn.textContent = 'Synchronisation…';
+    try {
+      const r = await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'sync', action: 'defaults' }) });
+      const total = r.addedCategories.length + r.addedProducts.length;
+      alert(total ? `Ajouté : ${[...r.addedCategories, ...r.addedProducts].join(', ')}` : 'Rien à ajouter, tout est déjà présent.');
+      await loadMenu(true);
+    } catch (err) {
+      alert(err.message || 'Erreur lors de la synchronisation.');
+      btn.disabled = false; btn.textContent = 'Synchroniser les catégories/produits du code';
+    }
   });
   document.querySelectorAll('[data-cat-edit]').forEach(b => b.addEventListener('click', () => {
     const c = AS.menu.categories.find(x => x.slug === b.dataset.catEdit);
