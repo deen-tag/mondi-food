@@ -27,6 +27,7 @@ const PATHS = {
   plus: "<path d='M12 5v14M5 12h14'/>",
   star: "<path d='m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9L12 3Z'/>",
   tracking: "<circle cx='12' cy='12' r='8.5'/><path d='M12 7v5l3 2'/>",
+  chef: "<path d='M8 21h8M9 21v-6.2M15 21v-6.2'/><path d='M6.5 10.2a3 3 0 0 1 .3-6 3.6 3.6 0 0 1 6.9-1.4A3.4 3.4 0 0 1 17.5 4a3 3 0 0 1 .5 6c.1 2.8-1.1 4.8-3 4.8H9.3c-1.9 0-2.9-2-2.8-4.6Z'/>",
 };
 
 // name: clé ci-dessus. cls: classe(s) CSS additionnelle(s). filled: rempli (ex. étoiles de notation).
