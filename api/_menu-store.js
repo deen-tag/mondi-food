@@ -97,6 +97,39 @@ function genId(prefix) {
   return `${prefix}-${Date.now().toString(36)}${Math.floor(Math.random() * 1000)}`;
 }
 
+// Ajoute dans Firestore les catégories/produits présents dans les défauts du code
+// (_menu-defaults.js) mais absents de la base — utile quand on ajoute une nouvelle
+// catégorie/de nouveaux produits en dur après le premier seed (qui ne se rejoue
+// jamais tout seul). Ne touche jamais à un document déjà existant (pas d'écrasement
+// des modifs faites depuis l'admin).
+export async function syncMissingDefaults() {
+  const db = getFirestore();
+  const [catSnap, prodSnap] = await Promise.all([
+    db.collection(COLLECTIONS.categories).get(),
+    db.collection(COLLECTIONS.products).get(),
+  ]);
+  const existingCatSlugs = new Set(catSnap.docs.map((d) => d.id));
+  const existingProdIds = new Set(prodSnap.docs.map((d) => d.id));
+
+  const missingCategories = DEFAULT_CATEGORIES.filter((c) => !existingCatSlugs.has(c.slug));
+  const missingProducts = DEFAULT_PRODUCTS.filter((p) => !existingProdIds.has(p.id));
+
+  if (!missingCategories.length && !missingProducts.length) {
+    return { addedCategories: [], addedProducts: [] };
+  }
+
+  const batch = db.batch();
+  missingCategories.forEach((c) => batch.set(db.collection(COLLECTIONS.categories).doc(c.slug), c));
+  missingProducts.forEach((p) => batch.set(db.collection(COLLECTIONS.products).doc(p.id), p));
+  await batch.commit();
+  invalidateCache();
+
+  return {
+    addedCategories: missingCategories.map((c) => c.label),
+    addedProducts: missingProducts.map((p) => p.name),
+  };
+}
+
 // ---- Catégories ----
 
 export async function createCategory({ label, sites, kind, order }) {

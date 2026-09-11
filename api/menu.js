@@ -9,6 +9,7 @@ import {
   deleteProduct,
   updateConfigurator,
   updateSettings,
+  syncMissingDefaults,
 } from './_menu-store.js';
 
 // Un seul fichier serverless pour tout le menu (public + admin), pour rester sous
@@ -63,6 +64,10 @@ export default async function handler(req, res) {
 
       if (resource === 'settings' && action === 'update') {
         return res.status(200).json(await updateSettings(payload));
+      }
+
+      if (resource === 'sync' && action === 'defaults') {
+        return res.status(200).json(await syncMissingDefaults());
       }
 
       return res.status(400).json({ error: 'Requête invalide' });
