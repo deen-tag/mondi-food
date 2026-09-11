@@ -64,8 +64,8 @@ button:active{transform:scale(.97)}
 
 /* Configurateur "Compose ta recette" */
 .builderPromoWrap{padding:16px 18px 4px}
-.builderPromo{width:100%;text-align:left;border:0;border-radius:20px;padding:22px 0 22px 20px;background:var(--bg);box-shadow:0 8px 22px rgba(140,37,211,.12);position:relative;overflow:hidden;display:flex;flex-direction:row;align-items:center;gap:10px}
-.builderPromoText{width:54%;flex:0 0 54%}
+.builderPromo{width:100%;text-align:left;border:0;border-radius:20px;padding:22px 0 22px 20px;background:var(--bg);box-shadow:0 8px 22px rgba(140,37,211,.12);position:relative;overflow:hidden;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;gap:10px}
+.builderPromoText{width:54%!important;flex:0 0 54%!important;min-width:0}
 .builderPromoHead{display:flex;align-items:center;gap:9px;margin-bottom:12px}
 .builderPromoIcon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:rgba(140,37,211,.1);color:var(--p);flex:0 0 auto}
 .builderPromoIcon .icon{width:16px;height:16px}
@@ -74,7 +74,7 @@ button:active{transform:scale(.97)}
 .builderPromo p{margin:0 0 14px;font-size:12.5px;color:var(--muted);line-height:1.4;max-width:100%}
 .builderPromo em{font:800 11px Inter;font-style:normal;display:inline-flex;align-items:center;gap:6px;background:var(--p);color:#fff;border-radius:20px;padding:9px 14px;white-space:nowrap}
 .builderPromo em .icon{width:13px;height:13px}
-.builderPromoImg{flex:0 0 46%;width:46%;max-width:260px;align-self:center;margin:-14px -6px}
+.builderPromoImg{flex:0 0 46%!important;width:46%!important;max-width:260px;align-self:center;margin:-14px -6px 0 0}
 .builderPromoImg img{width:100%;height:auto;display:block;object-fit:contain}
 @media(max-width:360px){.builderPromo{padding:18px 16px;flex-direction:column;align-items:flex-start}.builderPromo h3{font-size:20px}.builderPromoText{width:100%;flex:0 0 100%}.builderPromoImg{align-self:flex-end;width:64%;margin:6px 0 0}}
 .builderCard{width:100%;display:flex;align-items:center;gap:12px;text-align:left;border:1.5px dashed rgba(140,37,211,.4);background:linear-gradient(110deg,#faf3ff,#ffffff);border-radius:14px;padding:13px 14px;margin-bottom:12px}
