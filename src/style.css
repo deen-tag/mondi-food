@@ -66,13 +66,14 @@ button:active{transform:scale(.97)}
 .builderPromoWrap{padding:16px 18px 4px}
 .builderPromo{width:100%;text-align:left;border:0;border-radius:20px;padding:22px 20px;background:var(--bg);box-shadow:0 8px 22px rgba(140,37,211,.12);position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;gap:4px}
 .builderPromoText{width:100%}
-.builderPromoIcon{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:rgba(140,37,211,.1);color:var(--p);margin-bottom:10px}
-.builderPromoIcon .icon{width:20px;height:20px}
-.builderPromoTag{display:block;font:800 11px Inter;letter-spacing:1.2px;color:var(--p);text-transform:uppercase;margin-bottom:6px;font-style:normal}
+.builderPromoHead{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.builderPromoIcon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:rgba(140,37,211,.1);color:var(--p);flex:0 0 auto}
+.builderPromoIcon .icon{width:16px;height:16px}
+.builderPromoTag{font:800 11px Inter;letter-spacing:1.2px;color:var(--p);text-transform:uppercase;font-style:normal}
 .builderPromo h3{font:800 24px 'Barlow Condensed';margin:0 0 6px;letter-spacing:.2px;line-height:1.08;color:var(--text)}
 .builderPromo p{margin:0 0 14px;font-size:12.5px;color:var(--muted);line-height:1.4;max-width:88%}
-.builderPromo em{font:800 12px Inter;font-style:normal;display:inline-flex;align-items:center;gap:6px;background:var(--p);color:#fff;border-radius:24px;padding:10px 16px;white-space:nowrap}
-.builderPromo em .icon{width:15px;height:15px}
+.builderPromo em{font:800 11px Inter;font-style:normal;display:inline-flex;align-items:center;gap:6px;background:var(--p);color:#fff;border-radius:20px;padding:9px 14px;white-space:nowrap}
+.builderPromo em .icon{width:13px;height:13px}
 .builderPromoImg{align-self:flex-end;width:64%;max-width:260px;margin-top:6px}
 .builderPromoImg img{width:100%;height:auto;display:block;object-fit:contain}
 @media(max-width:360px){.builderPromo{padding:18px 16px}.builderPromo h3{font-size:20px}}
