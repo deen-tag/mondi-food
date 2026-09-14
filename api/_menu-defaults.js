@@ -146,3 +146,7 @@ export const DEFAULT_OPTION_PRICES = {
 
 export const DEFAULT_DELIVERY_FEE = 2.50;
 export const DEFAULT_FREE_DELIVERY_THRESHOLD = 25;
+
+// Paiement en ligne (Stripe) activé par défaut. Si désactivé depuis l'admin,
+// le site ne propose plus que le paiement à la livraison.
+export const DEFAULT_ONLINE_PAYMENT_ENABLED = true;

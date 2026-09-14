@@ -6,6 +6,7 @@ import {
   DEFAULT_OPTION_PRICES,
   DEFAULT_DELIVERY_FEE,
   DEFAULT_FREE_DELIVERY_THRESHOLD,
+  DEFAULT_ONLINE_PAYMENT_ENABLED,
 } from './_menu-defaults.js';
 
 // Couche d'accès au catalogue (catégories / produits / configurateurs / réglages)
@@ -43,6 +44,7 @@ async function seedIfEmpty(db) {
     optionPrices: DEFAULT_OPTION_PRICES,
     deliveryFee: DEFAULT_DELIVERY_FEE,
     freeDeliveryThreshold: DEFAULT_FREE_DELIVERY_THRESHOLD,
+    onlinePaymentEnabled: DEFAULT_ONLINE_PAYMENT_ENABLED,
   });
   await batch.commit();
 }
@@ -68,8 +70,8 @@ export async function getCatalog({ bypassCache = false } = {}) {
       products: prodSnap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0)),
       configurators: cfgSnap.docs.map((d) => ({ id: d.id, ...d.data() })),
       settings: settingsSnap.exists
-        ? settingsSnap.data()
-        : { optionPrices: DEFAULT_OPTION_PRICES, deliveryFee: DEFAULT_DELIVERY_FEE, freeDeliveryThreshold: DEFAULT_FREE_DELIVERY_THRESHOLD },
+        ? { onlinePaymentEnabled: DEFAULT_ONLINE_PAYMENT_ENABLED, ...settingsSnap.data() }
+        : { optionPrices: DEFAULT_OPTION_PRICES, deliveryFee: DEFAULT_DELIVERY_FEE, freeDeliveryThreshold: DEFAULT_FREE_DELIVERY_THRESHOLD, onlinePaymentEnabled: DEFAULT_ONLINE_PAYMENT_ENABLED },
     };
     cache = { at: Date.now(), data };
     return data;
@@ -82,7 +84,7 @@ export async function getCatalog({ bypassCache = false } = {}) {
       categories: DEFAULT_CATEGORIES,
       products: DEFAULT_PRODUCTS,
       configurators: DEFAULT_CONFIGURATORS,
-      settings: { optionPrices: DEFAULT_OPTION_PRICES, deliveryFee: DEFAULT_DELIVERY_FEE, freeDeliveryThreshold: DEFAULT_FREE_DELIVERY_THRESHOLD },
+      settings: { optionPrices: DEFAULT_OPTION_PRICES, deliveryFee: DEFAULT_DELIVERY_FEE, freeDeliveryThreshold: DEFAULT_FREE_DELIVERY_THRESHOLD, onlinePaymentEnabled: DEFAULT_ONLINE_PAYMENT_ENABLED },
     };
   }
 }
@@ -242,11 +244,12 @@ export async function updateConfigurator(id, patch) {
 export async function updateSettings(patch) {
   const db = getFirestore();
   const ref = db.collection(COLLECTIONS.settings).doc('global');
-  const allowed = ['optionPrices', 'deliveryFee', 'freeDeliveryThreshold'];
+  const allowed = ['optionPrices', 'deliveryFee', 'freeDeliveryThreshold', 'onlinePaymentEnabled'];
   const clean = {};
   for (const k of allowed) {
     if (!(k in patch)) continue;
     if (k === 'deliveryFee' || k === 'freeDeliveryThreshold') clean[k] = Math.max(0, Number(patch[k]) || 0);
+    else if (k === 'onlinePaymentEnabled') clean[k] = !!patch[k];
     else clean[k] = patch[k];
   }
   await ref.set(clean, { merge: true });

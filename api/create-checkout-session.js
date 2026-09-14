@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import { priceCart } from './_menu.js';
 import { getFirestore } from './_firebase.js';
 import { checkPromoCode } from './_promo.js';
+import { getCatalog } from './_menu-store.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -11,6 +12,14 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Le paiement en ligne peut être désactivé depuis l'admin (réglages > paiement).
+    // On revérifie ici côté serveur : le front cache déjà l'option, mais il ne faut
+    // jamais faire confiance à un appel direct à cette API.
+    const { settings } = await getCatalog();
+    if (settings?.onlinePaymentEnabled === false) {
+      return res.status(403).json({ error: 'Le paiement en ligne est désactivé pour le moment. Merci de choisir le paiement à la livraison.' });
+    }
+
     const { cart, customer, promoCode } = req.body || {};
     const { items, subtotal, delivery, total } = await priceCart(cart);
 
