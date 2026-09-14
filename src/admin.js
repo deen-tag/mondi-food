@@ -723,6 +723,9 @@ function menuSettingsView() {
      <label>Fromage supplémentaire (€)<input name="cheese" type="number" step="0.01" min="0" value="${op['Fromage supplémentaire'] ?? 1}"></label>
      <label>Base épicée (€)<input name="spicy" type="number" step="0.01" min="0" value="${op['Base épicée'] ?? 0.5}"></label>
     </div>
+    <h3>Paiement</h3>
+    <label class="checkRow"><input type="checkbox" name="onlinePaymentEnabled" ${s.onlinePaymentEnabled !== false ? 'checked' : ''}> Autoriser le paiement en ligne (carte, via Stripe)</label>
+    <small class="aMuted">Si désactivé, les clients ne pourront plus payer que "à la livraison" — l'option carte disparaît du checkout du site.</small>
     <button class="cta small" type="submit">ENREGISTRER</button>
    </form>
   </div>`;
@@ -980,7 +983,9 @@ function bind() {
 
   document.querySelector('#settingsForm')?.addEventListener('submit', async e => {
     e.preventDefault();
-    const d = Object.fromEntries(new FormData(e.target));
+    const form = e.target;
+    const d = Object.fromEntries(new FormData(form));
+    const onlinePaymentEnabled = form.querySelector('[name=onlinePaymentEnabled]').checked;
     try {
       await api('/api/menu', {
         method: 'POST',
@@ -988,6 +993,7 @@ function bind() {
           resource: 'settings', action: 'update',
           deliveryFee: Number(d.deliveryFee), freeDeliveryThreshold: Number(d.freeDeliveryThreshold),
           optionPrices: { 'Fromage supplémentaire': Number(d.cheese), 'Base épicée': Number(d.spicy) },
+          onlinePaymentEnabled,
         }),
       });
       await loadMenu(true);
