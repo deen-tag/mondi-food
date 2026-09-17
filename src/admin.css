@@ -137,6 +137,17 @@ main{padding:16px}
 .aFieldGroupLabel{font-size:11px;color:var(--muted);margin-bottom:6px}
 .aCheckGroup{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
 
+/* Repeater "Compose ta recette" : une ligne par base/sauce/ingrédient, au lieu
+   d'un textarea "Nom;prix" à taper à la main. */
+.aRepeater{margin-bottom:14px}
+.aRepRow{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.aRepRow .repName{flex:1;min-width:0}
+.aRepRow .repVal{width:66px;flex:0 0 66px}
+.aRepeater .aIconBtn{width:34px;height:34px;flex:0 0 34px}
+.aRepeater>[data-rep-add]{display:inline-flex;align-items:center;gap:6px;margin-top:2px}
+.aRepeater>[data-rep-add] .icon{width:13px;height:13px}
+.aEmpty.small{padding:6px 0;font-size:11px;text-align:left}
+
 /* Onglet Menu > Produits : titre de groupe par catégorie */
 .aGroupTitle{font:800 14px 'Barlow Condensed';letter-spacing:.5px;text-transform:uppercase;color:var(--p2);display:flex;align-items:center;gap:8px;margin:18px 0 8px}
 .aGroupTitle:first-of-type{margin-top:4px}

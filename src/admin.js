@@ -478,19 +478,44 @@ function imageOptions(current) {
   if (current) set.add(current);
   return [...set].sort().map(src => `<option value="${src}">${src}</option>`).join('');
 }
-// Bases/sauces/ingrédients des configurateurs édités en texte, une option par ligne
-// ("Nom;supplément" ou "Nom;prix") — plus simple et plus fiable qu'un formulaire à
-// lignes dynamiques pour ce genre de petites listes.
-function linesToOptions(text, key) {
-  return String(text || '').split('\n').map(l => l.trim()).filter(Boolean).map(line => {
-    const [name, val] = line.split(';').map(s => (s || '').trim());
-    const num = Math.max(0, Number(val) || 0);
-    const id = slugifyClient(name);
-    return key === 'extra' ? { id, name, extra: num } : { id, name, price: num };
+// ---------- "Compose ta recette" : repeater visuel bases/sauces/ingrédients ----------
+// Remplace les 3 textarea "Nom;prix" par lignes (une par option, faciles à taper,
+// modifier ou supprimer au tap). Le format stocké côté API ne change pas : une
+// option = { id, name, extra|price }.
+let rowIdCounter = 0;
+function newRowId() { return 'r' + (++rowIdCounter); }
+
+function builderDraft(cfg) {
+  if (!AS.builderDraft) AS.builderDraft = {};
+  if (!AS.builderDraft[cfg.id]) {
+    const mk = (list, key) => (list || []).map(o => ({ rid: newRowId(), name: o.name, val: o[key] }));
+    AS.builderDraft[cfg.id] = { bases: mk(cfg.bases, 'extra'), sauces: mk(cfg.sauces, 'extra'), ingredients: mk(cfg.ingredients, 'price') };
+  }
+  return AS.builderDraft[cfg.id];
+}
+
+// Relit les valeurs actuellement tapées dans le DOM et les remet dans le draft,
+// pour ne rien perdre quand on ajoute/supprime une ligne (qui redessine la liste).
+function syncDraftFromDom(cfgId, section) {
+  const draft = AS.builderDraft[cfgId][section];
+  document.querySelectorAll(`[data-rep-row][data-rep-cfg="${cfgId}"][data-rep-section="${section}"]`).forEach(row => {
+    const r = draft.find(x => x.rid === row.dataset.repRow);
+    if (!r) return;
+    r.name = row.querySelector('.repName').value;
+    r.val = row.querySelector('.repVal').value;
   });
 }
-function optionsToLines(list, key) {
-  return (list || []).map(o => `${o.name};${o[key]}`).join('\n');
+
+function optionRepeater(cfg, section, unitLabel) {
+  const rows = builderDraft(cfg)[section];
+  return `<div class="aRepeater">
+    ${rows.map(r => `<div class="aRepRow" data-rep-row="${r.rid}" data-rep-cfg="${cfg.id}" data-rep-section="${section}">
+      <input class="repName" placeholder="Nom" value="${r.name || ''}">
+      <input class="repVal" type="number" step="0.01" min="0" placeholder="${unitLabel}" value="${r.val ?? 0}">
+      <button type="button" class="aIconBtn danger" data-rep-remove="${r.rid}" data-rep-cfg="${cfg.id}" data-rep-section="${section}" aria-label="Supprimer cette ligne">${icon('trash')}</button>
+     </div>`).join('') || `<p class="aEmpty small">Aucun pour l'instant.</p>`}
+    <button type="button" class="ghost small" data-rep-add data-rep-cfg="${cfg.id}" data-rep-section="${section}">${icon('plus')} Ajouter</button>
+   </div>`;
 }
 
 // ---------- Sélecteur visuel d'images (depuis le dépôt GitHub) ----------
@@ -723,9 +748,12 @@ function menuBuilderView() {
     <label>Nom affiché<input name="label" required maxlength="60" value="${cfg.label}"></label>
     <label>Prix de base (€)<input name="basePrice" type="number" step="0.01" min="0" required value="${cfg.basePrice}"></label>
     <label class="checkRow"><input type="checkbox" name="active" ${cfg.active !== false ? 'checked' : ''}> Configurateur actif (visible sur le site)</label>
-    <label>Bases <small class="aMuted">— une par ligne, format "Nom;supplément en €"</small><textarea name="bases" rows="3">${optionsToLines(cfg.bases, 'extra')}</textarea></label>
-    <label>Sauces <small class="aMuted">— une par ligne, format "Nom;supplément en €"</small><textarea name="sauces" rows="3">${optionsToLines(cfg.sauces, 'extra')}</textarea></label>
-    <label>Ingrédients <small class="aMuted">— un par ligne, format "Nom;prix en €"</small><textarea name="ingredients" rows="8">${optionsToLines(cfg.ingredients, 'price')}</textarea></label>
+    <label class="aFieldGroupLabel">Bases <small class="aMuted">— supplément en € (0 si compris dans le prix de base)</small></label>
+    ${optionRepeater(cfg, 'bases', '+€')}
+    <label class="aFieldGroupLabel">Sauces <small class="aMuted">— supplément en € (0 si compris dans le prix de base)</small></label>
+    ${optionRepeater(cfg, 'sauces', '+€')}
+    <label class="aFieldGroupLabel">Ingrédients <small class="aMuted">— prix en €</small></label>
+    ${optionRepeater(cfg, 'ingredients', '€')}
     <button class="cta small" type="submit">ENREGISTRER</button>
    </form>
   </div>`).join('');
@@ -1009,18 +1037,40 @@ function bind() {
     } catch (err) { alert(err.message || 'Erreur'); }
   });
 
+  document.querySelectorAll('[data-rep-add]').forEach(b => b.addEventListener('click', () => {
+    const { repCfg: cfgId, repSection: section } = b.dataset;
+    syncDraftFromDom(cfgId, section);
+    AS.builderDraft[cfgId][section].push({ rid: newRowId(), name: '', val: 0 });
+    renderRoot();
+    document.querySelector(`[data-rep-cfg="${cfgId}"][data-rep-section="${section}"] .aRepRow:last-of-type .repName`)?.focus();
+  }));
+  document.querySelectorAll('[data-rep-remove]').forEach(b => b.addEventListener('click', () => {
+    const { repCfg: cfgId, repSection: section, repRemove: rid } = b.dataset;
+    syncDraftFromDom(cfgId, section);
+    AS.builderDraft[cfgId][section] = AS.builderDraft[cfgId][section].filter(r => r.rid !== rid);
+    renderRoot();
+  }));
   document.querySelectorAll('.cfgForm').forEach(f => f.addEventListener('submit', async e => {
     e.preventDefault();
+    const cfgId = f.dataset.cfg;
+    ['bases', 'sauces', 'ingredients'].forEach(section => syncDraftFromDom(cfgId, section));
+    const draft = AS.builderDraft[cfgId];
+    const toOptions = (rows, key) => rows.filter(r => (r.name || '').trim()).map(r => {
+      const id = slugifyClient(r.name.trim());
+      const num = Math.max(0, Number(r.val) || 0);
+      return key === 'extra' ? { id, name: r.name.trim(), extra: num } : { id, name: r.name.trim(), price: num };
+    });
     const d = Object.fromEntries(new FormData(f));
     try {
       await api('/api/menu', {
         method: 'POST',
         body: JSON.stringify({
-          resource: 'configurator', action: 'update', id: f.dataset.cfg,
+          resource: 'configurator', action: 'update', id: cfgId,
           label: d.label, basePrice: Number(d.basePrice), active: !!d.active,
-          bases: linesToOptions(d.bases, 'extra'), sauces: linesToOptions(d.sauces, 'extra'), ingredients: linesToOptions(d.ingredients, 'price'),
+          bases: toOptions(draft.bases, 'extra'), sauces: toOptions(draft.sauces, 'extra'), ingredients: toOptions(draft.ingredients, 'price'),
         }),
       });
+      delete AS.builderDraft[cfgId]; // repart des données serveur fraîches au prochain rendu
       await loadMenu(true);
       alert('Configurateur mis à jour.');
     } catch (err) { alert(err.message || 'Erreur'); }
