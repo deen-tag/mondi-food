@@ -22,6 +22,7 @@ const AS = {
   menuSub: 'categories', // sous-onglet de "Menu" : categories | products | builder | settings
   menuProductFilter: 'all',
   menuCollapsed: new Set(), // slugs de catégories repliées dans l'onglet Produits
+  quickPriceId: null, // id du produit dont le prix est en cours de modif rapide (sans ouvrir tout le formulaire)
   menuForm: null, // { kind:'category'|'product', data:{...} } pendant une création/édition
 };
 
@@ -596,7 +597,7 @@ function menuCategoriesView() {
   const list = AS.menu.categories.slice().sort((a, b) => (a.order || 0) - (b.order || 0))
     .map(c => categoryRow(c) + (editingSlug === c.slug ? categoryFormHtml(AS.menuForm.data) : '')).join('') || `<p class="aEmpty">Aucune catégorie.</p>`;
   return `${newBox}<div class="aDrivers">${list}</div>
-  <button class="aFab" data-cat-new title="Ajouter une catégorie" aria-label="Ajouter une catégorie">${icon('plus')}</button>`;
+  ${creating || editingSlug ? '' : `<button class="aFab" data-cat-new title="Ajouter une catégorie" aria-label="Ajouter une catégorie">${icon('plus')}</button>`}`;
 }
 
 function categoryFormHtml(d) {
@@ -624,9 +625,18 @@ function categoryFormHtml(d) {
 
 function productRow(p) {
   const off = p.active === false;
+  // Modif rapide du prix : évite d'ouvrir tout le formulaire juste pour un
+  // changement de tarif, le cas le plus fréquent au quotidien.
+  const priceHtml = AS.quickPriceId === p.id
+    ? `<form class="aQuickPrice" data-quickprice-form="${p.id}">
+        <input name="price" type="number" step="0.01" min="0" value="${p.price}" autofocus>
+        <button type="submit" class="aIconBtn" title="Valider" aria-label="Valider">${icon('check')}</button>
+        <button type="button" class="aIconBtn" data-quickprice-cancel title="Annuler" aria-label="Annuler">${icon('close')}</button>
+       </form>`
+    : `<small><button type="button" class="aPriceBtn" data-quickprice-edit="${p.id}">${formatPrice(p.price)} ${icon('pencil', 'editHint')}</button>${p.popular ? ' · ⭐ Populaire' : ''}${off ? ' · Masqué' : ''}</small>`;
   return `<div class="aDriverCard aProdCard">
     <div class="prodThumb"><img src="${p.img}" alt="" loading="lazy"></div>
-    <div><b>${p.name}</b><small>${formatPrice(p.price)}${p.popular ? ' · ⭐ Populaire' : ''}${off ? ' · Masqué' : ''}</small></div>
+    <div><b>${p.name}</b>${priceHtml}</div>
     <div class="aIconActions">
      <button class="aIconBtn${off ? ' offState' : ''}" data-prod-toggle="${p.id}" title="${off ? 'Afficher' : 'Masquer'}" aria-label="${off ? 'Afficher' : 'Masquer'}">${icon(off ? 'eye-off' : 'eye')}</button>
      <button class="aIconBtn" data-prod-edit="${p.id}" title="Modifier" aria-label="Modifier">${icon('pencil')}</button>
@@ -663,7 +673,7 @@ function menuProductsView() {
    ${cats.map(c => `<option value="${c.slug}" ${filter === c.slug ? 'selected' : ''}>${c.label}</option>`).join('')}
   </select></div>
   ${groups}
-  ${cats.length ? `<button class="aFab" data-prod-new title="Ajouter un produit" aria-label="Ajouter un produit">${icon('plus')}</button>` : ''}`;
+  ${cats.length && !creating && !editingId ? `<button class="aFab" data-prod-new title="Ajouter un produit" aria-label="Ajouter un produit">${icon('plus')}</button>` : ''}`;
 }
 
 function productFormHtml(d) {
@@ -685,15 +695,17 @@ function productFormHtml(d) {
      </div>
      <datalist id="imgOptions">${imageOptions(d.img)}</datalist>
     </label>
-    <div class="two">
-     <label>Badge (optionnel)<input name="badge" maxlength="40" placeholder="Ex. SIGNATURE" value="${d.badge || ''}"></label>
-     <label>Tag / filtre (optionnel)<input name="tag" maxlength="40" placeholder="Ex. Classiques" value="${d.tag || ''}"></label>
-    </div>
-    <div class="two">
+    <label>Badge (optionnel)<input name="badge" maxlength="40" placeholder="Ex. SIGNATURE" value="${d.badge || ''}"></label>
+    <small class="aFieldHint">Étiquette avec une étoile affichée sur la fiche produit côté client (ex. "SIGNATURE", "NOUVEAU"). Laisse vide pour afficher "POPULAIRE" automatiquement si la case ci-dessous est cochée.</small>
+    <label>Tag / filtre (optionnel)<input name="tag" maxlength="40" placeholder="Ex. Classiques" value="${d.tag || ''}"></label>
+    <small class="aFieldHint">Mot-clé utilisé par les boutons de filtre sur le site : les produits qui ont le même tag apparaissent ensemble quand un client filtre dessus.</small>
+    <label class="aFieldGroupLabel">Affichage</label>
+    <div class="aCheckGroup">
      <label class="checkRow"><input type="checkbox" name="hot" ${d.hot ? 'checked' : ''}> Épicé</label>
      <label class="checkRow"><input type="checkbox" name="veg" ${d.veg ? 'checked' : ''}> Végétarien</label>
+     <label class="checkRow"><input type="checkbox" name="popular" ${d.popular ? 'checked' : ''}> ⭐ Populaire</label>
     </div>
-    <label class="checkRow"><input type="checkbox" name="popular" ${d.popular ? 'checked' : ''}> ⭐ Populaire <small class="aMuted">— affiche une pastille sur la carte et met ce produit en avant dans "Nos incontournables" sur la page d'accueil</small></label>
+    <small class="aFieldHint">"Populaire" affiche une pastille sur la carte et met ce produit en avant dans "Nos incontournables" sur la page d'accueil.</small>
     <div class="aRow">
      <button class="cta small" type="submit">${editing ? 'ENREGISTRER' : 'CRÉER'}</button>
      <button type="button" class="ghost small" id="cancelMenuForm">Annuler</button>
@@ -954,6 +966,23 @@ function bind() {
     try {
       await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'product', action: 'update', id: p.id, active: p.active === false }) });
       await loadMenu(true);
+    } catch (err) { alert(err.message || 'Erreur'); }
+  }));
+  document.querySelectorAll('[data-quickprice-edit]').forEach(b => b.addEventListener('click', () => {
+    AS.quickPriceId = b.dataset.quickpriceEdit; renderRoot();
+    document.querySelector(`[data-quickprice-form="${AS.quickPriceId}"] input`)?.select();
+  }));
+  document.querySelectorAll('[data-quickprice-cancel]').forEach(b => b.addEventListener('click', () => {
+    AS.quickPriceId = null; renderRoot();
+  }));
+  document.querySelectorAll('[data-quickprice-form]').forEach(f => f.addEventListener('submit', async e => {
+    e.preventDefault();
+    const id = f.dataset.quickpriceForm;
+    const price = f.querySelector('[name="price"]').value;
+    if (!price || +price < 0) { alert('Entre un prix valide.'); return; }
+    try {
+      await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'product', action: 'update', id, price: +price }) });
+      AS.quickPriceId = null; await loadMenu(true);
     } catch (err) { alert(err.message || 'Erreur'); }
   }));
   document.querySelectorAll('[data-prod-delete]').forEach(b => b.addEventListener('click', async () => {
