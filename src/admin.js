@@ -506,10 +506,59 @@ function syncDraftFromDom(cfgId, section) {
   });
 }
 
+// Glisser-déposer (poignée) pour réordonner les lignes du repeater, au doigt
+// comme à la souris (Pointer Events couvre les deux). La ligne suit le doigt
+// via transform, et bascule de position dès qu'elle franchit la moitié d'une
+// ligne voisine — comme réorganiser des icônes sur un écran d'accueil.
+function attachRepeaterDrag() {
+  document.querySelectorAll('.repHandle').forEach(handle => {
+    handle.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      e.preventDefault();
+      const row = handle.closest('.aRepRow');
+      const list = row.parentElement;
+      const { repCfg: cfgId, repSection: section } = row.dataset;
+      const sel = `.aRepRow[data-rep-section="${section}"]`;
+      let siblings = [...list.querySelectorAll(sel)];
+      let index = siblings.indexOf(row);
+      const rowHeight = row.getBoundingClientRect().height + 6;
+      const startY = e.clientY;
+      let snapped = 0;
+      row.classList.add('dragging');
+      handle.setPointerCapture(e.pointerId);
+
+      function onMove(ev) {
+        const dy = ev.clientY - startY;
+        const target = Math.max(0, Math.min(siblings.length - 1, index + Math.round((dy - snapped) / rowHeight)));
+        if (target !== index) {
+          if (target > index) siblings[target].after(row); else siblings[target].before(row);
+          snapped += (target - index) * rowHeight;
+          index = target;
+          siblings = [...list.querySelectorAll(sel)];
+        }
+        row.style.transform = `translateY(${dy - snapped}px)`;
+      }
+      function onUp() {
+        handle.removeEventListener('pointermove', onMove);
+        handle.removeEventListener('pointerup', onUp);
+        row.classList.remove('dragging');
+        row.style.transform = '';
+        syncDraftFromDom(cfgId, section);
+        const order = [...list.querySelectorAll(sel)].map(r => r.dataset.repRow);
+        AS.builderDraft[cfgId][section].sort((a, b) => order.indexOf(a.rid) - order.indexOf(b.rid));
+        renderRoot();
+      }
+      handle.addEventListener('pointermove', onMove);
+      handle.addEventListener('pointerup', onUp);
+    });
+  });
+}
+
 function optionRepeater(cfg, section, unitLabel) {
   const rows = builderDraft(cfg)[section];
   return `<div class="aRepeater">
     ${rows.map(r => `<div class="aRepRow" data-rep-row="${r.rid}" data-rep-cfg="${cfg.id}" data-rep-section="${section}">
+      ${rows.length > 1 ? `<button type="button" class="repHandle" aria-label="Glisser pour réordonner">${icon('grip')}</button>` : ''}
       <input class="repName" placeholder="Nom" value="${r.name || ''}">
       <input class="repVal" type="number" step="0.01" min="0" placeholder="${unitLabel}" value="${r.val ?? 0}">
       <button type="button" class="aIconBtn danger" data-rep-remove="${r.rid}" data-rep-cfg="${cfg.id}" data-rep-section="${section}" aria-label="Supprimer cette ligne">${icon('trash')}</button>
@@ -1037,8 +1086,8 @@ function bind() {
     } catch (err) { alert(err.message || 'Erreur'); }
   });
 
-  document.querySelectorAll('[data-rep-add]').forEach(b => b.addEventListener('click', () => {
-    const { repCfg: cfgId, repSection: section } = b.dataset;
+  attachRepeaterDrag();
+  document.querySelectorAll('[data-rep-add]').forEach(b => b.addEventListener('click', () => {    const { repCfg: cfgId, repSection: section } = b.dataset;
     syncDraftFromDom(cfgId, section);
     AS.builderDraft[cfgId][section].push({ rid: newRowId(), name: '', val: 0 });
     renderRoot();
