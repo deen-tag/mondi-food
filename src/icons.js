@@ -15,6 +15,7 @@ const PATHS = {
   pencil: "<path d='M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3Z'/><path d='m14.5 6.5 3 3'/>",
   trash: "<path d='M5 7h14'/><path d='M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2'/><path d='M7 7l1 13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-13'/><path d='M10 11v6M14 11v6'/>",
   chevron: "<path d='m6 9 6 6 6-6'/>",
+  grip: "<circle cx='9' cy='6' r='1.3' fill='currentColor' stroke='none'/><circle cx='15' cy='6' r='1.3' fill='currentColor' stroke='none'/><circle cx='9' cy='12' r='1.3' fill='currentColor' stroke='none'/><circle cx='15' cy='12' r='1.3' fill='currentColor' stroke='none'/><circle cx='9' cy='18' r='1.3' fill='currentColor' stroke='none'/><circle cx='15' cy='18' r='1.3' fill='currentColor' stroke='none'/>",
   copy: "<rect x='9' y='9' width='11' height='11' rx='2'/><path d='M5 15V5a2 2 0 0 1 2-2h10'/>",
   delivery: "<path d='M3 6h11v11H3z'/><path d='M14 10h4l3 3v4h-7z'/><circle cx='7' cy='19' r='2'/><circle cx='18' cy='19' r='2'/>",
   fire: "<path d='M13 3c.5 3-2 4.5-2 7 0 1.5 1 2.5 2.5 2.5C16 12.5 17 10 16 8c3 2 4 4.2 4 7a8 8 0 0 1-16 0c0-4.5 3.2-7.7 6.8-10.5-.3 2.2.3 3.5 1.2 4.5C13 7 13.5 5 13 3Z'/>",
