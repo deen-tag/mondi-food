@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+:root{--bg:#f7f5f9;--card:#ffffff;--card2:#f3eef8;--line:#e8e1ee;--muted:#78717c;--p:#8c25d3;--p2:#ae42eb;--white:#1c1420;--ok:#1f9d52;--warn:#b8791f;--bad:#d1355a}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--white);font-family:Inter,Arial,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input,select,textarea{font:inherit;color:inherit;background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(140,37,211,.18)}
+.icon{width:1em;height:1em;display:inline-block;vertical-align:-.14em}
+.admin{max-width:920px;margin:0 auto;min-height:100vh;padding-bottom:40px}
+
+/* login */
+.adminLogin{max-width:340px;margin:14vh auto;text-align:center;padding:0 20px}
+.adminLogin img{height:70px;margin-bottom:10px}
+.adminLogin h1{font:800 34px 'Barlow Condensed';letter-spacing:2px;margin:6px 0}
+.adminLogin p{color:var(--muted);font-size:12px;margin-bottom:20px}
+.adminLogin input{margin-bottom:12px}
+#loginErr{color:var(--bad);font-size:11px}
+
+/* header */
+.aHeader{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 16px 10px}
+.aHeaderTop{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:10px}
+.aHeaderActions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.aLogo{font:800 13px 'Barlow Condensed';letter-spacing:1px;display:flex;align-items:center;gap:6px;color:var(--p2)}
+.aLogo b{color:var(--white);margin-left:4px;font-weight:800}
+.aTabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent 100%);padding-top:8px;margin-top:-8px}
+.aTabs::-webkit-scrollbar{display:none}
+.aTabs button{white-space:nowrap;padding:8px 12px;border-radius:9px;font-size:11px;font-weight:700;color:var(--muted);position:relative}
+.aTabs button.on{background:var(--p);color:#fff}
+.aTabs em{position:absolute;top:-6px;right:-6px;background:var(--bad);color:#fff;border-radius:50%;font:800 9px/1 Inter;padding:3px 5px;font-style:normal}
+.aBell{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--card2);border:1px solid var(--line);transition:background .2s,border-color .2s}
+.aBell.on{background:var(--p);border-color:var(--p)}
+.aCloseBtn{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--muted);background:var(--card2);border:1px solid var(--line);transition:background .2s,color .2s}
+.aCloseBtn:hover{background:#fbe4ec;color:var(--bad);border-color:#f3b8c5}
+
+main{padding:16px}
+
+/* dashboard */
+.alertBar{background:linear-gradient(90deg,#fde8ec,#fdeef1);border:1px solid #f3b8c5;color:#c81d43;border-radius:12px;padding:12px 14px;font:800 12px 'Barlow Condensed';letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:8px;animation:pulseAlert 2s infinite}
+@keyframes pulseAlert{0%,100%{box-shadow:0 0 0 0 rgba(226,80,106,.25)}50%{box-shadow:0 0 0 8px rgba(226,80,106,0)}}
+.aStats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.aStats div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 6px;text-align:center;transition:border-color .2s,background .2s}
+.aStats div[data-filter]{cursor:pointer}
+.aStats div[data-filter]:hover{border-color:#cbb8dd}
+.aStats div.active{border-color:var(--p);background:var(--card2)}
+.aStats b{display:block;font:800 24px 'Barlow Condensed';color:var(--p2)}
+.aStats small{color:var(--muted);font-size:9px}
+.aToolbar{margin-bottom:10px}
+.aFilters{display:flex;gap:6px;overflow-x:auto;margin-bottom:16px;padding-bottom:2px;scrollbar-width:none;-ms-overflow-style:none;mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent 100%);-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent 100%)}
+.aFilters::-webkit-scrollbar{display:none}
+.aFilters button{white-space:nowrap;border:1px solid var(--line);background:var(--card2);border-radius:20px;padding:8px 13px;font-size:11px;color:var(--muted)}
+.aFilters .active{background:var(--p);border-color:var(--p);color:#fff}
+.aGroup{margin-bottom:22px}
+.aGroup h2{font:800 15px 'Barlow Condensed';letter-spacing:1px;display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.aGroup h2 em{font-style:normal;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:2px 9px;font-size:11px;color:var(--muted)}
+.aCards{display:grid;gap:10px}
+.aCard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;cursor:pointer;transition:border-color .2s}
+.aCard:hover{border-color:#cbb8dd}
+.aCardTop{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px}
+.aCardTop b{color:var(--white);font-size:13px}
+.aCardClient{font-weight:700;font-size:13px;margin-bottom:3px}
+.aCardAddr{color:var(--muted);font-size:11px;margin-bottom:8px}
+.aCardBottom{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.aCardBottom strong{color:var(--p2);font-size:15px}
+.payBadge{font-size:9px;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:3px 8px}
+.aCardAct{display:flex;gap:8px}
+.aEmpty{color:var(--muted);font-size:12px;text-align:center;padding:30px 0}
+
+/* buttons */
+.cta{background:linear-gradient(120deg,#8c25d3,#ae42eb);color:#fff;border-radius:10px;padding:12px 16px;font-weight:800;font-size:11px;letter-spacing:.3px}
+.cta.small{padding:9px 12px;font-size:10px}
+.cta.wide{width:100%;text-align:center;display:block}
+.ghost{border:1px solid var(--line);background:var(--card2);color:var(--white);border-radius:10px;padding:9px 12px;font-size:10px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.ghost.small{padding:8px 11px;font-size:10px}
+.ghost.danger{border-color:#f3b8c5;color:#c81d43}
+.ghost.danger.solid{background:#d1355a;border-color:#d1355a;color:#fff}
+.ghost.danger.solid:hover{background:#b82a4b;border-color:#b82a4b}
+
+/* order detail */
+.back{color:var(--p2);display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:14px}
+.back span{color:var(--muted)}
+.aOrderHead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.aOrderHead h1{font:800 34px 'Barlow Condensed';margin:0}
+.statusChip{font-size:10px;font-weight:800;padding:5px 10px;border-radius:20px;border:1px solid var(--line);white-space:nowrap}
+.statusChip.nouvelle{color:#c81d43;border-color:#f3b8c5}
+.statusChip.preparation{color:#b8791f;border-color:#f0d9a8}
+.statusChip.livraison{color:#9229dc;border-color:#e4c9f5}
+.statusChip.livree{color:#1f9d52;border-color:#c8ecd4}
+.statusChip.annulee{color:#78717c;border-color:var(--line)}
+.aMuted{color:var(--muted);font-size:11px}
+.aBox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px}
+.aBox h3{font:800 13px 'Barlow Condensed';letter-spacing:.5px;margin:0 0 10px;text-transform:uppercase;color:var(--p2)}
+.aBox.done h3{color:var(--ok)}
+.aBox.cancelled h3,.aBox.danger h3{color:var(--bad)}
+.aBox label{display:block;font-size:11px;color:var(--muted);margin-bottom:12px}
+.aBox label input{margin-top:6px}
+.aRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.aItems{list-style:none;padding:0;margin:0}
+.aItems li{display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid var(--line)}
+.aItems li small{color:var(--muted)}
+.aTotal{display:flex;justify-content:space-between;font-weight:800;font-size:14px;margin-top:8px;color:var(--p2)}
+.aNote{background:var(--card2);border-radius:9px;padding:9px 10px;font-size:11px;color:#4a3a55;margin-top:10px}
+
+/* drivers */
+.aTitle{font:800 32px 'Barlow Condensed';margin:0 0 14px}
+.aDrivers{display:grid;gap:8px;margin-bottom:16px}
+.aDriverCard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
+.aDriverCard>div:first-child{display:flex;flex-direction:column;gap:2px}
+.aPromoActions{display:flex;flex-direction:column;gap:6px}
+.aDriverCard b{font-size:13px;display:block}
+.aDriverCard small{color:var(--muted);font-size:11px}
+#addDriver{display:flex;gap:8px}
+
+/* history */
+.aHistList{display:grid;gap:6px}
+.aHistRow{display:grid;grid-template-columns:60px 90px 1fr auto auto;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:11px;cursor:pointer}
+.aHistRow b{color:var(--p2)}
+.aHistRow span:nth-child(3){color:var(--muted)}
+
+@media(max-width:640px){.aHistRow{grid-template-columns:50px 1fr auto;grid-template-areas:'id date status' 'name name total'}.aHistRow span:nth-child(2){grid-area:date}.aHistRow span:nth-child(3){grid-area:name}.aHistRow b{grid-area:total}.aHistRow span:last-child{grid-area:status}}
+
+/* Onglet Menu : vignette produit dans la liste (aDriverCard étendue à 3 colonnes) */
+.aProdCard{gap:10px}
+.aProdCard .prodThumb{width:44px;height:44px;flex:0 0 44px;border-radius:8px;overflow:hidden;background:var(--line)}
+.aProdCard .prodThumb img{width:100%;height:100%;object-fit:cover;display:block}
+.aProdCard>div:nth-child(2){flex:1;min-width:0}
+.aBox .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.aBox .two label{margin-bottom:0}
+
+/* Cases à cocher des formulaires (elles héritaient à tort du width:100% des champs
+   texte, ce qui les affichait en gros carré vide au-dessus du libellé). */
+.aBox label.checkRow{display:flex;align-items:flex-start;gap:8px}
+.aBox label.checkRow input[type=checkbox]{width:16px;height:16px;flex:0 0 16px;margin:2px 0 0;padding:0;accent-color:var(--p)}
+.aBox label.checkRow small{display:block;margin-top:2px}
+
+/* Onglet Menu > Produits : titre de groupe par catégorie */
+.aGroupTitle{font:800 14px 'Barlow Condensed';letter-spacing:.5px;text-transform:uppercase;color:var(--p2);display:flex;align-items:center;gap:8px;margin:18px 0 8px}
+.aGroupTitle:first-of-type{margin-top:4px}
+.aGroupTitle em{font-style:normal;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:2px 9px;font-size:11px;color:var(--muted)}
+
+/* Actions compactes (icônes) sur les lignes catégorie/produit du Menu, à la
+   place des 3 boutons texte empilés qui prenaient toute la hauteur de la
+   carte sur mobile. */
+.aIconActions{display:flex;gap:2px;flex-shrink:0}
+.aIconBtn{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:background .15s,color .15s}
+.aIconBtn .icon{width:17px;height:17px}
+.aIconBtn:hover,.aIconBtn:active{background:var(--card2);color:var(--white)}
+.aIconBtn.danger:hover,.aIconBtn.danger:active{background:#fbe4ec;color:var(--bad)}
+.aIconBtn.offState{color:var(--bad)}
+
+/* Catégories de produits repliables : le titre devient un bouton cliquable
+   avec un chevron, pour ne pas avoir à tout scroller quand il y a beaucoup
+   de catégories/produits. */
+.aGroupTitle{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
+.aGroupTitle .chevIcon{width:15px;height:15px;margin-left:auto;transition:transform .18s;color:var(--muted)}
+.aGroupTitle.open .chevIcon{transform:rotate(180deg)}
+.aGroupBody{display:grid;gap:8px;margin-bottom:4px}
+.aGroupBody.collapsed{display:none}
+
+/* Bouton flottant "+" pour ajouter une catégorie/un produit sans avoir à
+   remonter tout en haut de la page sur mobile. */
+.aFab{position:fixed;right:16px;bottom:20px;width:52px;height:52px;border-radius:50%;background:linear-gradient(120deg,#8c25d3,#ae42eb);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(140,37,211,.4);z-index:30}
+.aFab .icon{width:24px;height:24px}
+.aFab:active{transform:scale(.94)}
+
+/* Champ Photo : texte libre + bouton pour ouvrir le sélecteur visuel GitHub */
+.aImgFieldRow{display:flex;gap:8px}
+.aImgFieldRow input{flex:1}
+.aImgFieldRow button{white-space:nowrap;flex:0 0 auto}
+
+/* Sélecteur visuel d'images GitHub (fenêtre modale) */
+.aModalOverlay{position:fixed;inset:0;background:rgba(28,20,32,.55);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+.aModal{background:var(--card);border-radius:16px;padding:16px;width:100%;max-width:560px;max-height:80vh;display:flex;flex-direction:column;gap:10px}
+.aModalHead{display:flex;align-items:center;justify-content:space-between}
+.aModalHead b{font:800 14px 'Barlow Condensed';letter-spacing:.5px;text-transform:uppercase;color:var(--p2)}
+.aModalSearch{flex:0 0 auto}
+.aImgGrid{overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;padding:2px}
+.aImgTile{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;transition:border-color .2s}
+.aImgTile:hover{border-color:var(--p)}
+.aImgTile img{width:100%;height:72px;object-fit:cover;border-radius:7px;background:var(--bg)}
+.aImgTile small{font-size:9px;color:var(--muted);width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}

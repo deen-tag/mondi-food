@@ -21,6 +21,7 @@ const AS = {
   menu: null, // catalogue { categories, products, configurators, settings }, chargé à la demande
   menuSub: 'categories', // sous-onglet de "Menu" : categories | products | builder | settings
   menuProductFilter: 'all',
+  menuCollapsed: new Set(), // slugs de catégories repliées dans l'onglet Produits
   menuForm: null, // { kind:'category'|'product', data:{...} } pendant une création/édition
 };
 
@@ -577,12 +578,13 @@ function menuView() {
 }
 
 function categoryRow(c) {
+  const off = c.active === false;
   return `<div class="aDriverCard">
-    <div><b>${c.label}</b><small>${c.kind === 'configurator' ? 'Configurateur' : 'Produits'} · ${(c.sites || []).map(s => s === 'main' ? 'Site principal' : 'Mondi Night').join(', ')}${c.active === false ? ' · Désactivée' : ''}</small></div>
-    <div class="aPromoActions">
-     <button class="ghost small" data-cat-toggle="${c.slug}">${c.active === false ? 'Activer' : 'Désactiver'}</button>
-     <button class="ghost small" data-cat-edit="${c.slug}">Modifier</button>
-     <button class="ghost small danger solid" data-cat-delete="${c.slug}">Supprimer</button>
+    <div><b>${c.label}</b><small>${c.kind === 'configurator' ? 'Configurateur' : 'Produits'} · ${(c.sites || []).map(s => s === 'main' ? 'Site principal' : 'Mondi Night').join(', ')}${off ? ' · Désactivée' : ''}</small></div>
+    <div class="aIconActions">
+     <button class="aIconBtn${off ? ' offState' : ''}" data-cat-toggle="${c.slug}" title="${off ? 'Activer' : 'Désactiver'}" aria-label="${off ? 'Activer' : 'Désactiver'}">${icon(off ? 'eye-off' : 'eye')}</button>
+     <button class="aIconBtn" data-cat-edit="${c.slug}" title="Modifier" aria-label="Modifier">${icon('pencil')}</button>
+     <button class="aIconBtn danger" data-cat-delete="${c.slug}" title="Supprimer" aria-label="Supprimer">${icon('trash')}</button>
     </div>
    </div>`;
 }
@@ -590,10 +592,11 @@ function categoryRow(c) {
 function menuCategoriesView() {
   const editingSlug = AS.menuForm?.kind === 'category' ? AS.menuForm.data.slug : null;
   const creating = AS.menuForm?.kind === 'category' && !editingSlug;
-  const newBox = `<div class="aBox">${creating ? categoryFormHtml(AS.menuForm.data) : `<button class="cta small" data-cat-new>+ AJOUTER UNE CATÉGORIE</button> <button class="ghost small" data-menu-sync>Synchroniser les catégories/produits du code</button>`}</div>`;
+  const newBox = creating ? `<div class="aBox">${categoryFormHtml(AS.menuForm.data)}</div>` : `<div class="aToolbar"><button class="ghost small" data-menu-sync>Synchroniser les catégories/produits du code</button></div>`;
   const list = AS.menu.categories.slice().sort((a, b) => (a.order || 0) - (b.order || 0))
     .map(c => categoryRow(c) + (editingSlug === c.slug ? categoryFormHtml(AS.menuForm.data) : '')).join('') || `<p class="aEmpty">Aucune catégorie.</p>`;
-  return `${newBox}<div class="aDrivers">${list}</div>`;
+  return `${newBox}<div class="aDrivers">${list}</div>
+  <button class="aFab" data-cat-new title="Ajouter une catégorie" aria-label="Ajouter une catégorie">${icon('plus')}</button>`;
 }
 
 function categoryFormHtml(d) {
@@ -620,13 +623,14 @@ function categoryFormHtml(d) {
 }
 
 function productRow(p) {
+  const off = p.active === false;
   return `<div class="aDriverCard aProdCard">
     <div class="prodThumb"><img src="${p.img}" alt="" loading="lazy"></div>
-    <div><b>${p.name}</b><small>${formatPrice(p.price)}${p.popular ? ' · ⭐ Populaire' : ''}${p.active === false ? ' · Masqué' : ''}</small></div>
-    <div class="aPromoActions">
-     <button class="ghost small" data-prod-toggle="${p.id}">${p.active === false ? 'Afficher' : 'Masquer'}</button>
-     <button class="ghost small" data-prod-edit="${p.id}">Modifier</button>
-     <button class="ghost small danger solid" data-prod-delete="${p.id}">Supprimer</button>
+    <div><b>${p.name}</b><small>${formatPrice(p.price)}${p.popular ? ' · ⭐ Populaire' : ''}${off ? ' · Masqué' : ''}</small></div>
+    <div class="aIconActions">
+     <button class="aIconBtn${off ? ' offState' : ''}" data-prod-toggle="${p.id}" title="${off ? 'Afficher' : 'Masquer'}" aria-label="${off ? 'Afficher' : 'Masquer'}">${icon(off ? 'eye-off' : 'eye')}</button>
+     <button class="aIconBtn" data-prod-edit="${p.id}" title="Modifier" aria-label="Modifier">${icon('pencil')}</button>
+     <button class="aIconBtn danger" data-prod-delete="${p.id}" title="Supprimer" aria-label="Supprimer">${icon('trash')}</button>
     </div>
    </div>`;
 }
@@ -636,23 +640,30 @@ function menuProductsView() {
   const filter = AS.menuProductFilter;
   const editingId = AS.menuForm?.kind === 'product' ? AS.menuForm.data.id : null;
   const creating = AS.menuForm?.kind === 'product' && !editingId;
-  const newBox = `<div class="aBox">${creating ? productFormHtml(AS.menuForm.data) : (cats.length ? `<button class="cta small" data-prod-new>+ AJOUTER UN PRODUIT</button>` : `<p class="aMuted">Crée d'abord une catégorie de type "Liste de produits".</p>`)}</div>`;
+  const newBox = creating ? `<div class="aBox">${productFormHtml(AS.menuForm.data)}</div>` : (!cats.length ? `<p class="aMuted">Crée d'abord une catégorie de type "Liste de produits".</p>` : '');
   // Groupé par catégorie (dans l'ordre du site) plutôt que mélangé : plus facile à
-  // s'y retrouver quand il y a des pizzas, boissons et desserts ensemble. Le
-  // formulaire d'édition s'affiche juste sous le produit cliqué, pas en bas de page.
+  // s'y retrouver quand il y a des pizzas, boissons et desserts ensemble. Chaque
+  // groupe est repliable au tap pour éviter d'avoir à tout scroller sur mobile ;
+  // le formulaire d'édition s'affiche juste sous le produit cliqué.
   const visibleCats = filter === 'all' ? cats : cats.filter(c => c.slug === filter);
   const groups = visibleCats.map(c => {
     const products = AS.menu.products.filter(p => p.categoryId === c.slug).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
     if (!products.length) return '';
+    // Une catégorie qui contient le produit en cours d'édition reste ouverte
+    // même si elle était repliée, pour ne pas perdre le formulaire de vue.
+    const forceOpen = editingId && products.some(p => p.id === editingId);
+    const collapsed = AS.menuCollapsed.has(c.slug) && !forceOpen;
     const rows = products.map(p => productRow(p) + (editingId === p.id ? productFormHtml(AS.menuForm.data) : '')).join('');
-    return `<h3 class="aGroupTitle">${c.label} <em>${products.length}</em></h3><div class="aDrivers">${rows}</div>`;
+    return `<h3 class="aGroupTitle${collapsed ? '' : ' open'}" data-cat-collapse="${c.slug}">${c.label} <em>${products.length}</em> ${icon('chevron', 'chevIcon')}</h3>
+    <div class="aGroupBody aDrivers${collapsed ? ' collapsed' : ''}">${rows}</div>`;
   }).join('') || `<p class="aEmpty">Aucun produit dans cette catégorie.</p>`;
   return `${newBox}
   <div class="aToolbar"><select id="menuProductFilter">
    <option value="all" ${filter === 'all' ? 'selected' : ''}>Toutes les catégories</option>
    ${cats.map(c => `<option value="${c.slug}" ${filter === c.slug ? 'selected' : ''}>${c.label}</option>`).join('')}
   </select></div>
-  ${groups}`;
+  ${groups}
+  ${cats.length ? `<button class="aFab" data-prod-new title="Ajouter un produit" aria-label="Ajouter un produit">${icon('plus')}</button>` : ''}`;
 }
 
 function productFormHtml(d) {
@@ -867,6 +878,11 @@ function bind() {
   document.querySelector('#menuProductFilter')?.addEventListener('change', e => {
     AS.menuProductFilter = e.target.value; renderRoot();
   });
+  document.querySelectorAll('[data-cat-collapse]').forEach(h => h.addEventListener('click', () => {
+    const slug = h.dataset.catCollapse;
+    if (AS.menuCollapsed.has(slug)) AS.menuCollapsed.delete(slug); else AS.menuCollapsed.add(slug);
+    renderRoot();
+  }));
   document.querySelector('#cancelMenuForm')?.addEventListener('click', () => { AS.menuForm = null; renderRoot(); });
   document.querySelector('[data-pick-img]')?.addEventListener('click', () => {
     openImagePicker(path => {
