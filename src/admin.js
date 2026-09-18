@@ -24,6 +24,7 @@ const AS = {
   menuCollapsed: new Set(), // slugs de catégories repliées dans l'onglet Produits
   quickPriceId: null, // id du produit dont le prix est en cours de modif rapide (sans ouvrir tout le formulaire)
   menuForm: null, // { kind:'category'|'product', data:{...} } pendant une création/édition
+  menuReorder: { categories: false, products: false, builder: false }, // mode "Réorganiser" actif par liste
 };
 
 const formatPrice = n => (+n).toFixed(2).replace('.', ',') + ' €';
@@ -510,9 +511,40 @@ function syncDraftFromDom(cfgId, section) {
 // comme à la souris (Pointer Events couvre les deux). La ligne suit le doigt
 // via transform, et bascule de position dès qu'elle franchit la moitié d'une
 // ligne voisine — comme réorganiser des icônes sur un écran d'accueil.
+// FLIP : capture la position "avant" de chaque voisine (hors la carte tenue),
+// laisse l'appelant faire le déplacement DOM (qui téléporte instantanément),
+// puis fait repartir visuellement chaque voisine déplacée de son ancienne
+// position vers la nouvelle avec une petite transition — au lieu du saut sec.
+// Coupe aussi le wiggle du mode réorganisation le temps de la transition,
+// sinon l'animation (qui touche aussi "transform") écraserait la translation.
+function flipSiblings(before, siblings, row) {
+  siblings.forEach(el => {
+    if (el === row) return;
+    const prev = before.get(el);
+    if (!prev) return;
+    const now = el.getBoundingClientRect();
+    const d = prev.top - now.top;
+    if (!d) return;
+    el.style.animation = 'none';
+    el.style.transition = 'none';
+    el.style.transform = `translateY(${d}px)`;
+    requestAnimationFrame(() => {
+      el.style.transition = 'transform .15s ease';
+      el.style.transform = '';
+    });
+    el.addEventListener('transitionend', () => {
+      el.style.transition = '';
+      el.style.animation = '';
+    }, { once: true });
+  });
+}
+
 function attachRepeaterDrag() {
   document.querySelectorAll('.repHandle').forEach(handle => {
     handle.addEventListener('pointerdown', e => {
+      // Hors mode "Réorganiser" : on ne touche à rien, le doigt scrolle la
+      // page normalement même s'il se pose pile sur la poignée.
+      if (!AS.menuReorder.builder) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       e.preventDefault();
       const row = handle.closest('.aRepRow');
@@ -531,10 +563,12 @@ function attachRepeaterDrag() {
         const dy = ev.clientY - startY;
         const target = Math.max(0, Math.min(siblings.length - 1, index + Math.round((dy - snapped) / rowHeight)));
         if (target !== index) {
+          const before = new Map(siblings.filter(s => s !== row).map(el => [el, el.getBoundingClientRect()]));
           if (target > index) siblings[target].after(row); else siblings[target].before(row);
           snapped += (target - index) * rowHeight;
           index = target;
           siblings = [...list.querySelectorAll(sel)];
+          flipSiblings(before, siblings, row);
         }
         row.style.transform = `translateY(${dy - snapped}px)`;
       }
@@ -556,7 +590,8 @@ function attachRepeaterDrag() {
 
 function optionRepeater(cfg, section, unitLabel) {
   const rows = builderDraft(cfg)[section];
-  return `<div class="aRepeater">
+  const reordering = AS.menuReorder.builder;
+  return `<div class="aRepeater${reordering ? ' reordering' : ''}">
     ${rows.map(r => `<div class="aRepRow" data-rep-row="${r.rid}" data-rep-cfg="${cfg.id}" data-rep-section="${section}">
       ${rows.length > 1 ? `<button type="button" class="repHandle" aria-label="Glisser pour réordonner">${icon('grip')}</button>` : ''}
       <input class="repName" placeholder="Nom" value="${r.name || ''}">
@@ -649,7 +684,8 @@ function menuView() {
   ${AS.menuSub === 'categories' ? menuCategoriesView() : ''}
   ${AS.menuSub === 'products' ? menuProductsView() : ''}
   ${AS.menuSub === 'builder' ? menuBuilderView() : ''}
-  ${AS.menuSub === 'settings' ? menuSettingsView() : ''}`;
+  ${AS.menuSub === 'settings' ? menuSettingsView() : ''}
+  ${reorderBanner()}`;
 }
 
 // Glisser-déposer générique (poignée .dragHandle) pour réordonner des cartes
@@ -658,6 +694,11 @@ function menuView() {
 function attachDragReorder(onDrop) {
   document.querySelectorAll('.dragHandle').forEach(handle => {
     handle.addEventListener('pointerdown', e => {
+      // Hors mode "Réorganiser" : on ne touche à rien, le doigt scrolle la
+      // page normalement même s'il se pose pile sur la poignée — c'est ça qui
+      // corrige le déplacement accidentel pendant un scroll.
+      const activeKey = AS.menuSub === 'categories' ? 'categories' : 'products';
+      if (!AS.menuReorder[activeKey]) return;
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       e.preventDefault();
       const row = handle.closest('[data-drag-id]');
@@ -675,10 +716,12 @@ function attachDragReorder(onDrop) {
         const dy = ev.clientY - startY;
         const target = Math.max(0, Math.min(siblings.length - 1, index + Math.round((dy - snapped) / rowHeight)));
         if (target !== index) {
+          const before = new Map(siblings.filter(s => s !== row).map(el => [el, el.getBoundingClientRect()]));
           if (target > index) siblings[target].after(row); else siblings[target].before(row);
           snapped += (target - index) * rowHeight;
           index = target;
           siblings = [...list.querySelectorAll(sel)];
+          flipSiblings(before, siblings, row);
         }
         row.style.transform = `translateY(${dy - snapped}px)`;
       }
@@ -709,14 +752,29 @@ function categoryRow(c, showHandle) {
    </div>`;
 }
 
+// Bouton "Réorganiser / Terminé" — bascule AS.menuReorder[key] et redessine.
+// Utilisé pour les 3 listes (catégories, produits, compose ta recette) et par
+// le bandeau flottant qui reste visible pendant tout le scroll une fois actif.
+function reorderToggleBtn(key, label) {
+  const on = AS.menuReorder[key];
+  return `<button type="button" class="ghost small${on ? ' active' : ''}" data-reorder-toggle="${key}">${on ? icon('check') + ' Terminé' : (label || 'Réorganiser')}</button>`;
+}
+
+function reorderBanner() {
+  const key = AS.menuSub === 'categories' ? 'categories' : AS.menuSub === 'products' ? 'products' : AS.menuSub === 'builder' ? 'builder' : null;
+  if (!key || !AS.menuReorder[key]) return '';
+  return `<div class="aReorderBanner">Mode réorganisation <button type="button" class="cta small" data-reorder-toggle="${key}">Terminé</button></div>`;
+}
+
 function menuCategoriesView() {
   const editingSlug = AS.menuForm?.kind === 'category' ? AS.menuForm.data.slug : null;
   const creating = AS.menuForm?.kind === 'category' && !editingSlug;
-  const newBox = creating ? `<div class="aBox">${categoryFormHtml(AS.menuForm.data)}</div>` : `<div class="aToolbar"><button class="ghost small" data-menu-sync>Synchroniser les catégories/produits du code</button></div>`;
+  const reordering = AS.menuReorder.categories;
+  const newBox = creating ? `<div class="aBox">${categoryFormHtml(AS.menuForm.data)}</div>` : `<div class="aToolbar">${reorderToggleBtn('categories')}</div>`;
   const list = AS.menu.categories.slice().sort((a, b) => (a.order || 0) - (b.order || 0))
     .map(c => categoryRow(c, AS.menu.categories.length > 1) + (editingSlug === c.slug ? categoryFormHtml(AS.menuForm.data) : '')).join('') || `<p class="aEmpty">Aucune catégorie.</p>`;
-  return `${newBox}<div class="aDrivers">${list}</div>
-  ${creating || editingSlug ? '' : `<button class="aFab" data-cat-new title="Ajouter une catégorie" aria-label="Ajouter une catégorie">${icon('plus')}</button>`}`;
+  return `${newBox}<div class="aDrivers${reordering ? ' reordering' : ''}">${list}</div>
+  ${creating || editingSlug || reordering ? '' : `<button class="aFab" data-cat-new title="Ajouter une catégorie" aria-label="Ajouter une catégorie">${icon('plus')}</button>`}`;
 }
 
 function categoryFormHtml(d) {
@@ -775,25 +833,29 @@ function menuProductsView() {
   // s'y retrouver quand il y a des pizzas, boissons et desserts ensemble. Chaque
   // groupe est repliable au tap pour éviter d'avoir à tout scroller sur mobile ;
   // le formulaire d'édition s'affiche juste sous le produit cliqué.
+  const reordering = AS.menuReorder.products;
   const visibleCats = filter === 'all' ? cats : cats.filter(c => c.slug === filter);
   const groups = visibleCats.map(c => {
     const products = AS.menu.products.filter(p => p.categoryId === c.slug).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
     if (!products.length) return '';
     // Une catégorie qui contient le produit en cours d'édition reste ouverte
     // même si elle était repliée, pour ne pas perdre le formulaire de vue.
-    const forceOpen = editingId && products.some(p => p.id === editingId);
+    // En mode réorganisation, tous les groupes s'ouvrent aussi : sinon les
+    // produits d'une catégorie repliée seraient invisibles et impossibles à
+    // déplacer.
+    const forceOpen = (editingId && products.some(p => p.id === editingId)) || reordering;
     const collapsed = AS.menuCollapsed.has(c.slug) && !forceOpen;
     const rows = products.map(p => productRow(p, products.length > 1) + (editingId === p.id ? productFormHtml(AS.menuForm.data) : '')).join('');
     return `<h3 class="aGroupTitle${collapsed ? '' : ' open'}" data-cat-collapse="${c.slug}">${c.label} <em>${products.length}</em> ${icon('chevron', 'chevIcon')}</h3>
-    <div class="aGroupBody aDrivers${collapsed ? ' collapsed' : ''}">${rows}</div>`;
+    <div class="aGroupBody aDrivers${collapsed ? ' collapsed' : ''}${reordering ? ' reordering' : ''}">${rows}</div>`;
   }).join('') || `<p class="aEmpty">Aucun produit dans cette catégorie.</p>`;
   return `${newBox}
-  <div class="aToolbar"><select id="menuProductFilter">
+  <div class="aToolbar aToolbarRow"><select id="menuProductFilter">
    <option value="all" ${filter === 'all' ? 'selected' : ''}>Toutes les catégories</option>
    ${cats.map(c => `<option value="${c.slug}" ${filter === c.slug ? 'selected' : ''}>${c.label}</option>`).join('')}
-  </select></div>
+  </select>${cats.length ? reorderToggleBtn('products') : ''}</div>
   ${groups}
-  ${cats.length && !creating && !editingId ? `<button class="aFab" data-prod-new title="Ajouter un produit" aria-label="Ajouter un produit">${icon('plus')}</button>` : ''}`;
+  ${cats.length && !creating && !editingId && !reordering ? `<button class="aFab" data-prod-new title="Ajouter un produit" aria-label="Ajouter un produit">${icon('plus')}</button>` : ''}`;
 }
 
 function productFormHtml(d) {
@@ -837,7 +899,10 @@ function productFormHtml(d) {
 function menuBuilderView() {
   const list = AS.menu.configurators;
   if (!list.length) return `<p class="aEmpty">Aucun configurateur "Compose ta recette".</p>`;
-  return list.map(cfg => `<div class="aBox">
+  // Un seul bouton "Réorganiser" pour toute la page : active les poignées de
+  // toutes les lignes (bases/sauces/ingrédients) de tous les configurateurs
+  // en une fois, plutôt qu'un bouton par bloc.
+  return `<div class="aToolbar">${reorderToggleBtn('builder')}</div>` + list.map(cfg => `<div class="aBox">
    <h3>${cfg.label}${cfg.active === false ? ' (désactivé)' : ''}</h3>
    <form class="cfgForm" data-cfg="${cfg.id}">
     <label>Nom affiché<input name="label" required maxlength="60" value="${cfg.label}"></label>
@@ -1049,18 +1114,11 @@ function bind() {
   document.querySelector('[data-cat-new]')?.addEventListener('click', () => {
     AS.menuForm = { kind: 'category', data: { sites: ['main'], kind: 'products' } }; openMenuForm();
   });
-  document.querySelector('[data-menu-sync]')?.addEventListener('click', async (e) => {
-    const btn = e.target; btn.disabled = true; btn.textContent = 'Synchronisation…';
-    try {
-      const r = await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'sync', action: 'defaults' }) });
-      const total = r.addedCategories.length + r.addedProducts.length;
-      alert(total ? `Ajouté : ${[...r.addedCategories, ...r.addedProducts].join(', ')}` : 'Rien à ajouter, tout est déjà présent.');
-      await loadMenu(true);
-    } catch (err) {
-      alert(err.message || 'Erreur lors de la synchronisation.');
-      btn.disabled = false; btn.textContent = 'Synchroniser les catégories/produits du code';
-    }
-  });
+  document.querySelectorAll('[data-reorder-toggle]').forEach(b => b.addEventListener('click', () => {
+    const key = b.dataset.reorderToggle;
+    AS.menuReorder[key] = !AS.menuReorder[key];
+    renderRoot();
+  }));
   document.querySelectorAll('[data-cat-edit]').forEach(b => b.addEventListener('click', () => {
     const c = AS.menu.categories.find(x => x.slug === b.dataset.catEdit);
     AS.menuForm = { kind: 'category', data: { ...c } }; openMenuForm();

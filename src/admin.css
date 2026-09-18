@@ -73,6 +73,11 @@ main{padding:16px}
 .ghost.danger{border-color:#f3b8c5;color:#c81d43}
 .ghost.danger.solid{background:#d1355a;border-color:#d1355a;color:#fff}
 .ghost.danger.solid:hover{background:#b82a4b;border-color:#b82a4b}
+.ghost.active{background:var(--p);border-color:var(--p);color:#fff}
+.ghost.active .icon{width:12px;height:12px}
+.aToolbarRow{display:flex;align-items:center;gap:8px}
+.aToolbarRow select{flex:1}
+.aToolbarRow .ghost{flex:0 0 auto}
 
 /* order detail */
 .back{color:var(--p2);display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:14px}
@@ -104,8 +109,13 @@ main{padding:16px}
 .aDrivers{display:grid;gap:8px;margin-bottom:16px}
 .aDriverCard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;justify-content:space-between}
 .aDriverCard.dragging{position:relative;z-index:5;box-shadow:0 4px 12px rgba(28,20,32,.14)}
-.dragHandle{flex:0 0 20px;width:20px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--muted);touch-action:none;cursor:grab}
+/* Poignée inerte tant que le mode "Réorganiser" n'est pas actif : touch-action
+   pan-y laisse le scroll vertical natif passer à travers un doigt posé dessus
+   par inadvertance. Elle ne devient "grab" (et ne bloque le scroll pour
+   suivre le doigt) qu'une fois la liste passée en .reordering. */
+.dragHandle{flex:0 0 20px;width:20px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--muted);touch-action:pan-y;cursor:default;opacity:.5}
 .dragHandle .icon{width:15px;height:15px}
+.reordering .dragHandle{touch-action:none;cursor:grab;color:var(--p);opacity:1}
 .aDriverCard>div:first-child{display:flex;flex-direction:column;gap:2px}
 .aPromoActions{display:flex;flex-direction:column;gap:6px}
 .aDriverCard b{font-size:13px;display:block}
@@ -164,8 +174,9 @@ main{padding:16px}
 .aRepeater{margin-bottom:14px}
 .aRepRow{display:flex;gap:6px;align-items:center;margin-bottom:6px}
 .aRepRow.dragging{position:relative;z-index:5;background:var(--card2);border-radius:9px;box-shadow:0 4px 10px rgba(28,20,32,.12)}
-.repHandle{flex:0 0 22px;width:22px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--muted);touch-action:none;cursor:grab}
+.repHandle{flex:0 0 22px;width:22px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--muted);touch-action:pan-y;cursor:default;opacity:.5}
 .repHandle .icon{width:15px;height:15px}
+.reordering .repHandle{touch-action:none;cursor:grab;color:var(--p);opacity:1}
 .aRepRow .repName{flex:1;min-width:0}
 .aRepRow .repVal{width:66px;flex:0 0 66px}
 .aRepeater .aIconBtn{width:34px;height:34px;flex:0 0 34px}
@@ -228,3 +239,25 @@ main{padding:16px}
 .aImgTile:hover{border-color:var(--p)}
 .aImgTile img{width:100%;height:72px;object-fit:cover;border-radius:7px;background:var(--bg)}
 .aImgTile small{font-size:9px;color:var(--muted);width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
+
+/* Mode "Réorganiser" : tremblement collectif façon écran d'accueil iPhone, pour
+   signaler un état global (tout est déplaçable) plutôt qu'une carte isolée. Le
+   décalage even/odd casse l'effet trop synchronisé/mécanique. Les actions
+   œil/crayon/poubelle se désactivent pour éviter un tap accidentel pendant la
+   réorganisation. */
+@keyframes aWiggleA{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1deg)}}
+@keyframes aWiggleB{0%,100%{transform:rotate(1deg)}50%{transform:rotate(-1deg)}}
+.reordering .aDriverCard,.aRepeater.reordering .aRepRow{animation:aWiggleA .22s ease-in-out infinite}
+.reordering .aDriverCard:nth-child(even),.aRepeater.reordering .aRepRow:nth-child(even){animation-name:aWiggleB}
+.reordering .aDriverCard.dragging,.aRepeater.reordering .aRepRow.dragging{animation:none}
+.reordering .aIconActions{opacity:.35;pointer-events:none}
+.aRepeater.reordering .aIconBtn{opacity:.35;pointer-events:none}
+@media (prefers-reduced-motion:reduce){
+ .reordering .aDriverCard,.aRepeater.reordering .aRepRow{animation:none;outline:2px solid var(--p);outline-offset:2px}
+}
+
+/* Bandeau flottant qui reste visible pendant tout le scroll en mode
+   réorganisation, pour ne jamais oublier qu'on y est (et où appuyer pour
+   sortir). Remplace le FAB "+" le temps du mode. */
+.aReorderBanner{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:40;background:var(--white);color:#fff;border-radius:30px;padding:10px 10px 10px 18px;display:flex;align-items:center;gap:10px;font:700 12px Inter;box-shadow:0 8px 22px rgba(28,20,32,.35)}
+.aReorderBanner .cta{padding:8px 16px}
