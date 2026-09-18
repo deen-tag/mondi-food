@@ -99,6 +99,15 @@ function genId(prefix) {
   return `${prefix}-${Date.now().toString(36)}${Math.floor(Math.random() * 1000)}`;
 }
 
+// Un produit garde une catégorie principale (categoryId, ex. "Pizza" sur le site
+// principal) mais peut aussi apparaître dans d'autres catégories sans être
+// dupliqué — typiquement une sélection de produits existants regroupée dans une
+// catégorie propre à Mondi Night (ex. "Plats Night").
+function sanitizeCategoryIds(arr) {
+  if (!Array.isArray(arr)) return [];
+  return [...new Set(arr.filter((x) => typeof x === 'string' && x))].slice(0, 20);
+}
+
 // ---- Catégories ----
 
 export async function createCategory({ label, sites, kind, order, img }) {
@@ -143,6 +152,7 @@ export async function createProduct(input) {
   const doc = {
     id,
     categoryId: String(input.categoryId || ''),
+    extraCategoryIds: sanitizeCategoryIds(input.extraCategoryIds),
     name: String(input.name || '').slice(0, 100),
     price: Math.max(0, Number(input.price) || 0),
     desc: String(input.desc || '').slice(0, 300),
@@ -167,13 +177,14 @@ export async function updateProduct(id, patch) {
   const ref = db.collection(COLLECTIONS.products).doc(id);
   const snap = await ref.get();
   if (!snap.exists) throw new Error('Produit introuvable');
-  const allowed = ['categoryId', 'name', 'price', 'desc', 'img', 'badge', 'tag', 'hot', 'veg', 'popular', 'active', 'order'];
+  const allowed = ['categoryId', 'extraCategoryIds', 'name', 'price', 'desc', 'img', 'badge', 'tag', 'hot', 'veg', 'popular', 'active', 'order'];
   const clean = {};
   for (const k of allowed) {
     if (!(k in patch)) continue;
     if (k === 'price') clean.price = Math.max(0, Number(patch.price) || 0);
     else if (k === 'name') clean.name = String(patch.name).slice(0, 100);
     else if (k === 'desc') clean.desc = String(patch.desc).slice(0, 300);
+    else if (k === 'extraCategoryIds') clean.extraCategoryIds = sanitizeCategoryIds(patch.extraCategoryIds);
     else clean[k] = patch[k];
   }
   await ref.update(clean);
