@@ -60,3 +60,37 @@ export async function uploadImageToGithub(path, base64Content, message) {
     raw: `https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/${path}`,
   };
 }
+
+// path attendu au format "public/images/uploads/xxx.png" (relatif à la racine du repo)
+export async function deleteImageFromGithub(path, message) {
+  if (!process.env.GITHUB_TOKEN) {
+    throw new Error("Suppression indisponible : variable d'environnement GITHUB_TOKEN manquante sur Vercel.");
+  }
+
+  // L'API Contents de GitHub exige le sha du fichier existant pour le supprimer.
+  const existing = await fetch(`${API_BASE}/${path}?ref=${GITHUB_BRANCH}`, { headers: authHeaders() });
+  if (!existing.ok) {
+    if (existing.status === 404) throw new Error('Fichier introuvable sur GitHub (déjà supprimé ?).');
+    throw new Error(`Impossible de lire le fichier avant suppression (${existing.status})`);
+  }
+  const { sha } = await existing.json();
+
+  const res = await fetch(`${API_BASE}/${path}`, {
+    method: 'DELETE',
+    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: message || `Suppression image ${path} (admin)`,
+      sha,
+      branch: GITHUB_BRANCH,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    if (res.status === 401) throw new Error('GITHUB_TOKEN invalide ou expiré.');
+    if (res.status === 403) throw new Error("Le token GitHub n'a pas les droits d'écriture sur ce dépôt.");
+    throw new Error(err.message || `Échec de la suppression GitHub (${res.status})`);
+  }
+
+  return { ok: true };
+}

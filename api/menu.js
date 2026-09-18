@@ -10,7 +10,7 @@ import {
   updateConfigurator,
   updateSettings,
 } from './_menu-store.js';
-import { uploadImageToGithub } from './_github.js';
+import { uploadImageToGithub, deleteImageFromGithub } from './_github.js';
 
 // Vercel bloque les requêtes au-delà d'une certaine taille de corps sur le
 // plan Hobby ; on refuse une image trop lourde côté serveur avant l'appel
@@ -97,6 +97,18 @@ export default async function handler(req, res) {
 
         const result = await uploadImageToGithub(path, base64);
         return res.status(200).json(result);
+      }
+
+      if (resource === 'image' && action === 'delete') {
+        const { sitePath } = payload;
+        // sitePath vient du sélecteur d'images admin, ex: "/images/uploads/123-photo.png".
+        // On ne permet la suppression que dans public/images/, jamais ailleurs dans le repo.
+        if (typeof sitePath !== 'string' || !/^\/images\/[^.][^\0]*\.(png|jpe?g|webp|gif)$/i.test(sitePath) || sitePath.includes('..')) {
+          return res.status(400).json({ error: 'Chemin d\'image invalide.' });
+        }
+        const path = `public${sitePath}`;
+        await deleteImageFromGithub(path);
+        return res.status(200).json({ ok: true });
       }
 
       return res.status(400).json({ error: 'Requête invalide' });
