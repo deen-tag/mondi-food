@@ -652,9 +652,54 @@ function menuView() {
   ${AS.menuSub === 'settings' ? menuSettingsView() : ''}`;
 }
 
-function categoryRow(c) {
+// Glisser-déposer générique (poignée .dragHandle) pour réordonner des cartes
+// catégorie/produit dans leur liste — même mécanique que le repeater, mais
+// ici chaque lâcher persiste directement le nouvel ordre côté serveur.
+function attachDragReorder(onDrop) {
+  document.querySelectorAll('.dragHandle').forEach(handle => {
+    handle.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      e.preventDefault();
+      const row = handle.closest('[data-drag-id]');
+      const list = row.parentElement;
+      const sel = ':scope > [data-drag-id]';
+      let siblings = [...list.querySelectorAll(sel)];
+      let index = siblings.indexOf(row);
+      const rowHeight = row.getBoundingClientRect().height + 8;
+      const startY = e.clientY;
+      let snapped = 0;
+      row.classList.add('dragging');
+      handle.setPointerCapture(e.pointerId);
+
+      function onMove(ev) {
+        const dy = ev.clientY - startY;
+        const target = Math.max(0, Math.min(siblings.length - 1, index + Math.round((dy - snapped) / rowHeight)));
+        if (target !== index) {
+          if (target > index) siblings[target].after(row); else siblings[target].before(row);
+          snapped += (target - index) * rowHeight;
+          index = target;
+          siblings = [...list.querySelectorAll(sel)];
+        }
+        row.style.transform = `translateY(${dy - snapped}px)`;
+      }
+      async function onUp() {
+        handle.removeEventListener('pointermove', onMove);
+        handle.removeEventListener('pointerup', onUp);
+        row.classList.remove('dragging');
+        row.style.transform = '';
+        const ids = [...list.querySelectorAll(sel)].map(r => r.dataset.dragId);
+        await onDrop(ids, row);
+      }
+      handle.addEventListener('pointermove', onMove);
+      handle.addEventListener('pointerup', onUp);
+    });
+  });
+}
+
+function categoryRow(c, showHandle) {
   const off = c.active === false;
-  return `<div class="aDriverCard">
+  return `<div class="aDriverCard" data-drag-id="${c.slug}">
+    ${showHandle ? `<button type="button" class="dragHandle" aria-label="Glisser pour réordonner">${icon('grip')}</button>` : ''}
     <div><b>${c.label}</b><small>${c.kind === 'configurator' ? 'Configurateur' : 'Produits'} · ${(c.sites || []).map(s => s === 'main' ? 'Site principal' : 'Mondi Night').join(', ')}${off ? ' · Désactivée' : ''}</small></div>
     <div class="aIconActions">
      <button class="aIconBtn${off ? ' offState' : ''}" data-cat-toggle="${c.slug}" title="${off ? 'Activer' : 'Désactiver'}" aria-label="${off ? 'Activer' : 'Désactiver'}">${icon(off ? 'eye-off' : 'eye')}</button>
@@ -669,7 +714,7 @@ function menuCategoriesView() {
   const creating = AS.menuForm?.kind === 'category' && !editingSlug;
   const newBox = creating ? `<div class="aBox">${categoryFormHtml(AS.menuForm.data)}</div>` : `<div class="aToolbar"><button class="ghost small" data-menu-sync>Synchroniser les catégories/produits du code</button></div>`;
   const list = AS.menu.categories.slice().sort((a, b) => (a.order || 0) - (b.order || 0))
-    .map(c => categoryRow(c) + (editingSlug === c.slug ? categoryFormHtml(AS.menuForm.data) : '')).join('') || `<p class="aEmpty">Aucune catégorie.</p>`;
+    .map(c => categoryRow(c, AS.menu.categories.length > 1) + (editingSlug === c.slug ? categoryFormHtml(AS.menuForm.data) : '')).join('') || `<p class="aEmpty">Aucune catégorie.</p>`;
   return `${newBox}<div class="aDrivers">${list}</div>
   ${creating || editingSlug ? '' : `<button class="aFab" data-cat-new title="Ajouter une catégorie" aria-label="Ajouter une catégorie">${icon('plus')}</button>`}`;
 }
@@ -697,7 +742,7 @@ function categoryFormHtml(d) {
   </div>`;
 }
 
-function productRow(p) {
+function productRow(p, showHandle) {
   const off = p.active === false;
   // Modif rapide du prix : évite d'ouvrir tout le formulaire juste pour un
   // changement de tarif, le cas le plus fréquent au quotidien.
@@ -708,9 +753,10 @@ function productRow(p) {
         <button type="button" class="aIconBtn" data-quickprice-cancel title="Annuler" aria-label="Annuler">${icon('close')}</button>
        </form>`
     : `<small><button type="button" class="aPriceBtn" data-quickprice-edit="${p.id}">${formatPrice(p.price)} ${icon('pencil', 'editHint')}</button>${p.popular ? ' · ⭐ Populaire' : ''}${off ? ' · Masqué' : ''}</small>`;
-  return `<div class="aDriverCard aProdCard">
+  return `<div class="aDriverCard aProdCard" data-drag-id="${p.id}">
+    ${showHandle ? `<button type="button" class="dragHandle" aria-label="Glisser pour réordonner">${icon('grip')}</button>` : ''}
     <div class="prodThumb"><img src="${p.img}" alt="" loading="lazy"></div>
-    <div><b>${p.name}</b>${priceHtml}</div>
+    <div class="prodInfo"><b>${p.name}</b>${priceHtml}</div>
     <div class="aIconActions">
      <button class="aIconBtn${off ? ' offState' : ''}" data-prod-toggle="${p.id}" title="${off ? 'Afficher' : 'Masquer'}" aria-label="${off ? 'Afficher' : 'Masquer'}">${icon(off ? 'eye-off' : 'eye')}</button>
      <button class="aIconBtn" data-prod-edit="${p.id}" title="Modifier" aria-label="Modifier">${icon('pencil')}</button>
@@ -737,7 +783,7 @@ function menuProductsView() {
     // même si elle était repliée, pour ne pas perdre le formulaire de vue.
     const forceOpen = editingId && products.some(p => p.id === editingId);
     const collapsed = AS.menuCollapsed.has(c.slug) && !forceOpen;
-    const rows = products.map(p => productRow(p) + (editingId === p.id ? productFormHtml(AS.menuForm.data) : '')).join('');
+    const rows = products.map(p => productRow(p, products.length > 1) + (editingId === p.id ? productFormHtml(AS.menuForm.data) : '')).join('');
     return `<h3 class="aGroupTitle${collapsed ? '' : ' open'}" data-cat-collapse="${c.slug}">${c.label} <em>${products.length}</em> ${icon('chevron', 'chevIcon')}</h3>
     <div class="aGroupBody aDrivers${collapsed ? ' collapsed' : ''}">${rows}</div>`;
   }).join('') || `<p class="aEmpty">Aucun produit dans cette catégorie.</p>`;
@@ -1086,6 +1132,16 @@ function bind() {
     } catch (err) { alert(err.message || 'Erreur'); }
   });
 
+  attachDragReorder(async (ids, row) => {
+    try {
+      if (row.classList.contains('aProdCard')) {
+        await Promise.all(ids.map((id, i) => api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'product', action: 'update', id, order: i }) })));
+      } else {
+        await Promise.all(ids.map((slug, i) => api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'category', action: 'update', slug, order: i }) })));
+      }
+      await loadMenu(true);
+    } catch (err) { alert(err.message || 'Erreur'); }
+  });
   attachRepeaterDrag();
   document.querySelectorAll('[data-rep-add]').forEach(b => b.addEventListener('click', () => {    const { repCfg: cfgId, repSection: section } = b.dataset;
     syncDraftFromDom(cfgId, section);

@@ -102,7 +102,10 @@ main{padding:16px}
 /* drivers */
 .aTitle{font:800 32px 'Barlow Condensed';margin:0 0 14px}
 .aDrivers{display:grid;gap:8px;margin-bottom:16px}
-.aDriverCard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
+.aDriverCard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;justify-content:space-between}
+.aDriverCard.dragging{position:relative;z-index:5;box-shadow:0 4px 12px rgba(28,20,32,.14)}
+.dragHandle{flex:0 0 20px;width:20px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--muted);touch-action:none;cursor:grab}
+.dragHandle .icon{width:15px;height:15px}
 .aDriverCard>div:first-child{display:flex;flex-direction:column;gap:2px}
 .aPromoActions{display:flex;flex-direction:column;gap:6px}
 .aDriverCard b{font-size:13px;display:block}
@@ -121,7 +124,7 @@ main{padding:16px}
 .aProdCard{gap:10px}
 .aProdCard .prodThumb{width:44px;height:44px;flex:0 0 44px;border-radius:8px;overflow:hidden;background:var(--line)}
 .aProdCard .prodThumb img{width:100%;height:100%;object-fit:cover;display:block}
-.aProdCard>div:nth-child(2){flex:1;min-width:0}
+.aProdCard .prodInfo{flex:1;min-width:0}
 .aBox .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .aBox .two label{margin-bottom:0}
 
