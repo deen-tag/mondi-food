@@ -666,6 +666,14 @@ async function uploadImageFile(file) {
   return result.sitePath;
 }
 
+async function deleteImageFile(sitePath) {
+  await api('/api/menu', {
+    method: 'POST',
+    body: JSON.stringify({ resource: 'image', action: 'delete', sitePath }),
+  });
+  githubImagesCache = null; // pour que le sélecteur ne montre plus l'image supprimée
+}
+
 // ---------- Sélecteur visuel d'images (depuis le dépôt GitHub) ----------
 // Le champ Photo reste un texte libre (voir imageOptions), mais ce sélecteur permet
 // de parcourir en vignettes tout ce qui existe réellement dans public/images/ sur
@@ -716,12 +724,35 @@ async function openImagePicker(onPick) {
     const q = (filter || '').toLowerCase();
     const filtered = images.filter(i => i.sitePath.toLowerCase().includes(q));
     if (!filtered.length) { grid.innerHTML = '<p class="aEmpty">Aucune image trouvée.</p>'; return; }
-    grid.innerHTML = filtered.map(i => `<button type="button" class="aImgTile" data-pick="${i.sitePath}" title="${i.sitePath}">
-      <img src="${i.raw}" loading="lazy" alt="${i.name}"><small>${i.name}</small>
-     </button>`).join('');
+    grid.innerHTML = filtered.map(i => `<div class="aImgTile" title="${i.sitePath}">
+      <button type="button" class="aImgTileDelete" data-delete="${i.sitePath}" title="Supprimer cette image">🗑</button>
+      <button type="button" class="aImgTilePick" data-pick="${i.sitePath}">
+        <img src="${i.raw}" loading="lazy" alt="${i.name}"><small>${i.name}</small>
+      </button>
+     </div>`).join('');
     grid.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => {
       onPick(b.dataset.pick);
       closeImagePicker();
+    }));
+    grid.querySelectorAll('[data-delete]').forEach(b => b.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const sitePath = b.dataset.delete;
+      const ok = await confirmModal({
+        title: 'Supprimer cette image',
+        message: `${sitePath} sera définitivement supprimée du dépôt GitHub. Si un produit utilise encore cette photo, son image sera cassée.`,
+        confirmLabel: 'Supprimer',
+        danger: true,
+      });
+      if (!ok) return;
+      b.disabled = true;
+      try {
+        await deleteImageFile(sitePath);
+        toast('Image supprimée sur GitHub.', 'success');
+        load(true);
+      } catch (err) {
+        toast(err.message || 'Échec de la suppression.', 'error');
+        b.disabled = false;
+      }
     }));
   }
 
