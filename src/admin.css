@@ -104,7 +104,7 @@ main{padding:16px}
 .aDrivers{display:grid;gap:8px;margin-bottom:16px}
 .aDriverCard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;justify-content:space-between}
 .aDriverCard.dragging{position:relative;z-index:5;box-shadow:0 4px 12px rgba(28,20,32,.14)}
-.dragHandle{flex:0 0 20px;width:20px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--muted);touch-action:none;cursor:grab}
+.dragHandle{flex:0 0 20px;width:20px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--muted);touch-action:pan-y;cursor:grab}
 .dragHandle .icon{width:15px;height:15px}
 .aDriverCard>div:first-child{display:flex;flex-direction:column;gap:2px}
 .aPromoActions{display:flex;flex-direction:column;gap:6px}
@@ -164,7 +164,7 @@ main{padding:16px}
 .aRepeater{margin-bottom:14px}
 .aRepRow{display:flex;gap:6px;align-items:center;margin-bottom:6px}
 .aRepRow.dragging{position:relative;z-index:5;background:var(--card2);border-radius:9px;box-shadow:0 4px 10px rgba(28,20,32,.12)}
-.repHandle{flex:0 0 22px;width:22px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--muted);touch-action:none;cursor:grab}
+.repHandle{flex:0 0 22px;width:22px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--muted);touch-action:pan-y;cursor:grab}
 .repHandle .icon{width:15px;height:15px}
 .aRepRow .repName{flex:1;min-width:0}
 .aRepRow .repVal{width:66px;flex:0 0 66px}

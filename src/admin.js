@@ -510,10 +510,36 @@ function syncDraftFromDom(cfgId, section) {
 // comme à la souris (Pointer Events couvre les deux). La ligne suit le doigt
 // via transform, et bascule de position dès qu'elle franchit la moitié d'une
 // ligne voisine — comme réorganiser des icônes sur un écran d'accueil.
+//
+// Le glissement ne démarre qu'après un court appui maintenu (HOLD_MS) sans
+// bouger le doigt de plus de MOVE_CANCEL_PX : sinon un simple scroll de la
+// page en passant sur la poignée serait interprété comme un glissement.
+const HOLD_MS = 220;
+const MOVE_CANCEL_PX = 8;
+function withHoldToDrag(startDrag) {
+  return function (e) {
+    if (e.pointerType === 'mouse' && e.button !== 0) { startDrag(e); return; } // souris : pas besoin d'appui maintenu
+    const handle = e.currentTarget;
+    const startX = e.clientX, startY = e.clientY;
+    const timer = setTimeout(() => { cleanup(); startDrag(e); }, HOLD_MS);
+    function onEarlyMove(ev) {
+      if (Math.abs(ev.clientX - startX) > MOVE_CANCEL_PX || Math.abs(ev.clientY - startY) > MOVE_CANCEL_PX) { clearTimeout(timer); cleanup(); }
+    }
+    function onEarlyUp() { clearTimeout(timer); cleanup(); }
+    function cleanup() {
+      handle.removeEventListener('pointermove', onEarlyMove);
+      handle.removeEventListener('pointerup', onEarlyUp);
+      handle.removeEventListener('pointercancel', onEarlyUp);
+    }
+    handle.addEventListener('pointermove', onEarlyMove);
+    handle.addEventListener('pointerup', onEarlyUp);
+    handle.addEventListener('pointercancel', onEarlyUp);
+  };
+}
+
 function attachRepeaterDrag() {
   document.querySelectorAll('.repHandle').forEach(handle => {
-    handle.addEventListener('pointerdown', e => {
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
+    handle.addEventListener('pointerdown', withHoldToDrag(e => {
       e.preventDefault();
       const row = handle.closest('.aRepRow');
       const list = row.parentElement;
@@ -528,6 +554,7 @@ function attachRepeaterDrag() {
       handle.setPointerCapture(e.pointerId);
 
       function onMove(ev) {
+        ev.preventDefault();
         const dy = ev.clientY - startY;
         const target = Math.max(0, Math.min(siblings.length - 1, index + Math.round((dy - snapped) / rowHeight)));
         if (target !== index) {
@@ -550,7 +577,7 @@ function attachRepeaterDrag() {
       }
       handle.addEventListener('pointermove', onMove);
       handle.addEventListener('pointerup', onUp);
-    });
+    }));
   });
 }
 
@@ -657,8 +684,7 @@ function menuView() {
 // ici chaque lâcher persiste directement le nouvel ordre côté serveur.
 function attachDragReorder(onDrop) {
   document.querySelectorAll('.dragHandle').forEach(handle => {
-    handle.addEventListener('pointerdown', e => {
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
+    handle.addEventListener('pointerdown', withHoldToDrag(e => {
       e.preventDefault();
       const row = handle.closest('[data-drag-id]');
       const list = row.parentElement;
@@ -672,6 +698,7 @@ function attachDragReorder(onDrop) {
       handle.setPointerCapture(e.pointerId);
 
       function onMove(ev) {
+        ev.preventDefault();
         const dy = ev.clientY - startY;
         const target = Math.max(0, Math.min(siblings.length - 1, index + Math.round((dy - snapped) / rowHeight)));
         if (target !== index) {
@@ -692,7 +719,7 @@ function attachDragReorder(onDrop) {
       }
       handle.addEventListener('pointermove', onMove);
       handle.addEventListener('pointerup', onUp);
-    });
+    }));
   });
 }
 
