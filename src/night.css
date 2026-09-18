@@ -24,12 +24,13 @@ button,a{font:inherit;color:inherit;cursor:pointer;text-decoration:none}
 .nPill.wait b{width:7px;height:7px;border-radius:50%;background:var(--n-amber)}
 @keyframes liveDot{70%{box-shadow:0 0 0 6px rgba(56,224,122,0)}100%{box-shadow:0 0 0 0 rgba(56,224,122,0)}}
 
-/* category chips — même comportement que .switch du site principal : défile
-   avec la page (pas collant), onglet actif en couleur unie */
-.nCats{display:flex;gap:8px;overflow-x:auto;padding:17px 14px 5px;scrollbar-width:none;-ms-overflow-style:none}
+/* category chips — même fonctionnement que .switch du site principal (défile
+   avec la page, pas collant) mais habillage néon propre à Mondi Night */
+.nCats{display:flex;gap:9px;overflow-x:auto;padding:17px 14px 6px;scrollbar-width:none;-ms-overflow-style:none}
 .nCats::-webkit-scrollbar{display:none}
-.nCats button{flex-shrink:0;border:1px solid var(--n-line);background:var(--n-card);color:var(--n-muted);border-radius:30px;padding:9px 16px;font-size:11px;white-space:nowrap}
-.nCats button.active{background:var(--n-accent);border-color:var(--n-accent);color:#fff}
+.nCats button{flex-shrink:0;border:1px solid rgba(178,59,255,.35);background:rgba(178,59,255,.08);color:var(--n-text);border-radius:30px;padding:9px 18px;font:800 10.5px 'Barlow Condensed';letter-spacing:1px;text-transform:uppercase;white-space:nowrap;transition:box-shadow .2s,border-color .2s,background .2s}
+.nCats button:active{background:rgba(178,59,255,.16)}
+.nCats button.active{background:linear-gradient(120deg,var(--n-accent),var(--n-accent2));border-color:transparent;color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 6px 16px rgba(178,59,255,.45)}
 
 /* cards — même logique que .card/.cardMain du site principal : miniature à
    gauche, texte à droite, bouton rond en bas à droite */
