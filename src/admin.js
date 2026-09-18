@@ -1,5 +1,6 @@
 import './admin.css';
 import { icon } from './icons.js';
+import { toast, confirmModal } from './toast.js';
 
 const STATUS = { received: 'Nouvelle', preparing: 'En préparation', delivering: 'En livraison', delivered: 'Livrée', cancelled: 'Annulée' };
 const CANCEL_REASONS = ['Client absent', 'Produit indisponible', 'Problème de paiement', 'Adresse incorrecte', 'Annulation client', 'Autre'];
@@ -78,7 +79,7 @@ async function checkPushStatus() {
 
 async function subscribeToPush() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    alert('Ton navigateur ne supporte pas les notifications push.');
+    toast('Ton navigateur ne supporte pas les notifications push.', 'error');
     return;
   }
   try {
@@ -89,7 +90,7 @@ async function subscribeToPush() {
       await Notification.requestPermission();
     }
     const { publicKey } = await api('/api/push-subscribe');
-    if (!publicKey) { alert('Notifications push pas encore configurées côté serveur.'); return; }
+    if (!publicKey) { toast('Notifications push pas encore configurées côté serveur.', 'warning'); return; }
     const reg = await navigator.serviceWorker.register('/sw.js');
     const sub = await reg.pushManager.subscribe({
       userVisibleOnly: true,
@@ -100,12 +101,12 @@ async function subscribeToPush() {
     renderRoot();
   } catch (err) {
     console.error(err);
-    alert('Impossible d’activer les notifications push. Vérifie que tu as autorisé les notifications pour ce site.');
+    toast('Impossible d’activer les notifications push. Vérifie que tu as autorisé les notifications pour ce site.', 'error');
   }
 }
 
 async function unsubscribeFromPush() {
-  if (!confirm('Désactiver les notifications push sur cet appareil ?')) return;
+  if (!(await confirmModal({ title: 'Notifications push', message: 'Désactiver les notifications push sur cet appareil ?', confirmLabel: 'Désactiver' }))) return;
   try {
     const reg = await navigator.serviceWorker.getRegistration('/sw.js');
     const sub = await reg?.pushManager.getSubscription();
@@ -117,7 +118,7 @@ async function unsubscribeFromPush() {
     renderRoot();
   } catch (err) {
     console.error(err);
-    alert('Impossible de désactiver les notifications.');
+    toast('Impossible de désactiver les notifications.', 'error');
   }
 }
 
@@ -191,7 +192,7 @@ async function loadMenu(force) {
     AS.menu = await api('/api/menu');
     renderRoot();
   } catch (err) {
-    alert(err.message || 'Impossible de charger le menu.');
+    toast(err.message || 'Impossible de charger le menu.', 'error');
   }
 }
 
@@ -1034,7 +1035,7 @@ async function cancelOrder(id) {
   refresh();
 }
 async function deleteOrder(id) {
-  if (!confirm('Supprimer définitivement cette commande ? Cette action est irréversible.')) return;
+  if (!(await confirmModal({ title: 'Supprimer la commande', message: 'Cette action est irréversible.', confirmLabel: 'Supprimer', danger: true }))) return;
   await api(`/api/orders/${id}`, { method: 'DELETE' });
   AS.view = 'dashboard'; AS.selected = null;
   refresh();
@@ -1048,7 +1049,7 @@ function bind() {
     // Confirmation avant de couper la session : évite de perdre un
     // formulaire en cours ou une réorganisation à cause d'un tap accidentel
     // sur ce bouton, positionné juste à côté de la cloche de notifications.
-    if (!confirm('Se déconnecter de l\'admin ?')) return;
+    if (!(await confirmModal({ title: 'Déconnexion', message: 'Se déconnecter de l\'admin ?', confirmLabel: 'Se déconnecter' }))) return;
     await api('/api/admin-auth', { method: 'POST', body: JSON.stringify({ action: 'logout' }) }); AS.authed = false; renderRoot();
   });
   document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
@@ -1073,7 +1074,7 @@ function bind() {
       else if (act === 'delete') await deleteOrder(id);
       else if (act === 'markPaid') { await api(`/api/orders/${id}`, { method: 'PATCH', body: JSON.stringify({ paymentStatus: 'paye' }) }); refresh(); }
       else if (act === 'markFailed') { await api(`/api/orders/${id}`, { method: 'PATCH', body: JSON.stringify({ paymentStatus: 'echoue' }) }); refresh(); }
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   }));
 
   document.querySelectorAll('[data-driver-toggle]').forEach(b => b.addEventListener('click', async () => {
@@ -1081,27 +1082,27 @@ function bind() {
     try {
       await api(`/api/drivers/${d.id}`, { method: 'PATCH', body: JSON.stringify({ status: d.status === 'pause' ? 'dispo' : 'pause' }) });
       refresh();
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   }));
   document.querySelector('#addDriver')?.addEventListener('submit', async e => {
     e.preventDefault();
     const name = new FormData(e.target).get('name');
     try { await api('/api/drivers', { method: 'POST', body: JSON.stringify({ name }) }); refresh(); }
-    catch (err) { alert(err.message || 'Erreur'); }
+    catch (err) { toast(err.message || 'Erreur', 'error'); }
   });
 
   document.querySelectorAll('[data-promo-toggle]').forEach(b => b.addEventListener('click', async () => {
     try {
       await api('/api/orders', { method: 'POST', body: JSON.stringify({ action: 'promo-toggle', code: b.dataset.promoToggle }) });
       refresh();
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   }));
   document.querySelectorAll('[data-promo-delete]').forEach(b => b.addEventListener('click', async () => {
-    if (!confirm(`Supprimer le code ${b.dataset.promoDelete} ?`)) return;
+    if (!(await confirmModal({ title: 'Supprimer le code promo', message: `Le code ${b.dataset.promoDelete} sera définitivement supprimé.`, confirmLabel: 'Supprimer', danger: true }))) return;
     try {
       await api('/api/orders', { method: 'POST', body: JSON.stringify({ action: 'promo-delete', code: b.dataset.promoDelete }) });
       refresh();
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   }));
   document.querySelector('#addPromo')?.addEventListener('submit', async e => {
     e.preventDefault();
@@ -1109,7 +1110,7 @@ function bind() {
     try {
       await api('/api/orders', { method: 'POST', body: JSON.stringify({ action: 'promo-create', ...d }) });
       refresh();
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   });
 
   // ---- Menu ----
@@ -1154,25 +1155,25 @@ function bind() {
     try {
       await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'category', action: 'update', slug: c.slug, active: c.active === false }) });
       await loadMenu(true);
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   }));
   document.querySelectorAll('[data-cat-delete]').forEach(b => b.addEventListener('click', async () => {
-    if (!confirm('Supprimer cette catégorie ?')) return;
+    if (!(await confirmModal({ title: 'Supprimer la catégorie', message: 'Les produits associés ne seront pas supprimés, mais la catégorie disparaîtra du site.', confirmLabel: 'Supprimer', danger: true }))) return;
     try {
       await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'category', action: 'delete', slug: b.dataset.catDelete }) });
       await loadMenu(true);
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   }));
   document.querySelector('#categoryForm')?.addEventListener('submit', async e => {
     e.preventDefault();
     const d = Object.fromEntries(new FormData(e.target));
     const editing = AS.menuForm?.data?.slug;
     const sites = [d.siteMain ? 'main' : null, d.siteNight ? 'night' : null].filter(Boolean);
-    if (!sites.length) { alert('Choisis au moins un site (principal et/ou Mondi Night).'); return; }
+    if (!sites.length) { toast('Choisis au moins un site (principal et/ou Mondi Night).', 'warning'); return; }
     try {
       await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'category', action: editing ? 'update' : 'create', slug: editing, label: d.label, kind: d.kind, sites }) });
       AS.menuForm = null; await loadMenu(true);
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   });
 
   document.querySelector('[data-prod-new]')?.addEventListener('click', () => {
@@ -1188,7 +1189,7 @@ function bind() {
     try {
       await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'product', action: 'update', id: p.id, active: p.active === false }) });
       await loadMenu(true);
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   }));
   document.querySelectorAll('[data-quickprice-edit]').forEach(b => b.addEventListener('click', () => {
     AS.quickPriceId = b.dataset.quickpriceEdit; renderRoot();
@@ -1201,18 +1202,18 @@ function bind() {
     e.preventDefault();
     const id = f.dataset.quickpriceForm;
     const price = f.querySelector('[name="price"]').value;
-    if (!price || +price < 0) { alert('Entre un prix valide.'); return; }
+    if (!price || +price < 0) { toast('Entre un prix valide.', 'warning'); return; }
     try {
       await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'product', action: 'update', id, price: +price }) });
       AS.quickPriceId = null; await loadMenu(true);
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   }));
   document.querySelectorAll('[data-prod-delete]').forEach(b => b.addEventListener('click', async () => {
-    if (!confirm('Supprimer définitivement ce produit ?')) return;
+    if (!(await confirmModal({ title: 'Supprimer le produit', message: 'Cette action est irréversible.', confirmLabel: 'Supprimer', danger: true }))) return;
     try {
       await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'product', action: 'delete', id: b.dataset.prodDelete }) });
       await loadMenu(true);
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   }));
   document.querySelector('#productForm')?.addEventListener('submit', async e => {
     e.preventDefault();
@@ -1228,7 +1229,7 @@ function bind() {
         }),
       });
       AS.menuForm = null; await loadMenu(true);
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   });
 
   attachDragReorder(async (ids, row) => {
@@ -1239,7 +1240,7 @@ function bind() {
         await Promise.all(ids.map((slug, i) => api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'category', action: 'update', slug, order: i }) })));
       }
       await loadMenu(true);
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   });
   attachRepeaterDrag();
   document.querySelectorAll('[data-rep-add]').forEach(b => b.addEventListener('click', () => {    const { repCfg: cfgId, repSection: section } = b.dataset;
@@ -1276,8 +1277,8 @@ function bind() {
       });
       delete AS.builderDraft[cfgId]; // repart des données serveur fraîches au prochain rendu
       await loadMenu(true);
-      alert('Configurateur mis à jour.');
-    } catch (err) { alert(err.message || 'Erreur'); }
+      toast('Configurateur mis à jour.', 'success');
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   }));
 
   // Petit tag "✓ Enregistré" qui apparaît furtivement à côté du bouton, plutôt
@@ -1299,7 +1300,7 @@ function bind() {
       await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'settings', action: 'update', deliveryFee: Number(d.deliveryFee), freeDeliveryThreshold: Number(d.freeDeliveryThreshold) }) });
       await loadMenu(true);
       flashSaved(form);
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   });
   document.querySelector('#settingsFormOptions')?.addEventListener('submit', async e => {
     e.preventDefault();
@@ -1309,7 +1310,7 @@ function bind() {
       await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'settings', action: 'update', optionPrices: { 'Fromage supplémentaire': Number(d.cheese), 'Base épicée': Number(d.spicy) } }) });
       await loadMenu(true);
       flashSaved(form);
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   });
   document.querySelector('#settingsFormPayment')?.addEventListener('submit', async e => {
     e.preventDefault();
@@ -1319,7 +1320,7 @@ function bind() {
       await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'settings', action: 'update', onlinePaymentEnabled }) });
       await loadMenu(true);
       flashSaved(form);
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   });
 }
 

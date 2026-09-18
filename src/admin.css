@@ -271,3 +271,41 @@ main{padding:16px}
    sortir). Remplace le FAB "+" le temps du mode. */
 .aReorderBanner{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:40;background:var(--white);color:#fff;border-radius:30px;padding:10px 10px 10px 18px;display:flex;align-items:center;gap:10px;font:700 12px Inter;box-shadow:0 8px 22px rgba(28,20,32,.35)}
 .aReorderBanner .cta{padding:8px 16px}
+
+/* ---------- Toasts (remplace alert()) ---------- */
+.aToastWrap{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:0;right:0;z-index:80;display:flex;flex-direction:column;align-items:center;gap:8px;padding:0 14px;pointer-events:none}
+.aToast{pointer-events:auto;display:flex;align-items:flex-start;gap:9px;max-width:420px;width:100%;background:var(--white);color:#fff;border-radius:13px;padding:12px 12px 12px 14px;box-shadow:0 10px 28px rgba(28,20,32,.28);font-size:12.5px;line-height:1.4;font-weight:600;animation:toastIn .32s cubic-bezier(.2,.9,.25,1.1);border:1px solid rgba(255,255,255,.08)}
+.aToast::before{content:'';position:absolute;width:4px;left:0;top:0;bottom:0;border-radius:13px 0 0 13px}
+.aToast{position:relative;overflow:hidden}
+.aToast.success::before{background:var(--ok)}
+.aToast.error::before{background:var(--bad)}
+.aToast.warning::before{background:var(--warn)}
+.aToast.info::before{background:var(--p2)}
+.aToastIcon{flex:0 0 18px;width:18px;height:18px;margin-top:1px}
+.aToastIcon .icon{width:18px;height:18px}
+.aToast.success .aToastIcon{color:#3fd482}
+.aToast.error .aToastIcon{color:#f2718f}
+.aToast.warning .aToastIcon{color:#f0b94a}
+.aToast.info .aToastIcon{color:var(--p2)}
+.aToastMsg{flex:1;padding-top:1px}
+.aToastClose{flex:0 0 auto;width:20px;height:20px;margin:-2px -2px 0 0;color:rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .15s,color .15s}
+.aToastClose:hover{background:rgba(255,255,255,.12);color:#fff}
+.aToastClose .icon{width:12px;height:12px}
+.aToast.out{animation:toastOut .32s ease forwards}
+@keyframes toastIn{from{opacity:0;transform:translateY(-14px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes toastOut{from{opacity:1;max-height:80px;margin-top:0}to{opacity:0;transform:translateY(-8px) scale(.98);max-height:0;margin-top:-8px}}
+@media (prefers-reduced-motion:reduce){.aToast,.aToast.out{animation:none}}
+
+/* ---------- Modale de confirmation (remplace confirm()) ---------- */
+.aConfirmOverlay{opacity:0;transition:opacity .18s ease}
+.aConfirmOverlay.show{opacity:1}
+.aConfirmModal{max-width:340px;text-align:center;align-items:center;gap:4px;transform:translateY(8px) scale(.97);transition:transform .2s cubic-bezier(.2,.9,.25,1.1);padding:24px 20px 20px}
+.aConfirmOverlay.show .aConfirmModal{transform:translateY(0) scale(1)}
+.aConfirmIcon{width:46px;height:46px;border-radius:50%;background:var(--card2);color:var(--p2);display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.aConfirmIcon .icon{width:22px;height:22px}
+.aConfirmIcon.danger{background:#fbe4ec;color:var(--bad)}
+.aConfirmModal b{font:800 17px 'Barlow Condensed';letter-spacing:.3px;color:var(--white)}
+.aConfirmMsg{color:var(--muted);font-size:12.5px;line-height:1.5;margin:4px 0 6px}
+.aConfirmActions{display:flex;gap:8px;width:100%;margin-top:10px}
+.aConfirmActions button{flex:1;justify-content:center}
+.cta.danger{background:linear-gradient(120deg,#d1355a,#e2506a)}
