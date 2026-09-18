@@ -510,46 +510,11 @@ function syncDraftFromDom(cfgId, section) {
 // comme à la souris (Pointer Events couvre les deux). La ligne suit le doigt
 // via transform, et bascule de position dès qu'elle franchit la moitié d'une
 // ligne voisine — comme réorganiser des icônes sur un écran d'accueil.
-//
-// Le glissement ne démarre qu'après un court appui maintenu (HOLD_MS) sans
-// bouger le doigt de plus de MOVE_CANCEL_PX — sinon un simple scroll de la
-// page est laissé passer normalement. Le pointeur est capturé dès le contact
-// (setPointerCapture) pour suivre le mouvement de façon fiable même si le
-// doigt dérive hors de la petite poignée pendant l'attente ; ça ne bloque pas
-// le scroll en soi, seul le preventDefault() une fois le glissement armé le
-// fait, et seulement si le seuil de tolérance n'a pas été dépassé avant.
-const HOLD_MS = 250;
-const MOVE_CANCEL_PX = 8;
-function withHoldToDrag(startDrag) {
-  return function (e) {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
-    const handle = e.currentTarget;
-    handle.setPointerCapture(e.pointerId);
-    const startX = e.clientX, startY = e.clientY;
-    let settled = false;
-    const timer = setTimeout(() => { settled = true; cleanup(); startDrag(e, handle); }, HOLD_MS);
-    function onEarlyMove(ev) {
-      if (Math.abs(ev.clientX - startX) > MOVE_CANCEL_PX || Math.abs(ev.clientY - startY) > MOVE_CANCEL_PX) {
-        clearTimeout(timer);
-        cleanup();
-        try { handle.releasePointerCapture(e.pointerId); } catch {}
-      }
-    }
-    function onEarlyUp() { if (!settled) { clearTimeout(timer); cleanup(); } }
-    function cleanup() {
-      handle.removeEventListener('pointermove', onEarlyMove);
-      handle.removeEventListener('pointerup', onEarlyUp);
-      handle.removeEventListener('pointercancel', onEarlyUp);
-    }
-    handle.addEventListener('pointermove', onEarlyMove);
-    handle.addEventListener('pointerup', onEarlyUp);
-    handle.addEventListener('pointercancel', onEarlyUp);
-  };
-}
-
 function attachRepeaterDrag() {
   document.querySelectorAll('.repHandle').forEach(handle => {
-    handle.addEventListener('pointerdown', withHoldToDrag((e, handle) => {
+    handle.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      e.preventDefault();
       const row = handle.closest('.aRepRow');
       const list = row.parentElement;
       const { repCfg: cfgId, repSection: section } = row.dataset;
@@ -560,9 +525,9 @@ function attachRepeaterDrag() {
       const startY = e.clientY;
       let snapped = 0;
       row.classList.add('dragging');
+      handle.setPointerCapture(e.pointerId);
 
       function onMove(ev) {
-        ev.preventDefault();
         const dy = ev.clientY - startY;
         const target = Math.max(0, Math.min(siblings.length - 1, index + Math.round((dy - snapped) / rowHeight)));
         if (target !== index) {
@@ -585,7 +550,7 @@ function attachRepeaterDrag() {
       }
       handle.addEventListener('pointermove', onMove);
       handle.addEventListener('pointerup', onUp);
-    }));
+    });
   });
 }
 
@@ -692,7 +657,9 @@ function menuView() {
 // ici chaque lâcher persiste directement le nouvel ordre côté serveur.
 function attachDragReorder(onDrop) {
   document.querySelectorAll('.dragHandle').forEach(handle => {
-    handle.addEventListener('pointerdown', withHoldToDrag((e, handle) => {
+    handle.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      e.preventDefault();
       const row = handle.closest('[data-drag-id]');
       const list = row.parentElement;
       const sel = ':scope > [data-drag-id]';
@@ -702,9 +669,9 @@ function attachDragReorder(onDrop) {
       const startY = e.clientY;
       let snapped = 0;
       row.classList.add('dragging');
+      handle.setPointerCapture(e.pointerId);
 
       function onMove(ev) {
-        ev.preventDefault();
         const dy = ev.clientY - startY;
         const target = Math.max(0, Math.min(siblings.length - 1, index + Math.round((dy - snapped) / rowHeight)));
         if (target !== index) {
@@ -725,7 +692,7 @@ function attachDragReorder(onDrop) {
       }
       handle.addEventListener('pointermove', onMove);
       handle.addEventListener('pointerup', onUp);
-    }));
+    });
   });
 }
 
