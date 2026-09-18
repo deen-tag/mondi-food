@@ -18,10 +18,14 @@ function nightCategories(){
   .filter(c=>c.active!==false && c.kind==='products' && Array.isArray(c.sites) && c.sites.includes('night'))
   .sort((a,b)=>(a.order||0)-(b.order||0));
 }
+// Un produit peut être rattaché à d'autres catégories en plus de sa catégorie
+// principale (ex. un produit "Pizza" du site principal aussi listé dans une
+// catégorie "Plats Night") — voir le champ extraCategoryIds géré depuis l'admin.
+function productCategorySlugs(p){return [p.categoryId,...(p.extraCategoryIds||[])]}
 function nightProducts(){
  if(!S.catalog)return [];
  const slugs=new Set(nightCategories().map(c=>c.slug));
- return S.catalog.products.filter(p=>p.active!==false && slugs.has(p.categoryId));
+ return S.catalog.products.filter(p=>p.active!==false && productCategorySlugs(p).some(id=>slugs.has(id)));
 }
 
 function render(){
@@ -47,7 +51,7 @@ function hero(){const open=isNightOpen();return `<section class="nHero"><p>Vendr
 
 function cats(){const list=nightCategories();return `<nav class="nCats">${list.map(c=>`<button class="${S.cat===c.slug?'active':''}" data-cat="${c.slug}">${c.label}</button>`).join('')}</nav>`}
 
-function cards(){const list=nightProducts().filter(p=>p.categoryId===S.cat);return `<section class="nCards">${list.map(card).join('')}</section>`}
+function cards(){const list=nightProducts().filter(p=>productCategorySlugs(p).includes(S.cat));return `<section class="nCards">${list.map(card).join('')}</section>`}
 
 function card(p){
  const open=isNightOpen();

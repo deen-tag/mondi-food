@@ -989,6 +989,9 @@ function productFormHtml(d) {
     <small class="aFieldHint">Étiquette avec une étoile affichée sur la fiche produit côté client (ex. "SIGNATURE", "NOUVEAU"). Laisse vide pour afficher "POPULAIRE" automatiquement si la case ci-dessous est cochée.</small>
     <label>Tag / filtre (optionnel)<input name="tag" maxlength="40" placeholder="Ex. Classiques" value="${d.tag || ''}"></label>
     <small class="aFieldHint">Mot-clé utilisé par les boutons de filtre sur le site : les produits qui ont le même tag apparaissent ensemble quand un client filtre dessus.</small>
+    ${cats.filter(c => c.slug !== d.categoryId).length ? `<label class="aFieldGroupLabel">Aussi visible dans</label>
+    <div class="aCheckGroup">${cats.filter(c => c.slug !== d.categoryId).map(c => `<label class="checkRow"><input type="checkbox" name="extraCategoryIds" value="${c.slug}" ${(d.extraCategoryIds || []).includes(c.slug) ? 'checked' : ''}> ${c.label}</label>`).join('')}</div>
+    <small class="aFieldHint">Le produit reste rattaché à sa catégorie principale ci-dessus, mais apparaît en plus dans les catégories cochées ici — pratique pour réutiliser un produit déjà en ligne dans une catégorie propre à Mondi Night, sans le recréer.</small>` : ''}
     <label class="aFieldGroupLabel">Affichage</label>
     <div class="aCheckGroup">
      <label class="checkRow"><input type="checkbox" name="hot" ${d.hot ? 'checked' : ''}> Épicé</label>
@@ -1326,13 +1329,14 @@ function bind() {
   document.querySelector('#productForm')?.addEventListener('submit', async e => {
     e.preventDefault();
     const d = Object.fromEntries(new FormData(e.target));
+    const extraCategoryIds = Array.from(e.target.querySelectorAll('[name="extraCategoryIds"]:checked')).map(el => el.value);
     const editing = AS.menuForm?.data?.id;
     try {
       await api('/api/menu', {
         method: 'POST',
         body: JSON.stringify({
           resource: 'product', action: editing ? 'update' : 'create', id: editing,
-          categoryId: d.categoryId, name: d.name, price: Number(d.price), desc: d.desc,
+          categoryId: d.categoryId, extraCategoryIds, name: d.name, price: Number(d.price), desc: d.desc,
           img: d.img, badge: d.badge || null, tag: d.tag || null, hot: !!d.hot, veg: !!d.veg, popular: !!d.popular,
         }),
       });
