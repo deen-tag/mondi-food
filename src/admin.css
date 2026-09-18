@@ -15,6 +15,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--p);box-s
 .adminLogin input{margin-bottom:12px}
 #loginErr{color:var(--bad);font-size:11px}
 
+/* Champ mot de passe + bouton œil pour afficher/masquer, sur le même modèle
+   que le champ Photo (texte + bouton "Parcourir GitHub"). */
+.aPasswordRow{display:flex;gap:8px;margin-bottom:12px}
+.aPasswordRow input{flex:1;margin-bottom:0}
+.aPasswordRow button{flex:0 0 auto}
+.cta:disabled{opacity:.65;cursor:default}
+
 /* header */
 .aHeader{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 16px 10px}
 .aHeaderTop{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:10px}

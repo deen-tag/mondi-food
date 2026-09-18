@@ -24,6 +24,7 @@ const PATHS = {
   list: "<circle cx='4.5' cy='6' r='1.4' fill='currentColor' stroke='none'/><path d='M9 6h11'/><circle cx='4.5' cy='12' r='1.4' fill='currentColor' stroke='none'/><path d='M9 12h11'/><circle cx='4.5' cy='18' r='1.4' fill='currentColor' stroke='none'/><path d='M9 18h11'/>",
   location: "<path d='M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z'/><circle cx='12' cy='10' r='2.5'/>",
   lock: "<rect x='4' y='10' width='16' height='10' rx='2'/><path d='M7 10V7a5 5 0 0 1 10 0v3'/>",
+  logout: "<path d='M9 21H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3'/><path d='M16 17l5-5-5-5'/><path d='M21 12H9'/>",
   menu: "<path d='M4 5h16M4 12h16M4 19h16'/>",
   minus: "<path d='M5 12h14'/>",
   moon: "<path d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z'/>",

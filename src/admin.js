@@ -229,18 +229,40 @@ function renderRoot() {
 
 function loginView() {
   return `<div class="adminLogin"><img src="/logo.png"><h1>ADMIN</h1><p>Espace réservé à l'équipe Mondi Food</p>
-  <form id="loginForm"><input type="password" name="pass" placeholder="Mot de passe" required autofocus>
-  <button class="cta wide" type="submit">SE CONNECTER ${icon('arrow-right')}</button></form>
+  <form id="loginForm">
+   <div class="aPasswordRow">
+    <input id="loginPass" type="password" name="pass" placeholder="Mot de passe" autocomplete="current-password" required autofocus>
+    <button type="button" class="ghost small" id="togglePass" aria-label="Afficher le mot de passe">${icon('eye')}</button>
+   </div>
+   <button class="cta wide" type="submit" id="loginSubmit">SE CONNECTER ${icon('arrow-right')}</button>
+  </form>
   <small id="loginErr"></small></div>`;
 }
 function bindLogin() {
+  const passInput = document.querySelector('#loginPass');
+  const toggleBtn = document.querySelector('#togglePass');
+  const errEl = document.querySelector('#loginErr');
+  toggleBtn?.addEventListener('click', () => {
+    const showing = passInput.type === 'text';
+    passInput.type = showing ? 'password' : 'text';
+    toggleBtn.innerHTML = icon(showing ? 'eye' : 'eye-off');
+    toggleBtn.setAttribute('aria-label', showing ? 'Afficher le mot de passe' : 'Masquer le mot de passe');
+  });
+  // Le message d'erreur d'une tentative précédente ne doit pas rester affiché
+  // pendant qu'on retape un nouveau mot de passe.
+  passInput?.addEventListener('input', () => { errEl.textContent = ''; });
   document.querySelector('#loginForm')?.addEventListener('submit', async e => {
     e.preventDefault();
     const pass = new FormData(e.target).get('pass');
+    const submitBtn = document.querySelector('#loginSubmit');
+    submitBtn.disabled = true; submitBtn.textContent = 'Connexion…';
     try {
       await api('/api/admin-auth', { method: 'POST', body: JSON.stringify({ action: 'login', password: pass }) });
       AS.authed = true; AS.loading = true; renderRoot(); refresh(); checkPushStatus();
-    } catch { document.querySelector('#loginErr').textContent = 'Mot de passe incorrect.'; }
+    } catch {
+      errEl.textContent = 'Mot de passe incorrect.';
+      submitBtn.disabled = false; submitBtn.innerHTML = `SE CONNECTER ${icon('arrow-right')}`;
+    }
   });
 }
 
@@ -252,7 +274,7 @@ function header() {
    <span class="aLogo">${icon('fire', '', true)} MONDI FOOD <b>ADMIN</b></span>
    <div class="aHeaderActions">
     ${pushOk ? `<button class="aBell ${AS.pushSubscribed ? 'on' : ''}" data-toggle-push title="${AS.pushSubscribed ? 'Désactiver les notifications push' : 'Activer les notifications push'}">${AS.pushSubscribed ? '🔔' : '🔕'}</button>` : ''}
-    <button class="aCloseBtn" data-logout title="Déconnexion">${icon('close')}</button>
+    <button class="aCloseBtn" data-logout title="Se déconnecter">${icon('logout')}</button>
    </div>
   </div>
   <nav class="aTabs">
@@ -1023,6 +1045,10 @@ function bind() {
     AS.pushSubscribed ? unsubscribeFromPush() : subscribeToPush();
   });
   document.querySelector('[data-logout]')?.addEventListener('click', async () => {
+    // Confirmation avant de couper la session : évite de perdre un
+    // formulaire en cours ou une réorganisation à cause d'un tap accidentel
+    // sur ce bouton, positionné juste à côté de la cloche de notifications.
+    if (!confirm('Se déconnecter de l\'admin ?')) return;
     await api('/api/admin-auth', { method: 'POST', body: JSON.stringify({ action: 'logout' }) }); AS.authed = false; renderRoot();
   });
   document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
