@@ -50,7 +50,7 @@ function typeMeta(slug){
   label:cat.label,
   title:cat.label.toUpperCase(),
   plural:cat.label.toUpperCase(),
-  heroImg:ov.heroImg||prods[0]?.img||'/images/logo.png',
+  heroImg:cat.img||ov.heroImg||prods[0]?.img||'/images/logo.png',
   desc:ov.desc||`Découvre notre sélection ${cat.label.toLowerCase()}, préparée avec soin.`,
   cook:ov.cook||'parfaite',
   cookSub:ov.cookSub||'Préparé avec soin',

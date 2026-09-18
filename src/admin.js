@@ -766,6 +766,7 @@ function categoryRow(c, showHandle) {
   const off = c.active === false;
   return `<div class="aDriverCard" data-drag-id="${c.slug}">
     ${showHandle ? `<button type="button" class="dragHandle" aria-label="Glisser pour réordonner">${icon('grip')}</button>` : ''}
+    ${c.img ? `<div class="prodThumb"><img src="${c.img}" alt="" loading="lazy"></div>` : ''}
     <div class="aDriverInfo"><b>${c.label}</b><small>${c.kind === 'configurator' ? 'Configurateur' : 'Produits'} · ${(c.sites || []).map(s => s === 'main' ? 'Site principal' : 'Mondi Night').join(', ')}${off ? ' · Désactivée' : ''}</small></div>
     <div class="aIconActions">
      <button class="aIconBtn${off ? ' offState' : ''}" data-cat-toggle="${c.slug}" title="${off ? 'Activer' : 'Désactiver'}" aria-label="${off ? 'Activer' : 'Désactiver'}">${icon(off ? 'eye-off' : 'eye')}</button>
@@ -815,6 +816,14 @@ function categoryFormHtml(d) {
     </label>
     <label class="checkRow"><input type="checkbox" name="siteMain" ${sites.includes('main') ? 'checked' : ''}> Visible sur le site principal</label>
     <label class="checkRow"><input type="checkbox" name="siteNight" ${sites.includes('night') ? 'checked' : ''}> Visible sur Mondi Night</label>
+    <label>Photo (vignette accueil + bannière page menu)
+     <div class="aImgFieldRow">
+      <input name="img" list="imgOptions" value="${d.img || ''}" placeholder="/images/pizza-card.png">
+      <button type="button" class="ghost small" data-pick-img>Parcourir GitHub</button>
+     </div>
+     <datalist id="imgOptions">${imageOptions(d.img)}</datalist>
+    </label>
+    <small class="aFieldHint">Laisse vide pour garder l'image par défaut de cette catégorie (ou l'image du premier produit si elle n'en a pas).</small>
     <div class="aRow">
      <button class="cta small" type="submit">${editing ? 'ENREGISTRER' : 'CRÉER'}</button>
      <button type="button" class="ghost small" id="cancelMenuForm">Annuler</button>
@@ -1171,7 +1180,7 @@ function bind() {
     const sites = [d.siteMain ? 'main' : null, d.siteNight ? 'night' : null].filter(Boolean);
     if (!sites.length) { toast('Choisis au moins un site (principal et/ou Mondi Night).', 'warning'); return; }
     try {
-      await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'category', action: editing ? 'update' : 'create', slug: editing, label: d.label, kind: d.kind, sites }) });
+      await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'category', action: editing ? 'update' : 'create', slug: editing, label: d.label, kind: d.kind, sites, img: d.img || '' }) });
       AS.menuForm = null; await loadMenu(true);
       toast(editing ? 'Catégorie modifiée.' : 'Catégorie ajoutée.');
     } catch (err) { toast(err.message || 'Erreur', 'error'); }
