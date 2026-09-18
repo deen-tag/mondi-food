@@ -1087,7 +1087,7 @@ function bind() {
   document.querySelector('#addDriver')?.addEventListener('submit', async e => {
     e.preventDefault();
     const name = new FormData(e.target).get('name');
-    try { await api('/api/drivers', { method: 'POST', body: JSON.stringify({ name }) }); refresh(); }
+    try { await api('/api/drivers', { method: 'POST', body: JSON.stringify({ name }) }); refresh(); toast('Livreur ajouté.'); }
     catch (err) { toast(err.message || 'Erreur', 'error'); }
   });
 
@@ -1173,6 +1173,7 @@ function bind() {
     try {
       await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'category', action: editing ? 'update' : 'create', slug: editing, label: d.label, kind: d.kind, sites }) });
       AS.menuForm = null; await loadMenu(true);
+      toast(editing ? 'Catégorie modifiée.' : 'Catégorie ajoutée.');
     } catch (err) { toast(err.message || 'Erreur', 'error'); }
   });
 
@@ -1206,6 +1207,7 @@ function bind() {
     try {
       await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'product', action: 'update', id, price: +price }) });
       AS.quickPriceId = null; await loadMenu(true);
+      toast('Prix mis à jour.');
     } catch (err) { toast(err.message || 'Erreur', 'error'); }
   }));
   document.querySelectorAll('[data-prod-delete]').forEach(b => b.addEventListener('click', async () => {
@@ -1229,6 +1231,7 @@ function bind() {
         }),
       });
       AS.menuForm = null; await loadMenu(true);
+      toast(editing ? 'Produit modifié.' : 'Produit ajouté.');
     } catch (err) { toast(err.message || 'Erreur', 'error'); }
   });
 

@@ -1,5 +1,6 @@
 import './admin.css';
 import { icon } from './icons.js';
+import { toast } from './toast.js';
 
 const DS = {
   driverId: sessionStorage.getItem('mf_driver_id') || null,
@@ -107,13 +108,13 @@ function bind(driver) {
     try {
       await api('/api/driver', { method: 'POST', body: JSON.stringify({ action: 'status', driverId: driver.id, status: driver.status === 'pause' ? 'dispo' : 'pause' }) });
       refresh();
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   });
   document.querySelectorAll('[data-delivered]').forEach(b => b.addEventListener('click', async () => {
     try {
       await api('/api/driver', { method: 'POST', body: JSON.stringify({ action: 'deliver', driverId: driver.id, orderId: b.dataset.delivered }) });
       refresh();
-    } catch (err) { alert(err.message || 'Erreur'); }
+    } catch (err) { toast(err.message || 'Erreur', 'error'); }
   }));
 }
 
