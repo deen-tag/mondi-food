@@ -3,7 +3,7 @@ import { icon } from './icons.js';
 import { isNightOpen, nextOpeningLabel } from './night-schedule.js';
 import { loadCatalog } from './menu-client.js';
 
-const S = {cat:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),justAddedKey:null,catalog:null,loadError:false,contactOpen:false};
+const S = {route:'home',cat:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),justAddedKey:null,catalog:null,loadError:false,contactOpen:false};
 const formatPrice = n => n.toFixed(2).replace('.',',')+' €';
 const count = () => S.cart.reduce((a,x)=>a+x.qty,0);
 const total = () => S.cart.reduce((a,x)=>a+x.price*x.qty,0);
@@ -34,7 +34,8 @@ function render(){
   root.innerHTML=`<div class="nightApp"><section class="nHero"><img class="nLogo" src="/images/night/logo.png" alt="Mondi Night"><p>${S.loadError?'Impossible de charger le menu, réessaie dans un instant.':'Chargement du menu…'}</p></section></div>`;
   return;
  }
- root.innerHTML=`<div class="nightApp">${header()}${hero()}${cats()}${cards()}${sticky()}<div id="nToast"></div></div>${nContactSheet()}`;
+ const body = S.route==='category' ? `${backNav()}${cats()}${cards()}` : catBlocks();
+ root.innerHTML=`<div class="nightApp">${header()}${hero()}${body}${sticky()}<div id="nToast"></div></div>${nContactSheet()}`;
  bind();
 }
 
@@ -49,7 +50,24 @@ function header(){return `<header class="nHeader"><button class="nPhone" data-co
 
 function hero(){const open=isNightOpen();return `<section class="nHero"><p>Vendredi &amp; samedi · 23h → 05h</p><span class="nPill ${open?'live':'wait'}"><b></b>${open?'OUVERT MAINTENANT':nextOpeningLabel()}</span></section>`}
 
+// Image représentative d'une catégorie pour les blocs : celle choisie dans
+// l'admin en priorité, sinon la photo du premier produit qu'elle contient
+// (même logique de repli que typeMeta() côté site principal).
+function catImg(c){
+ if(c.img)return c.img;
+ const first=S.catalog.products.find(p=>p.active!==false && productCategorySlugs(p).includes(c.slug));
+ return first?.img||'/images/logo.png';
+}
+function catCount(c){return S.catalog.products.filter(p=>p.active!==false && productCategorySlugs(p).includes(c.slug)).length}
+
+function backNav(){return `<button class="nBack" data-go="home">${icon('arrow-left')} <span>Retour au menu</span></button>`}
+
 function cats(){const list=nightCategories();return `<nav class="nCats">${list.map(c=>`<button class="${S.cat===c.slug?'active':''}" data-cat="${c.slug}">${c.label}</button>`).join('')}</nav>`}
+
+function catBlocks(){
+ const list=nightCategories();
+ return `<section class="nTiles">${list.map(c=>`<button class="nTile${S.cat===c.slug?' active':''}" data-cat="${c.slug}"><div class="nTileText"><h3>${c.label}</h3><p>${catCount(c)} au menu</p></div><div class="nTileImg"><img src="${catImg(c)}" onerror="this.style.display='none'"></div><span>${S.cat===c.slug?'Sélectionné':'Voir'} ${icon('arrow-right')}</span></button>`).join('')}</section>`;
+}
 
 function cards(){const list=nightProducts().filter(p=>productCategorySlugs(p).includes(S.cat));return `<section class="nCards">${list.map(card).join('')}</section>`}
 
@@ -93,7 +111,8 @@ function toast(t){
 }
 
 function bind(){
- document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{S.cat=b.dataset.cat;render()});
+ document.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{S.cat=b.dataset.cat;S.route='category';render()});
+ document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{S.route=b.dataset.go;render()});
  document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>add(b.dataset.add));
  document.querySelectorAll('[data-contact]').forEach(b=>b.onclick=()=>{S.contactOpen=true;render()});
  document.querySelectorAll('[data-contact-close]').forEach(b=>b.onclick=()=>{S.contactOpen=false;render()});
@@ -103,7 +122,7 @@ async function boot(){
  try{
   S.catalog=await loadCatalog();
   const list=nightCategories();
-  if(!S.cat||!list.some(c=>c.slug===S.cat))S.cat=list[0]?.slug||null;
+  if(S.cat&&!list.some(c=>c.slug===S.cat)){S.cat=null;S.route='home'}
  }catch{
   S.loadError=true;
  }

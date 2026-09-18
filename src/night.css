@@ -24,13 +24,32 @@ button,a{font:inherit;color:inherit;cursor:pointer;text-decoration:none}
 .nPill.wait b{width:7px;height:7px;border-radius:50%;background:var(--n-amber)}
 @keyframes liveDot{70%{box-shadow:0 0 0 6px rgba(56,224,122,0)}100%{box-shadow:0 0 0 0 rgba(56,224,122,0)}}
 
-/* category chips — même fonctionnement que .switch du site principal (défile
-   avec la page, pas collant) mais habillage néon propre à Mondi Night */
-.nCats{display:flex;gap:9px;overflow-x:auto;padding:17px 14px 6px;scrollbar-width:none;-ms-overflow-style:none}
+/* bouton retour de la vue catégorie vers l'accueil (blocs) — même logique que
+   .back "Retour à l'accueil" du site principal */
+.nBack{display:flex;align-items:center;gap:8px;margin:14px 14px 0;padding:8px 4px;color:var(--n-muted);font:700 11px Inter;background:none;border:0}
+.nBack .icon{width:1.1em;height:1.1em}
+
+/* category chips — sous-navigation affichée uniquement une fois dans une
+   catégorie (comme le bloc .switch du site principal), pour changer de
+   catégorie sans revenir à l'accueil */
+.nCats{display:flex;gap:9px;overflow-x:auto;padding:12px 14px 5px;scrollbar-width:none;-ms-overflow-style:none}
 .nCats::-webkit-scrollbar{display:none}
 .nCats button{flex-shrink:0;border:1px solid rgba(178,59,255,.35);background:rgba(178,59,255,.08);color:var(--n-text);border-radius:30px;padding:9px 18px;font:800 10.5px 'Barlow Condensed';letter-spacing:1px;text-transform:uppercase;white-space:nowrap;transition:box-shadow .2s,border-color .2s,background .2s}
 .nCats button:active{background:rgba(178,59,255,.16)}
 .nCats button.active{background:linear-gradient(120deg,var(--n-accent),var(--n-accent2));border-color:transparent;color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 6px 16px rgba(178,59,255,.45)}
+/* category blocks — même esprit que .homeTiles/.tile du site principal
+   (image + titre + CTA), habillage neon propre à Mondi Night */
+.nTiles{padding:14px 14px 4px;display:grid;gap:10px}
+.nTile{position:relative;border:1px solid rgba(178,59,255,.28);border-radius:16px;overflow:hidden;background:var(--n-card);padding:13px 46px 13px 16px;display:flex;align-items:center;gap:6px;text-align:left;box-shadow:0 6px 18px rgba(0,0,0,.3);transition:box-shadow .2s,border-color .2s}
+.nTile.active{border-color:transparent;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 8px 20px rgba(178,59,255,.4)}
+.nTileImg{position:relative;flex-shrink:0;width:118px;height:82px;border-radius:11px;overflow:hidden;background:rgba(255,255,255,.04)}
+.nTileImg img{width:100%;height:100%;object-fit:cover;display:block}
+.nTileImg:after{content:'';position:absolute;inset:0;box-shadow:inset 0 0 18px 2px rgba(0,0,0,.35);pointer-events:none}
+.nTileText{flex:1;min-width:0}
+.nTileText h3{font:800 22px 'Barlow Condensed';margin:0 0 3px;text-transform:uppercase;color:var(--n-text);letter-spacing:.2px}
+.nTileText p{margin:0;color:var(--n-muted);font-size:10px}
+.nTile>span{position:absolute;right:10px;bottom:10px;background:linear-gradient(120deg,var(--n-accent),var(--n-accent2));color:#fff;border-radius:30px;padding:5px 12px 5px 13px;display:flex;align-items:center;gap:4px;font:800 10px Inter}
+.nTile>span .icon{width:.9em;height:.9em}
 
 /* cards — même logique que .card/.cardMain du site principal : miniature à
    gauche, texte à droite, bouton rond en bas à droite */
