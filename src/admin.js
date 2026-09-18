@@ -438,7 +438,7 @@ function driversView() {
   <h1 class="aTitle">LIVREURS</h1>
   <div class="aDrivers">${AS.drivers.map(d => `
    <div class="aDriverCard">
-    <div><b>🛵 ${d.name}</b><small>${statusDot[d.status]}</small></div>
+    <div class="aDriverInfo"><b>🛵 ${d.name}</b><small>${statusDot[d.status]}</small></div>
     ${d.status !== 'livraison' ? `<button class="ghost small" data-driver-toggle="${d.id}">${d.status === 'pause' ? 'Rendre disponible' : 'Mettre en pause'}</button>` : `<span class="aMuted">En cours</span>`}
    </div>`).join('') || `<p class="aEmpty">Aucun livreur pour le moment.</p>`}</div>
   <div class="aBox"><h3>Ajouter un livreur</h3>
@@ -454,7 +454,7 @@ function promoView() {
     const expired = p.expiresAt && new Date(p.expiresAt) < new Date();
     return `
    <div class="aDriverCard">
-    <div>
+    <div class="aDriverInfo">
      <b>🏷️ ${p.code}</b>
      <small>${p.type === 'percent' ? `-${p.value}%` : `-${p.value.toFixed(2).replace('.', ',')} €`}${p.minSubtotal ? ` dès ${p.minSubtotal.toFixed(2).replace('.', ',')} €` : ''}</small>
      <small>${p.usedCount || 0} utilisation${(p.usedCount || 0) > 1 ? 's' : ''}${p.maxUses != null ? ` / ${p.maxUses} max` : ''} · ${expired ? '🔴 Expiré' : (p.active ? '🟢 Actif' : '⚪ Désactivé')}</small>
@@ -765,7 +765,7 @@ function categoryRow(c, showHandle) {
   const off = c.active === false;
   return `<div class="aDriverCard" data-drag-id="${c.slug}">
     ${showHandle ? `<button type="button" class="dragHandle" aria-label="Glisser pour réordonner">${icon('grip')}</button>` : ''}
-    <div><b>${c.label}</b><small>${c.kind === 'configurator' ? 'Configurateur' : 'Produits'} · ${(c.sites || []).map(s => s === 'main' ? 'Site principal' : 'Mondi Night').join(', ')}${off ? ' · Désactivée' : ''}</small></div>
+    <div class="aDriverInfo"><b>${c.label}</b><small>${c.kind === 'configurator' ? 'Configurateur' : 'Produits'} · ${(c.sites || []).map(s => s === 'main' ? 'Site principal' : 'Mondi Night').join(', ')}${off ? ' · Désactivée' : ''}</small></div>
     <div class="aIconActions">
      <button class="aIconBtn${off ? ' offState' : ''}" data-cat-toggle="${c.slug}" title="${off ? 'Activer' : 'Désactiver'}" aria-label="${off ? 'Activer' : 'Désactiver'}">${icon(off ? 'eye-off' : 'eye')}</button>
      <button class="aIconBtn" data-cat-edit="${c.slug}" title="Modifier" aria-label="Modifier">${icon('pencil')}</button>

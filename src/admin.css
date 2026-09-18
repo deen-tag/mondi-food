@@ -123,7 +123,7 @@ main{padding:16px}
 .dragHandle{flex:0 0 20px;width:20px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--muted);touch-action:pan-y;cursor:default;opacity:.5}
 .dragHandle .icon{width:15px;height:15px}
 .reordering .dragHandle{touch-action:none;cursor:grab;color:var(--p);opacity:1}
-.aDriverCard>div:first-child{display:flex;flex-direction:column;gap:2px}
+.aDriverInfo{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
 .aPromoActions{display:flex;flex-direction:column;gap:6px}
 .aDriverCard b{font-size:13px;display:block}
 .aDriverCard small{color:var(--muted);font-size:11px}
