@@ -139,7 +139,7 @@ function render(){
  // Le thème sombre néon ne s'applique qu'au parcours panier lui-même : si le
  // client repart vers l'accueil ou le menu depuis le panier, il retrouve le
  // site principal normal (clair).
- document.querySelector('.phone')?.classList.toggle('nightMode',S.fromNight&&['cart','checkout','confirmation'].includes(S.route));
+ document.querySelector('.phone')?.classList.toggle('nightMode',S.fromNight&&['cart','checkout','confirmation','track','about'].includes(S.route));
  if(S.route==='home')s.innerHTML=home();
  if(S.route==='menu'||S.route==='category')s.innerHTML=menu();
  if(S.route==='product')s.innerHTML=product();
@@ -469,8 +469,8 @@ async function handleStripeReturn(){
 // checkout/confirmation) afin d'appliquer le thème sombre néon sur tout le
 // parcours panier — sinon le client passe d'un univers "nuit" à une page blanche
 // en plein milieu de sa commande.
-if(new URLSearchParams(window.location.search).get('view')==='cart'){
- S.route='cart';
+if(['cart','track','about'].includes(new URLSearchParams(window.location.search).get('view'))){
+ S.route=new URLSearchParams(window.location.search).get('view');
  if(new URLSearchParams(window.location.search).get('from')==='night')localStorage.setItem('fd_from_night','1');
  window.history.replaceState({},'',window.location.pathname);
 }
@@ -491,5 +491,6 @@ async function boot(){
  }
  await handleStripeReturn();
  shell();
+ if(S.route==='track')loadTrack();
 }
 boot();

@@ -33,10 +33,10 @@
 .waitBadge{position:absolute;right:10px;bottom:13px;width:37px;height:37px;border-radius:50%;border:1px dashed var(--line);color:var(--muted);display:flex;align-items:center;justify-content:center}
 .waitNote{display:block;color:#ffcf6b;font-size:8px;margin-top:3px;letter-spacing:.1px}
 
-/* pas de barre d'onglets en bas sur Mondi Night (contrairement au site principal)
-   → moins de marge basse, et la barre panier colle en bas de l'écran */
-.phone.nightMode{padding-bottom:20px}
-.phone.nightMode .sticky{bottom:16px}
+/* La barre d'onglets (Accueil/Infos/Panier/Suivi) est maintenant affichée
+   aussi sur Mondi Night (voir night.js) : on retrouve donc le même espacement
+   bas et la même position de la barre panier collante que le site principal
+   (valeurs par défaut de style.css), plus besoin de override ici. */
 
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 

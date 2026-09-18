@@ -101,6 +101,16 @@ function card(p){
 // barre panier collante — mêmes classes .sticky/.stickyBag/.stickyInfo/.cta.pill
 function sticky(){return S.cart.length?`<div class="sticky"><span class="stickyBag">${icon('cart')}</span><span class="stickyInfo"><b>${count()} articles</b><small>${formatPrice(total())}</small></span><a class="cta pill" href="/index.html?view=cart&from=night">Voir le panier ${icon('arrow-right')}</a></div>`:''}
 
+// barre d'onglets — mêmes classes/icônes que le site principal. "Accueil" reste
+// sur Mondi Night ; "Infos" et "Suivi" n'ont pas d'équivalent ici, donc ce sont
+// de simples liens vers le site principal (comme le fait déjà le panier), avec
+// ?from=night pour que ces pages gardent le thème sombre côté site principal.
+function navBar(){return `<nav>
+<button data-go="home" class="${S.route==='home'?'on':''}"><i>${icon('home')}</i><small>Accueil</small></button>
+<a href="/index.html?view=about&from=night"><i>${icon('info')}</i><small>Infos</small></a>
+<a href="/index.html?view=cart&from=night"><i>${icon('cart')}<b>${count()}</b></i><small>Panier</small></a>
+<a href="/index.html?view=track&from=night"><i>${icon('tracking')}</i><small>Suivi</small></a></nav>`}
+
 // fiche contact — même markup/classes que la sheetWrap du site principal
 function contactSheet(){
  if(!S.contactOpen)return '';
@@ -118,7 +128,7 @@ function render(){
   return;
  }
  const body = S.route==='category' ? `${backNav()}${cats()}${cards()}` : `${catBlocks()}${perks()}`;
- root.innerHTML=`<div class="phone nightMode">${header()}${hero()}${closingSoon()}<main id="screen">${body}</main>${sticky()}<div id="toast"></div></div>${contactSheet()}`;
+ root.innerHTML=`<div class="phone nightMode">${header()}${hero()}${closingSoon()}<main id="screen">${body}</main>${navBar()}${sticky()}<div id="toast"></div></div>${contactSheet()}`;
  bind();
  initReveal();
 }
