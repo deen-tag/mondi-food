@@ -136,6 +136,10 @@ function nav(){return `<nav>
 
 function render(){
  const s=document.querySelector('#screen');
+ // Le thème sombre néon ne s'applique qu'au parcours panier lui-même : si le
+ // client repart vers l'accueil ou le menu depuis le panier, il retrouve le
+ // site principal normal (clair).
+ document.querySelector('.phone')?.classList.toggle('nightMode',S.fromNight&&['cart','checkout','confirmation'].includes(S.route));
  if(S.route==='home')s.innerHTML=home();
  if(S.route==='menu'||S.route==='category')s.innerHTML=menu();
  if(S.route==='product')s.innerHTML=product();
@@ -325,7 +329,7 @@ function initReveal(){
 }
 
 function bind(){
- document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{S.route=b.dataset.go; if(b.dataset.type)S.type=b.dataset.type;if(S.route==='category')S.filter='Toutes';render();if(S.route==='track')loadTrack()});
+ document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{S.route=b.dataset.go; if(b.dataset.type)S.type=b.dataset.type;if(S.route==='category')S.filter='Toutes';if(S.fromNight&&(S.route==='home'||S.route==='menu')){S.fromNight=false;localStorage.removeItem('fd_from_night')}render();if(S.route==='track')loadTrack()});
  document.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>{S.type=b.dataset.type;S.filter='Toutes';S.route='category';render()});
  document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{S.filter=b.dataset.filter;render()});
  document.querySelectorAll('[data-product]').forEach(b=>b.onclick=()=>{S.selected=b.dataset.product;S.opts={cheese:false,spicy:false};S.route='product';render()});
@@ -460,11 +464,17 @@ async function handleStripeReturn(){
 }
 
 // Arrivée depuis night.html ("Voir le panier") : on ouvre directement le panier,
-// qui est partagé entre les deux pages via le même localStorage 'fd_cart'.
+// qui est partagé entre les deux pages via le même localStorage 'fd_cart'. On
+// retient aussi qu'on vient de Night (localStorage, pour survivre à la navigation
+// checkout/confirmation) afin d'appliquer le thème sombre néon sur tout le
+// parcours panier — sinon le client passe d'un univers "nuit" à une page blanche
+// en plein milieu de sa commande.
 if(new URLSearchParams(window.location.search).get('view')==='cart'){
  S.route='cart';
+ if(new URLSearchParams(window.location.search).get('from')==='night')localStorage.setItem('fd_from_night','1');
  window.history.replaceState({},'',window.location.pathname);
 }
+S.fromNight=localStorage.getItem('fd_from_night')==='1';
 async function boot(){
  loadingShell(false);
  try{

@@ -916,7 +916,7 @@ function productRow(p, showHandle) {
         <button type="submit" class="aIconBtn" title="Valider" aria-label="Valider">${icon('check')}</button>
         <button type="button" class="aIconBtn" data-quickprice-cancel title="Annuler" aria-label="Annuler">${icon('close')}</button>
        </form>`
-    : `<small><button type="button" class="aPriceBtn" data-quickprice-edit="${p.id}">${formatPrice(p.price)} ${icon('pencil', 'editHint')}</button>${p.popular ? '<span class="prodBadge">⭐ Populaire</span>' : ''}${off ? '<span class="prodBadge">Masqué</span>' : ''}</small>`;
+    : `<small><button type="button" class="aPriceBtn" data-quickprice-edit="${p.id}">${formatPrice(p.price)} ${icon('pencil', 'editHint')}</button>${p.popular ? '<span class="prodBadge">⭐ Populaire</span>' : ''}${p.popularNight ? '<span class="prodBadge">⭐ Populaire Night</span>' : ''}${off ? '<span class="prodBadge">Masqué</span>' : ''}</small>`;
   return `<div class="aDriverCard aProdCard" data-drag-id="${p.id}">
     ${showHandle ? `<button type="button" class="dragHandle" aria-label="Glisser pour réordonner">${icon('grip')}</button>` : ''}
     <div class="prodThumb"><img src="${p.img}" alt="" loading="lazy"></div>
@@ -996,8 +996,10 @@ function productFormHtml(d) {
     <div class="aCheckGroup">
      <label class="checkRow"><input type="checkbox" name="hot" ${d.hot ? 'checked' : ''}> Épicé</label>
      <label class="checkRow"><input type="checkbox" name="veg" ${d.veg ? 'checked' : ''}> Végétarien</label>
-     <label class="checkRow"><input type="checkbox" name="popular" ${d.popular ? 'checked' : ''}> ⭐ Populaire</label>
+     <label class="checkRow"><input type="checkbox" name="popular" ${d.popular ? 'checked' : ''}> ⭐ Populaire (site principal)</label>
+     <label class="checkRow"><input type="checkbox" name="popularNight" ${d.popularNight ? 'checked' : ''}> ⭐ Populaire (Mondi Night)</label>
     </div>
+    <small class="aFieldHint">Les deux badges sont indépendants : un plat peut être un best-seller le jour sans l'être la nuit (ou inversement).</small>
     <small class="aFieldHint">"Populaire" affiche une pastille sur la carte et met ce produit en avant dans "Nos incontournables" sur la page d'accueil.</small>
     <div class="aRow">
      <button class="cta small" type="submit">${editing ? 'ENREGISTRER' : 'CRÉER'}</button>
@@ -1337,7 +1339,7 @@ function bind() {
         body: JSON.stringify({
           resource: 'product', action: editing ? 'update' : 'create', id: editing,
           categoryId: d.categoryId, extraCategoryIds, name: d.name, price: Number(d.price), desc: d.desc,
-          img: d.img, badge: d.badge || null, tag: d.tag || null, hot: !!d.hot, veg: !!d.veg, popular: !!d.popular,
+          img: d.img, badge: d.badge || null, tag: d.tag || null, hot: !!d.hot, veg: !!d.veg, popular: !!d.popular, popularNight: !!d.popularNight,
         }),
       });
       AS.menuForm = null; await loadMenu(true);

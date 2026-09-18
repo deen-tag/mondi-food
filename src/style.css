@@ -1,6 +1,15 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
 :root{--bg:#f7f5f9;--card:#ffffff;--line:#e8e1ee;--muted:#78717c;--text:#1c1420;--p:#8c25d3;--p2:#ae42eb}
+/* Thème sombre néon appliqué au panier/checkout/confirmation quand le client
+   arrive depuis Mondi Night (voir main.js, classe .nightMode sur .phone) —
+   sans ça, on passerait d'un univers sombre à une page blanche en pleine
+   commande. Toutes les couleurs du panier venant déjà de ces variables, une
+   seule redéfinition suffit à tout basculer. */
+.phone.nightMode{--bg:#0b0710;--card:#1b1129;--line:rgba(255,255,255,.09);--muted:#a293ba;--text:#f6eefc;--p:#b23bff;--p2:#ff3fa6;background:radial-gradient(circle at 50% -10%,#2a1440 0,var(--bg) 60%)}
+.phone.nightMode .cta{background:linear-gradient(120deg,var(--p),var(--p2))}
+.phone.nightMode .sheetPanel{box-shadow:0 -10px 40px rgba(0,0,0,.5)}
+.phone.nightMode .sheetClose{background:rgba(255,255,255,.06)}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;overflow-anchor:none}button{font:inherit;color:inherit;cursor:pointer}.icon{width:1em;height:1em;display:inline-block;vertical-align:-.14em;flex-shrink:0}.plus{display:flex;align-items:center;justify-content:center}.qty button{display:flex;align-items:center;justify-content:center}.phone{max-width:520px;min-height:100vh;margin:auto;background:radial-gradient(circle at 50% 0%,#f4e9fb 0,var(--bg) 55%);padding-bottom:88px;overflow:hidden;box-shadow:0 0 50px rgba(30,15,45,.06)}header{height:132px;position:sticky;top:0;z-index:20;background:rgba(244,233,251,.75);backdrop-filter:blur(15px);display:grid;grid-template-columns:70px 1fr 70px;align-items:center}.hamb,.cartIcon{border:0;background:none;color:var(--p);font-size:28px;align-self:start;margin-top:12px}.logo{background:none;border:0;height:110px}.logo img{height:110px;width:auto;max-width:230px;object-fit:contain}.cartIcon{position:relative}.cartIcon b{position:absolute;background:var(--p);color:#fff;border-radius:50%;font:bold 10px Inter;padding:5px;min-width:21px;text-align:center;top:-4px;right:2px}nav b{position:absolute;background:var(--p);color:#fff;border-radius:50%;font:bold 10px Inter;padding:5px;min-width:21px;text-align:center;top:-7px;right:-9px}
 .sheetWrap{position:fixed;inset:0;z-index:50}
 .sheetBackdrop{position:absolute;inset:0;background:rgba(20,10,30,.45);animation:sheetFade .25s ease}

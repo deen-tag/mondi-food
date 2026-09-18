@@ -1,6 +1,6 @@
 import './night.css';
 import { icon } from './icons.js';
-import { isNightOpen, nextOpeningLabel } from './night-schedule.js';
+import { isNightOpen, nextOpeningDate, minutesUntilClose } from './night-schedule.js';
 import { loadCatalog } from './menu-client.js';
 
 const S = {route:'home',cat:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),justAddedKey:null,catalog:null,loadError:false,contactOpen:false};
@@ -35,7 +35,7 @@ function render(){
   return;
  }
  const body = S.route==='category' ? `${backNav()}${cats()}${cards()}` : `${catBlocks()}${perks()}`;
- root.innerHTML=`<div class="nightApp">${header()}${hero()}${body}${sticky()}<div id="nToast"></div></div>${nContactSheet()}`;
+ root.innerHTML=`<div class="nightApp">${header()}${hero()}${closingSoon()}${body}${sticky()}<div id="nToast"></div></div>${nContactSheet()}`;
  bind();
 }
 
@@ -46,9 +46,27 @@ const CONTACT = {
  whatsapp:'33600000000',
  email:'contact@mondifood.fr',
 };
-function header(){return `<header class="nHeader"><button class="nPhone" data-contact>${icon('phone')}</button><a class="nHomeLogo" href="/"><img src="/images/night/logo.png" alt="Mondi Night"></a><a class="nCart" href="/index.html?view=cart">${icon('cart')}<b>${count()}</b></a></header>`}
+function header(){return `<header class="nHeader"><button class="nPhone" data-contact>${icon('phone')}</button><a class="nHomeLogo" href="/"><img src="/images/night/logo.png" alt="Mondi Night"></a><a class="nCart" href="/index.html?view=cart&from=night">${icon('cart')}<b>${count()}</b></a></header>`}
 
-function hero(){const open=isNightOpen();return `<section class="nHero"><p>Vendredi &amp; samedi · 23h → 05h</p><span class="nPill ${open?'live':'wait'}"><b></b>${open?'OUVERT MAINTENANT':nextOpeningLabel()}</span></section>`}
+function hero(){
+ const open=isNightOpen();
+ let label;
+ if(open){label='OUVERT MAINTENANT'}
+ else{
+  const diff=Math.max(0,nextOpeningDate()-new Date());
+  const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000);
+  label=`Ouvre dans ${h>0?`${h}h${String(m).padStart(2,'0')}`:`${m} min`}`;
+ }
+ return `<section class="nHero"><p>Vendredi &amp; samedi · 23h → 05h</p><span class="nPill ${open?'live':'wait'}"><b></b>${label}</span></section>`;
+}
+
+// Alerte affichée en fin de service pour éviter les commandes passées juste
+// avant la coupure à 5h (le client ne s'en rendrait compte qu'au moment de payer).
+function closingSoon(){
+ const mins=minutesUntilClose();
+ if(mins===null||mins>45)return '';
+ return `<div class="nClosingSoon">${icon('moon')} Dernières commandes possibles dans ${mins} min (fermeture à 5h)</div>`;
+}
 
 function perks(){return `<section class="nPerks"><div><b>${icon('fire','',true)}</b><strong>Cuisson parfaite</strong><small>Doré & croustillant</small></div><div><b>${icon('check')}</b><strong>Ingrédients frais</strong><small>Sélectionnés avec soin</small></div><div><b>${icon('delivery')}</b><strong>Livraison rapide</strong><small>30–45 min</small></div></section>`}
 
@@ -73,16 +91,19 @@ function catBlocks(){
 
 function cards(){const list=nightProducts().filter(p=>productCategorySlugs(p).includes(S.cat));return `<section class="nCards">${list.map(card).join('')}</section>`}
 
+function productBadge(p){return p.badge || (p.popularNight ? 'POPULAIRE' : null)}
+
 function card(p){
  const open=isNightOpen();
  const justAdded=S.justAddedKey===p.id;
+ const badge=productBadge(p);
  const action=open
   ?`<button class="nPlus${justAdded?' added':''}" data-add="${p.id}">${justAdded?icon('check'):icon('plus')}</button>`
   :`<span class="nWaitBadge" title="Disponible vendredi et samedi dès 23h">${icon('moon')}</span>`;
- return `<article class="nCard"><div class="nThumb"><img src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.style.display='none'"></div><div class="nCopy"><h3>${p.name}</h3><p>${p.desc}</p><strong>${formatPrice(p.price)}</strong>${open?'':'<small class="nWaitNote">Dispo ven & sam dès 23h</small>'}</div>${action}</article>`;
+ return `<article class="nCard"><div class="nThumb">${badge?`<span class="nBadge">★ ${badge}</span>`:''}<img src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.style.display='none'"></div><div class="nCopy"><h3>${p.name}</h3><p>${p.desc}</p><strong>${formatPrice(p.price)}</strong>${open?'':'<small class="nWaitNote">Dispo ven & sam dès 23h</small>'}</div>${action}</article>`;
 }
 
-function sticky(){return S.cart.length?`<div class="nSticky"><span class="nStickyBag">${icon('cart')}</span><span class="nStickyInfo"><b>${count()} articles</b><small>${formatPrice(total())}</small></span><a href="/index.html?view=cart">Voir le panier ${icon('arrow-right')}</a></div>`:''}
+function sticky(){return S.cart.length?`<div class="nSticky"><span class="nStickyBag">${icon('cart')}</span><span class="nStickyInfo"><b>${count()} articles</b><small>${formatPrice(total())}</small></span><a href="/index.html?view=cart&from=night">Voir le panier ${icon('arrow-right')}</a></div>`:''}
 
 function nContactSheet(){
  if(!S.contactOpen)return '';

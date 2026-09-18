@@ -21,3 +21,28 @@ export function nextOpeningLabel(date = new Date()) {
   const opensTonight = (day === 5 && hour < OPEN_HOUR) || (day === 6 && hour >= CLOSE_HOUR && hour < OPEN_HOUR);
   return opensTonight ? 'Ouvre ce soir à 23h' : 'Ouvre vendredi à 23h';
 }
+
+// Date/heure exacte de la prochaine ouverture, pour afficher un compte à rebours
+// (ex. "Ouvre dans 2h14") plutôt qu'un simple texte sur la page Mondi Night.
+export function nextOpeningDate(date = new Date()) {
+  const day = date.getDay();
+  const hour = date.getHours();
+  const target = new Date(date);
+  target.setSeconds(0, 0);
+  const opensTonight = (day === 5 && hour < OPEN_HOUR) || (day === 6 && hour >= CLOSE_HOUR && hour < OPEN_HOUR);
+  if (opensTonight) { target.setHours(OPEN_HOUR, 0, 0, 0); return target; }
+  target.setDate(target.getDate() + (5 - day + 7) % 7);
+  target.setHours(OPEN_HOUR, 0, 0, 0);
+  return target;
+}
+
+// Minutes restantes avant la fermeture (5h), tant que Mondi Night est ouvert —
+// permet d'afficher une alerte "dernières commandes" en fin de service.
+export function minutesUntilClose(date = new Date()) {
+  if (!isNightOpen(date)) return null;
+  const target = new Date(date);
+  target.setSeconds(0, 0);
+  if (date.getHours() >= OPEN_HOUR) target.setDate(target.getDate() + 1); // ouvert depuis le soir : ferme le lendemain matin
+  target.setHours(CLOSE_HOUR, 0, 0, 0);
+  return Math.max(0, Math.round((target - date) / 60000));
+}
