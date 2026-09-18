@@ -46,3 +46,9 @@
 .phone.nightMode header{background:rgba(11,7,16,.75)}
 .phone.nightMode .sticky{background:var(--card)}
 .phone.nightMode .stickyBag{background:rgba(178,59,255,.16)}
+
+/* Le logo du header est un <a> (lien vers le site principal) et non un
+   <button> comme sur le site de jour — les boutons centrent leur contenu par
+   défaut dans le navigateur, pas les liens, d'où le décalage. On le fixe
+   explicitement au lieu de compter sur ce comportement implicite. */
+.logo{text-align:center}
