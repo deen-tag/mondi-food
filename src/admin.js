@@ -625,6 +625,47 @@ function optionRepeater(cfg, section, unitLabel) {
    </div>`;
 }
 
+// ---------- Upload direct d'une photo (compressée) vers GitHub ----------
+// Redimensionne côté navigateur avant envoi : évite les timeouts / limites de
+// taille côté serveur, et garde le site rapide (pas de photo de 8 Mo servie
+// telle quelle).
+const UPLOAD_MAX_DIMENSION = 1200;
+const UPLOAD_QUALITY = 0.82;
+
+function compressImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > UPLOAD_MAX_DIMENSION || height > UPLOAD_MAX_DIMENSION) {
+        const scale = UPLOAD_MAX_DIMENSION / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      // PNG gardé tel quel (transparence), JPEG/WEBP recompressés
+      const outType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      resolve(canvas.toDataURL(outType, UPLOAD_QUALITY));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image illisible.')); };
+    img.src = url;
+  });
+}
+
+async function uploadImageFile(file) {
+  const dataUrl = await compressImageFile(file);
+  const result = await api('/api/menu', {
+    method: 'POST',
+    body: JSON.stringify({ resource: 'image', action: 'upload', filename: file.name, dataUrl }),
+  });
+  githubImagesCache = null; // pour que "Parcourir GitHub" voie la nouvelle image au prochain tour
+  return result.sitePath;
+}
+
 // ---------- Sélecteur visuel d'images (depuis le dépôt GitHub) ----------
 // Le champ Photo reste un texte libre (voir imageOptions), mais ce sélecteur permet
 // de parcourir en vignettes tout ce qui existe réellement dans public/images/ sur
@@ -820,6 +861,8 @@ function categoryFormHtml(d) {
      <div class="aImgFieldRow">
       <input name="img" list="imgOptions" value="${d.img || ''}" placeholder="/images/pizza-card.png">
       <button type="button" class="ghost small" data-pick-img>Parcourir GitHub</button>
+      <button type="button" class="ghost small" data-upload-img>Envoyer une photo</button>
+      <input type="file" accept="image/png,image/jpeg,image/webp" data-upload-img-input hidden>
      </div>
      <datalist id="imgOptions">${imageOptions(d.img)}</datalist>
     </label>
@@ -906,6 +949,8 @@ function productFormHtml(d) {
      <div class="aImgFieldRow">
       <input name="img" list="imgOptions" value="${d.img || ''}" placeholder="/images/night/burger-bacon.png">
       <button type="button" class="ghost small" data-pick-img>Parcourir GitHub</button>
+      <button type="button" class="ghost small" data-upload-img>Envoyer une photo</button>
+      <input type="file" accept="image/png,image/jpeg,image/webp" data-upload-img-input hidden>
      </div>
      <datalist id="imgOptions">${imageOptions(d.img)}</datalist>
     </label>
@@ -1140,6 +1185,27 @@ function bind() {
       const input = document.querySelector('#categoryForm [name="img"], #productForm [name="img"]');
       if (input) input.value = path;
     });
+  });
+  document.querySelector('[data-upload-img]')?.addEventListener('click', () => {
+    document.querySelector('[data-upload-img-input]')?.click();
+  });
+  document.querySelector('[data-upload-img-input]')?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const btn = document.querySelector('[data-upload-img]');
+    const label = btn?.textContent;
+    if (btn) { btn.textContent = 'Envoi…'; btn.disabled = true; }
+    try {
+      const path = await uploadImageFile(file);
+      const input = document.querySelector('#categoryForm [name="img"], #productForm [name="img"]');
+      if (input) input.value = path;
+      toast('Photo envoyée sur GitHub.', 'success');
+    } catch (err) {
+      toast(err.message || "Échec de l'envoi de la photo.", 'error');
+    } finally {
+      if (btn) { btn.textContent = label; btn.disabled = false; }
+      e.target.value = '';
+    }
   });
 
   function openMenuForm() {
