@@ -61,4 +61,12 @@
    de base de .phone (88px, prévu pour la seule barre d'onglets) ne suffit
    plus et elle recouvre le bas de la page (bloc perks). On ajoute donc sa
    hauteur + une marge, sinon le bas reste inaccessible même en bout de scroll. */
-.phone.nightMode.hasSticky{padding-bottom:calc(88px + 58px + 24px + env(safe-area-inset-bottom))}
+.phone.nightMode.hasSticky{padding-bottom:calc(88px + 58px + 80px + env(safe-area-inset-bottom))}
+
+/* Le panier du header est un <a> (lien vers index.html) et non un <button>
+   comme sur le site de jour. Un bouton centre son contenu, pas un lien : l'icône
+   se collait à gauche de la case de 70px alors que la pastille du nombre
+   d'articles reste ancrée à droite (right:2px), d'où un gros écart entre les
+   deux. On centre l'icône comme sur le jour pour que la pastille chevauche le
+   coin du caddie. */
+.cartIcon{text-align:center;text-decoration:none}
