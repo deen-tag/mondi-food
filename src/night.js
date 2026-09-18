@@ -73,7 +73,8 @@ function catImg(c){
 }
 function catCount(c){return S.catalog.products.filter(p=>p.active!==false && productCategorySlugs(p).includes(c.slug)).length}
 
-function backNav(){return `<button class="back" data-go="home">${icon('arrow-left')} <span>Retour au menu</span></button>`}
+// même conteneur .menuTop que le site de jour : donne la marge gauche/haut du bouton retour
+function backNav(){return `<div class="menuTop"><button class="back" data-go="home">${icon('arrow-left')} <span>Retour au menu</span></button></div>`}
 
 function cats(){const list=nightCategories();return `<div class="switch">${list.map(c=>`<button class="${S.cat===c.slug?'active':''}" data-cat="${c.slug}">${c.label}</button>`).join('')}</div>`}
 
@@ -83,7 +84,7 @@ function catBlocks(){
  return `<section class="homeTiles">${list.map(c=>`<button class="tile" data-cat="${c.slug}"><div class="tileText"><i>${catCount(c)} AU MENU</i><h3>${c.label}</h3><p>Découvre notre sélection ${c.label.toLowerCase()}</p></div><div class="tileImg"><img src="${catImg(c)}" onerror="this.style.display='none'"></div><span>Voir ${icon('arrow-right')}</span></button>`).join('')}</section>`;
 }
 
-function cards(){const list=nightProducts().filter(p=>productCategorySlugs(p).includes(S.cat));return `<div class="cards">${list.map(card).join('')}</div>`}
+function cards(){const list=nightProducts().filter(p=>productCategorySlugs(p).includes(S.cat));return `<section class="menuSection"><div class="cards">${list.map(card).join('')}</div></section>`}
 
 function productBadge(p){return p.badge || (p.popularNight ? 'POPULAIRE' : null)}
 
