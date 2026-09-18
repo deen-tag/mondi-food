@@ -19,6 +19,11 @@
 .phone.nightMode header{background:rgba(11,7,16,.75)}
 .phone.nightMode .sticky{background:var(--card)}
 .phone.nightMode .stickyBag{background:rgba(178,59,255,.16)}
+.phone.nightMode nav{background:rgba(20,12,28,.97)}
+.phone.nightMode .qty button{background:rgba(255,255,255,.06)}
+.phone.nightMode .form input,.phone.nightMode .form textarea,.phone.nightMode .promoRow input{background:rgba(255,255,255,.05)}
+.phone.nightMode .empty>div,.phone.nightMode .ok{background:rgba(178,59,255,.16);border-color:rgba(178,59,255,.35)}
+.phone.nightMode .timeline>div>b{background:rgba(255,255,255,.06)}
 *{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;overflow-anchor:none}button{font:inherit;color:inherit;cursor:pointer}.icon{width:1em;height:1em;display:inline-block;vertical-align:-.14em;flex-shrink:0}.plus{display:flex;align-items:center;justify-content:center}.qty button{display:flex;align-items:center;justify-content:center}.phone{max-width:520px;min-height:100vh;margin:auto;background:radial-gradient(circle at 50% 0%,#f4e9fb 0,var(--bg) 55%);padding-bottom:88px;overflow:hidden;box-shadow:0 0 50px rgba(30,15,45,.06)}header{height:132px;position:sticky;top:0;z-index:20;background:rgba(244,233,251,.75);backdrop-filter:blur(15px);display:grid;grid-template-columns:70px 1fr 70px;align-items:center}.hamb,.cartIcon{border:0;background:none;color:var(--p);font-size:28px;align-self:start;margin-top:12px}.logo{background:none;border:0;height:110px}.logo img{height:110px;width:auto;max-width:230px;object-fit:contain}.cartIcon{position:relative}.cartIcon b{position:absolute;background:var(--p);color:#fff;border-radius:50%;font:bold 10px Inter;padding:5px;min-width:21px;text-align:center;top:-4px;right:2px}nav b{position:absolute;background:var(--p);color:#fff;border-radius:50%;font:bold 10px Inter;padding:5px;min-width:21px;text-align:center;top:-7px;right:-9px}
 .sheetWrap{position:fixed;inset:0;z-index:50}
 .sheetBackdrop{position:absolute;inset:0;background:rgba(20,10,30,.45);animation:sheetFade .25s ease}
