@@ -128,7 +128,7 @@ function render(){
   return;
  }
  const body = S.route==='category' ? `${backNav()}${cats()}${cards()}` : `${catBlocks()}${perks()}`;
- root.innerHTML=`<div class="phone nightMode">${header()}${hero()}${closingSoon()}<main id="screen">${body}</main>${navBar()}${sticky()}<div id="toast"></div></div>${contactSheet()}`;
+ root.innerHTML=`<div class="phone nightMode${S.cart.length?' hasSticky':''}">${header()}${hero()}${closingSoon()}<main id="screen">${body}</main>${navBar()}${sticky()}<div id="toast"></div></div>${contactSheet()}`;
  bind();
  initReveal();
 }

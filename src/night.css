@@ -55,3 +55,10 @@
    pensé pour un fond clair — sur fond sombre il ressort comme un halo flou
    blanc autour des images. On le retire côté nuit. */
 .phone.nightMode .tileImg:after{box-shadow:none}
+
+/* Quand la barre panier collante est affichée (panier non vide), elle se pose
+   au-dessus de la barre d'onglets (87px du bas) et mesure ~58px : le padding
+   de base de .phone (88px, prévu pour la seule barre d'onglets) ne suffit
+   plus et elle recouvre le bas de la page (bloc perks). On ajoute donc sa
+   hauteur + une marge, sinon le bas reste inaccessible même en bout de scroll. */
+.phone.nightMode.hasSticky{padding-bottom:calc(88px + 58px + 24px + env(safe-area-inset-bottom))}
