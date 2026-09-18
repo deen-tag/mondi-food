@@ -40,15 +40,18 @@
 
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
-/* Le header et la barre panier ont un fond écrit en dur dans style.css (pensé
-   pour le thème clair), donc ils ne suivaient pas le thème nuit — on les
-   raccroche ici aux variables déjà basculées par .phone.nightMode. */
-.phone.nightMode header{background:rgba(11,7,16,.75)}
-.phone.nightMode .sticky{background:var(--card)}
-.phone.nightMode .stickyBag{background:rgba(178,59,255,.16)}
+/* Header, barre panier, fiche contact : correctifs déplacés dans style.css
+   (voir commentaire là-bas) pour s'appliquer aussi au panier du site
+   principal quand le client vient de Mondi Night — cette page ne charge
+   jamais ce fichier-ci. */
 
 /* Le logo du header est un <a> (lien vers le site principal) et non un
    <button> comme sur le site de jour — les boutons centrent leur contenu par
    défaut dans le navigateur, pas les liens, d'où le décalage. On le fixe
    explicitement au lieu de compter sur ce comportement implicite. */
 .logo{text-align:center}
+
+/* Le liseré brillant blanc (box-shadow inset) autour des photos de tuiles est
+   pensé pour un fond clair — sur fond sombre il ressort comme un halo flou
+   blanc autour des images. On le retire côté nuit. */
+.phone.nightMode .tileImg:after{box-shadow:none}
