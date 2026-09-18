@@ -39,3 +39,10 @@
 .phone.nightMode .sticky{bottom:16px}
 
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Le header et la barre panier ont un fond écrit en dur dans style.css (pensé
+   pour le thème clair), donc ils ne suivaient pas le thème nuit — on les
+   raccroche ici aux variables déjà basculées par .phone.nightMode. */
+.phone.nightMode header{background:rgba(11,7,16,.75)}
+.phone.nightMode .sticky{background:var(--card)}
+.phone.nightMode .stickyBag{background:rgba(178,59,255,.16)}
