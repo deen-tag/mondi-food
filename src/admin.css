@@ -140,6 +140,25 @@ main{padding:16px}
 .aFieldGroupLabel{font-size:11px;color:var(--muted);margin-bottom:6px}
 .aCheckGroup{display:flex;flex-direction:column;gap:8px;margin-bottom:4px}
 
+/* Réglages : interrupteur à la place d'une checkbox nue, encart d'avertissement
+   ambre pour le texte à impact business, et confirmation discrète au lieu
+   d'une alert() bloquante. */
+.toggleSwitch{display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px}
+.toggleSwitch input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.toggleTrack{position:relative;flex:0 0 44px;width:44px;height:26px;border-radius:20px;background:var(--line);transition:background .18s}
+.toggleThumb{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(28,20,32,.25);transition:transform .18s}
+.toggleSwitch input:checked+.toggleTrack{background:var(--p)}
+.toggleSwitch input:checked+.toggleTrack .toggleThumb{transform:translateX(18px)}
+.toggleSwitch input:focus-visible+.toggleTrack{outline:2px solid var(--p);outline-offset:2px}
+.toggleLabel{font-size:13px;color:var(--white);line-height:1.35}
+
+.aWarnBox{display:flex;gap:8px;align-items:flex-start;background:#fbf1de;border:1px solid #edd6a3;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#7a5414;line-height:1.45}
+.aWarnBox .warnIcon{flex:0 0 16px;width:16px;height:16px;margin-top:1px;color:var(--warn)}
+
+.aSavedTag{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--ok);opacity:0;transform:translateX(-4px);transition:opacity .2s,transform .2s}
+.aSavedTag.show{opacity:1;transform:translateX(0)}
+.aSavedTag .savedIcon{width:14px;height:14px}
+
 /* Repeater "Compose ta recette" : une ligne par base/sauce/ingrédient, au lieu
    d'un textarea "Nom;prix" à taper à la main. */
 .aRepeater{margin-bottom:14px}

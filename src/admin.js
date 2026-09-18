@@ -857,22 +857,37 @@ function menuBuilderView() {
 function menuSettingsView() {
   const s = AS.menu.settings || {};
   const op = s.optionPrices || {};
-  return `<div class="aBox">
+  return `
+  <div class="aBox">
    <h3>Livraison</h3>
-   <form id="settingsForm">
+   <form id="settingsFormDelivery" class="settingsForm">
     <div class="two">
      <label>Frais de livraison (€)<input name="deliveryFee" type="number" step="0.01" min="0" value="${s.deliveryFee ?? 2.5}"></label>
      <label>Livraison offerte dès (€)<input name="freeDeliveryThreshold" type="number" step="0.01" min="0" value="${s.freeDeliveryThreshold ?? 25}"></label>
     </div>
-    <h3>Options payantes (fiche produit)</h3>
+    <div class="aRow"><button class="cta small" type="submit">ENREGISTRER</button><span class="aSavedTag"><span></span></span></div>
+   </form>
+  </div>
+  <div class="aBox">
+   <h3>Options payantes (fiche produit)</h3>
+   <form id="settingsFormOptions" class="settingsForm">
     <div class="two">
      <label>Fromage supplémentaire (€)<input name="cheese" type="number" step="0.01" min="0" value="${op['Fromage supplémentaire'] ?? 1}"></label>
      <label>Base épicée (€)<input name="spicy" type="number" step="0.01" min="0" value="${op['Base épicée'] ?? 0.5}"></label>
     </div>
-    <h3>Paiement</h3>
-    <label class="checkRow"><input type="checkbox" name="onlinePaymentEnabled" ${s.onlinePaymentEnabled !== false ? 'checked' : ''}> Autoriser le paiement en ligne (carte, via Stripe)</label>
-    <small class="aMuted">Si désactivé, les clients ne pourront plus payer que "à la livraison" — l'option carte disparaît du checkout du site.</small>
-    <button class="cta small" type="submit">ENREGISTRER</button>
+    <div class="aRow"><button class="cta small" type="submit">ENREGISTRER</button><span class="aSavedTag"><span></span></span></div>
+   </form>
+  </div>
+  <div class="aBox">
+   <h3>Paiement</h3>
+   <form id="settingsFormPayment" class="settingsForm">
+    <label class="toggleSwitch">
+     <input type="checkbox" name="onlinePaymentEnabled" ${s.onlinePaymentEnabled !== false ? 'checked' : ''}>
+     <span class="toggleTrack"><span class="toggleThumb"></span></span>
+     <span class="toggleLabel">Autoriser le paiement en ligne (carte, via Stripe)</span>
+    </label>
+    <div class="aWarnBox">${icon('warning', 'warnIcon')}<span>Si désactivé, les clients ne pourront plus payer que "à la livraison" — l'option carte disparaît du checkout du site.</span></div>
+    <div class="aRow"><button class="cta small" type="submit">ENREGISTRER</button><span class="aSavedTag"><span></span></span></div>
    </form>
   </div>`;
 }
@@ -1181,23 +1196,45 @@ function bind() {
     } catch (err) { alert(err.message || 'Erreur'); }
   }));
 
-  document.querySelector('#settingsForm')?.addEventListener('submit', async e => {
+  // Petit tag "✓ Enregistré" qui apparaît furtivement à côté du bouton, plutôt
+  // qu'une popup alert() qui interrompt et qu'il faut fermer manuellement.
+  function flashSaved(form) {
+    const tag = form.querySelector('.aSavedTag');
+    if (!tag) return;
+    tag.querySelector('span').innerHTML = `${icon('check', 'savedIcon')} Enregistré`;
+    tag.classList.add('show');
+    clearTimeout(tag._t);
+    tag._t = setTimeout(() => tag.classList.remove('show'), 1800);
+  }
+
+  document.querySelector('#settingsFormDelivery')?.addEventListener('submit', async e => {
     e.preventDefault();
     const form = e.target;
     const d = Object.fromEntries(new FormData(form));
+    try {
+      await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'settings', action: 'update', deliveryFee: Number(d.deliveryFee), freeDeliveryThreshold: Number(d.freeDeliveryThreshold) }) });
+      await loadMenu(true);
+      flashSaved(form);
+    } catch (err) { alert(err.message || 'Erreur'); }
+  });
+  document.querySelector('#settingsFormOptions')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const form = e.target;
+    const d = Object.fromEntries(new FormData(form));
+    try {
+      await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'settings', action: 'update', optionPrices: { 'Fromage supplémentaire': Number(d.cheese), 'Base épicée': Number(d.spicy) } }) });
+      await loadMenu(true);
+      flashSaved(form);
+    } catch (err) { alert(err.message || 'Erreur'); }
+  });
+  document.querySelector('#settingsFormPayment')?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const form = e.target;
     const onlinePaymentEnabled = form.querySelector('[name=onlinePaymentEnabled]').checked;
     try {
-      await api('/api/menu', {
-        method: 'POST',
-        body: JSON.stringify({
-          resource: 'settings', action: 'update',
-          deliveryFee: Number(d.deliveryFee), freeDeliveryThreshold: Number(d.freeDeliveryThreshold),
-          optionPrices: { 'Fromage supplémentaire': Number(d.cheese), 'Base épicée': Number(d.spicy) },
-          onlinePaymentEnabled,
-        }),
-      });
+      await api('/api/menu', { method: 'POST', body: JSON.stringify({ resource: 'settings', action: 'update', onlinePaymentEnabled }) });
       await loadMenu(true);
-      alert('Réglages enregistrés.');
+      flashSaved(form);
     } catch (err) { alert(err.message || 'Erreur'); }
   });
 }
