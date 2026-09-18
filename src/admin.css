@@ -102,7 +102,7 @@ main{padding:16px}
 .aBox h3{font:800 13px 'Barlow Condensed';letter-spacing:.5px;margin:0 0 10px;text-transform:uppercase;color:var(--p2)}
 .aBox.done h3{color:var(--ok)}
 .aBox.cancelled h3,.aBox.danger h3{color:var(--bad)}
-.aBox label{display:block;font-size:11px;color:var(--muted);margin-bottom:12px}
+.aBox label:not(.toggleSwitch){display:block;font-size:11px;color:var(--muted);margin-bottom:12px}
 .aBox label input{margin-top:6px}
 .aRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .aItems{list-style:none;padding:0;margin:0}
@@ -210,6 +210,9 @@ main{padding:16px}
    formulaire — le prix est le champ qu'on change le plus souvent. */
 .aPriceBtn{display:inline-flex;align-items:center;gap:4px;color:var(--muted);font-size:11px}
 .aPriceBtn .editHint{width:11px;height:11px;opacity:.6}
+.prodInfo small{display:flex;flex-wrap:wrap;align-items:center;column-gap:6px;row-gap:2px}
+.prodBadge{white-space:nowrap}
+.prodBadge::before{content:'· ';color:var(--muted)}
 .aQuickPrice{display:flex;align-items:center;gap:4px;margin-top:2px}
 .aQuickPrice input{width:80px;padding:4px 8px;font-size:12px}
 .aQuickPrice .aIconBtn{width:28px;height:28px}

@@ -832,7 +832,7 @@ function productRow(p, showHandle) {
         <button type="submit" class="aIconBtn" title="Valider" aria-label="Valider">${icon('check')}</button>
         <button type="button" class="aIconBtn" data-quickprice-cancel title="Annuler" aria-label="Annuler">${icon('close')}</button>
        </form>`
-    : `<small><button type="button" class="aPriceBtn" data-quickprice-edit="${p.id}">${formatPrice(p.price)} ${icon('pencil', 'editHint')}</button>${p.popular ? ' · ⭐ Populaire' : ''}${off ? ' · Masqué' : ''}</small>`;
+    : `<small><button type="button" class="aPriceBtn" data-quickprice-edit="${p.id}">${formatPrice(p.price)} ${icon('pencil', 'editHint')}</button>${p.popular ? '<span class="prodBadge">⭐ Populaire</span>' : ''}${off ? '<span class="prodBadge">Masqué</span>' : ''}</small>`;
   return `<div class="aDriverCard aProdCard" data-drag-id="${p.id}">
     ${showHandle ? `<button type="button" class="dragHandle" aria-label="Glisser pour réordonner">${icon('grip')}</button>` : ''}
     <div class="prodThumb"><img src="${p.img}" alt="" loading="lazy"></div>
