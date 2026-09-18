@@ -101,12 +101,12 @@ function genId(prefix) {
 
 // ---- Catégories ----
 
-export async function createCategory({ label, sites, kind, order }) {
+export async function createCategory({ label, sites, kind, order, img }) {
   const db = getFirestore();
   let slug = slugify(label);
   const existing = await db.collection(COLLECTIONS.categories).doc(slug).get();
   if (existing.exists) slug = `${slug}-${Date.now().toString(36)}`;
-  const doc = { slug, label: String(label).slice(0, 60), sites: Array.isArray(sites) && sites.length ? sites : ['main'], kind: kind === 'configurator' ? 'configurator' : 'products', order: Number.isFinite(order) ? order : 999, active: true };
+  const doc = { slug, label: String(label).slice(0, 60), sites: Array.isArray(sites) && sites.length ? sites : ['main'], kind: kind === 'configurator' ? 'configurator' : 'products', order: Number.isFinite(order) ? order : 999, active: true, img: String(img || '').slice(0, 300) };
   await db.collection(COLLECTIONS.categories).doc(slug).set(doc);
   invalidateCache();
   return doc;
@@ -117,7 +117,7 @@ export async function updateCategory(slug, patch) {
   const ref = db.collection(COLLECTIONS.categories).doc(slug);
   const snap = await ref.get();
   if (!snap.exists) throw new Error('Catégorie introuvable');
-  const allowed = ['label', 'sites', 'order', 'active'];
+  const allowed = ['label', 'sites', 'order', 'active', 'img'];
   const clean = {};
   for (const k of allowed) if (k in patch) clean[k] = patch[k];
   await ref.update(clean);
