@@ -10,6 +10,21 @@ import {
   updateConfigurator,
   updateSettings,
 } from './_menu-store.js';
+import { uploadImageToGithub } from './_github.js';
+
+// Vercel bloque les requêtes au-delà d'une certaine taille de corps sur le
+// plan Hobby ; on refuse une image trop lourde côté serveur avant l'appel
+// GitHub, en plus de la compression déjà faite côté navigateur.
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024; // 4 Mo
+
+function sanitizeFilename(name) {
+  return (name || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // enlève les accents
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-+|-+$)/g, '')
+    .slice(0, 60);
+}
 
 // Un seul fichier serverless pour tout le menu (public + admin), pour rester sous
 // la limite de 12 fonctions du plan Vercel Hobby (voir api/admin-auth.js) :
@@ -63,6 +78,25 @@ export default async function handler(req, res) {
 
       if (resource === 'settings' && action === 'update') {
         return res.status(200).json(await updateSettings(payload));
+      }
+
+      if (resource === 'image' && action === 'upload') {
+        const { filename, dataUrl } = payload;
+        const match = /^data:image\/(png|jpe?g|webp);base64,(.+)$/.exec(dataUrl || '');
+        if (!match) return res.status(400).json({ error: "Format d'image invalide (png, jpg ou webp uniquement)" });
+
+        const [, rawExt, base64] = match;
+        const approxBytes = base64.length * 0.75;
+        if (approxBytes > MAX_IMAGE_BYTES) {
+          return res.status(400).json({ error: 'Image trop lourde (4 Mo max).' });
+        }
+
+        const ext = rawExt === 'jpeg' ? 'jpg' : rawExt;
+        const safeName = sanitizeFilename(filename?.replace(/\.[^.]+$/, '')) || 'image';
+        const path = `public/images/uploads/${Date.now()}-${safeName}.${ext}`;
+
+        const result = await uploadImageToGithub(path, base64);
+        return res.status(200).json(result);
       }
 
       return res.status(400).json({ error: 'Requête invalide' });
