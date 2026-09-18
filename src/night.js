@@ -1,3 +1,4 @@
+import './style.css';
 import './night.css';
 import { icon } from './icons.js';
 import { isNightOpen, nextOpeningDate, minutesUntilClose } from './night-schedule.js';
@@ -28,17 +29,6 @@ function nightProducts(){
  return S.catalog.products.filter(p=>p.active!==false && productCategorySlugs(p).some(id=>slugs.has(id)));
 }
 
-function render(){
- const root=document.querySelector('#root');
- if(!S.catalog){
-  root.innerHTML=`<div class="nightApp"><section class="nHero"><img class="nLogo" src="/images/night/logo.png" alt="Mondi Night"><p>${S.loadError?'Impossible de charger le menu, réessaie dans un instant.':'Chargement du menu…'}</p></section></div>`;
-  return;
- }
- const body = S.route==='category' ? `${backNav()}${cats()}${cards()}` : `${catBlocks()}${perks()}`;
- root.innerHTML=`<div class="nightApp">${header()}${hero()}${closingSoon()}${body}${sticky()}<div id="nToast"></div></div>${nContactSheet()}`;
- bind();
-}
-
 // ⚠️ Mêmes coordonnées placeholder que CONTACT dans main.js — à remplacer par les vraies avant mise en prod.
 const CONTACT = {
  phone:'+33 6 00 00 00 00',
@@ -46,7 +36,9 @@ const CONTACT = {
  whatsapp:'33600000000',
  email:'contact@mondifood.fr',
 };
-function header(){return `<header class="nHeader"><button class="nPhone" data-contact>${icon('phone')}</button><a class="nHomeLogo" href="/"><img src="/images/night/logo.png" alt="Mondi Night"></a><a class="nCart" href="/index.html?view=cart&from=night">${icon('cart')}<b>${count()}</b></a></header>`}
+
+// header — mêmes classes/dimensions que le site principal (logo 110px, icônes 28px)
+function header(){return `<header><button class="hamb" data-contact>${icon('phone')}</button><a class="logo" href="/"><img src="/images/night/logo.png" alt="Mondi Night"></a><a class="cartIcon" href="/index.html?view=cart&from=night">${icon('cart')}<b>${count()}</b></a></header>`}
 
 function hero(){
  const open=isNightOpen();
@@ -57,7 +49,7 @@ function hero(){
   const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000);
   label=`Ouvre dans ${h>0?`${h}h${String(m).padStart(2,'0')}`:`${m} min`}`;
  }
- return `<section class="nHero"><p>Vendredi &amp; samedi · 23h → 05h</p><span class="nPill ${open?'live':'wait'}"><b></b>${label}</span></section>`;
+ return `<section class="homeHero nStars"><p class="kicker">VENDREDI &amp; SAMEDI · 23H → 05H</p><span class="statusPill ${open?'live':'wait'}"><b></b>${label}</span></section>`;
 }
 
 // Alerte affichée en fin de service pour éviter les commandes passées juste
@@ -65,10 +57,11 @@ function hero(){
 function closingSoon(){
  const mins=minutesUntilClose();
  if(mins===null||mins>45)return '';
- return `<div class="nClosingSoon">${icon('moon')} Dernières commandes possibles dans ${mins} min (fermeture à 5h)</div>`;
+ return `<div class="closingSoon">${icon('moon')} Dernières commandes possibles dans ${mins} min (fermeture à 5h)</div>`;
 }
 
-function perks(){return `<section class="nPerks"><div><b>${icon('fire','',true)}</b><strong>Cuisson parfaite</strong><small>Doré & croustillant</small></div><div><b>${icon('check')}</b><strong>Ingrédients frais</strong><small>Sélectionnés avec soin</small></div><div><b>${icon('delivery')}</b><strong>Livraison rapide</strong><small>30–45 min</small></div></section>`}
+// perks — identique au bloc "3 avantages" du site principal
+function perks(){return `<section class="perks"><div><b>${icon('fire','',true)}</b><strong>Cuisson parfaite</strong><small>Doré & croustillant</small></div><div><b>${icon('check')}</b><strong>Ingrédients frais</strong><small>Sélectionnés avec soin</small></div><div><b>${icon('delivery')}</b><strong>Livraison rapide</strong><small>30–45 min</small></div></section>`}
 
 // Image représentative d'une catégorie pour les blocs : celle choisie dans
 // l'admin en priorité, sinon la photo du premier produit qu'elle contient
@@ -80,38 +73,54 @@ function catImg(c){
 }
 function catCount(c){return S.catalog.products.filter(p=>p.active!==false && productCategorySlugs(p).includes(c.slug)).length}
 
-function backNav(){return `<button class="nBack" data-go="home">${icon('arrow-left')} <span>Retour au menu</span></button>`}
+function backNav(){return `<button class="back" data-go="home">${icon('arrow-left')} <span>Retour au menu</span></button>`}
 
-function cats(){const list=nightCategories();return `<nav class="nCats">${list.map(c=>`<button class="${S.cat===c.slug?'active':''}" data-cat="${c.slug}">${c.label}</button>`).join('')}</nav>`}
+function cats(){const list=nightCategories();return `<div class="switch">${list.map(c=>`<button class="${S.cat===c.slug?'active':''}" data-cat="${c.slug}">${c.label}</button>`).join('')}</div>`}
 
+// blocs catégories — mêmes classes .homeTiles/.tile/.tileImg/.tileText que le site principal
 function catBlocks(){
  const list=nightCategories();
- return `<section class="nTiles">${list.map(c=>`<button class="nTile${S.cat===c.slug?' active':''}" data-cat="${c.slug}"><div class="nTileText"><h3>${c.label}</h3><p>${catCount(c)} au menu</p></div><div class="nTileImg"><img src="${catImg(c)}" onerror="this.style.display='none'"></div><span>${S.cat===c.slug?'Sélectionné':'Voir'} ${icon('arrow-right')}</span></button>`).join('')}</section>`;
+ return `<section class="homeTiles">${list.map(c=>`<button class="tile" data-cat="${c.slug}"><div class="tileText"><i>${catCount(c)} AU MENU</i><h3>${c.label}</h3><p>Découvre notre sélection ${c.label.toLowerCase()}</p></div><div class="tileImg"><img src="${catImg(c)}" onerror="this.style.display='none'"></div><span>Voir ${icon('arrow-right')}</span></button>`).join('')}</section>`;
 }
 
-function cards(){const list=nightProducts().filter(p=>productCategorySlugs(p).includes(S.cat));return `<section class="nCards">${list.map(card).join('')}</section>`}
+function cards(){const list=nightProducts().filter(p=>productCategorySlugs(p).includes(S.cat));return `<div class="cards">${list.map(card).join('')}</div>`}
 
 function productBadge(p){return p.badge || (p.popularNight ? 'POPULAIRE' : null)}
 
+// carte produit — mêmes classes .card/.cardMain/.thumb/.copy/.badge/.plus que le site principal
 function card(p){
  const open=isNightOpen();
  const justAdded=S.justAddedKey===p.id;
  const badge=productBadge(p);
  const action=open
-  ?`<button class="nPlus${justAdded?' added':''}" data-add="${p.id}">${justAdded?icon('check'):icon('plus')}</button>`
-  :`<span class="nWaitBadge" title="Disponible vendredi et samedi dès 23h">${icon('moon')}</span>`;
- return `<article class="nCard"><div class="nThumb">${badge?`<span class="nBadge">★ ${badge}</span>`:''}<img src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.style.display='none'"></div><div class="nCopy"><h3>${p.name}</h3><p>${p.desc}</p><strong>${formatPrice(p.price)}</strong>${open?'':'<small class="nWaitNote">Dispo ven & sam dès 23h</small>'}</div>${action}</article>`;
+  ?`<button class="plus${justAdded?' added':''}" data-add="${p.id}">${justAdded?icon('check'):icon('plus')}</button>`
+  :`<span class="waitBadge" title="Disponible vendredi et samedi dès 23h">${icon('moon')}</span>`;
+ return `<article class="card"><div class="cardMain"><div class="thumb">${badge?`<em class="badge">${icon('star','',true)} ${badge}</em>`:''}<img src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.style.display='none'"></div><div class="copy"><h3>${p.name}</h3><p>${p.desc}</p><strong>${formatPrice(p.price)}</strong>${open?'':'<small class="waitNote">Dispo ven & sam dès 23h</small>'}</div></div>${action}</article>`;
 }
 
-function sticky(){return S.cart.length?`<div class="nSticky"><span class="nStickyBag">${icon('cart')}</span><span class="nStickyInfo"><b>${count()} articles</b><small>${formatPrice(total())}</small></span><a href="/index.html?view=cart&from=night">Voir le panier ${icon('arrow-right')}</a></div>`:''}
+// barre panier collante — mêmes classes .sticky/.stickyBag/.stickyInfo/.cta.pill
+function sticky(){return S.cart.length?`<div class="sticky"><span class="stickyBag">${icon('cart')}</span><span class="stickyInfo"><b>${count()} articles</b><small>${formatPrice(total())}</small></span><a class="cta pill" href="/index.html?view=cart&from=night">Voir le panier ${icon('arrow-right')}</a></div>`:''}
 
-function nContactSheet(){
+// fiche contact — même markup/classes que la sheetWrap du site principal
+function contactSheet(){
  if(!S.contactOpen)return '';
- return `<div class="nSheetWrap"><div class="nSheetBackdrop" data-contact-close></div><div class="nSheetPanel"><div class="nSheetHandle"></div><button class="nSheetClose" data-contact-close>${icon('close')}</button><h2>NOUS CONTACTER</h2><p class="nSheetSub">Une question sur ta commande ? On te répond vite.</p><div class="nContactLinks">
-<a class="nContactRow" href="tel:${CONTACT.phoneHref}">${icon('phone')}<div><b>Téléphone</b><small>${CONTACT.phone}</small></div></a>
-<a class="nContactRow" href="https://wa.me/${CONTACT.whatsapp}" target="_blank" rel="noopener">${icon('phone')}<div><b>WhatsApp</b><small>Réponse rapide</small></div></a>
-<a class="nContactRow" href="mailto:${CONTACT.email}">${icon('mail')}<div><b>Email</b><small>${CONTACT.email}</small></div></a>
+ return `<div class="sheetWrap"><div class="sheetBackdrop" data-contact-close></div><div class="sheetPanel"><div class="sheetHandle"></div><button class="sheetClose" data-contact-close>${icon('close')}</button><h2>NOUS CONTACTER</h2><p class="sheetSub">Une question sur ta commande ? On te répond vite.</p><div class="contactLinks">
+<a class="contactRow" href="tel:${CONTACT.phoneHref}">${icon('phone')}<div><b>Téléphone</b><small>${CONTACT.phone}</small></div></a>
+<a class="contactRow" href="https://wa.me/${CONTACT.whatsapp}" target="_blank" rel="noopener">${icon('phone')}<div><b>WhatsApp</b><small>Réponse rapide</small></div></a>
+<a class="contactRow" href="mailto:${CONTACT.email}">${icon('mail')}<div><b>Email</b><small>${CONTACT.email}</small></div></a>
 </div></div></div>`;
+}
+
+function render(){
+ const root=document.querySelector('#root');
+ if(!S.catalog){
+  root.innerHTML=`<div class="phone nightMode"><section class="simple"><i>MONDI NIGHT</i><h1>${S.loadError?'CONNEXION IMPOSSIBLE':'CHARGEMENT…'}</h1><p>${S.loadError?'Impossible de charger le menu, réessaie dans un instant.':'Un instant, on prépare le menu.'}</p></section></div>`;
+  return;
+ }
+ const body = S.route==='category' ? `${backNav()}${cats()}${cards()}` : `${catBlocks()}${perks()}`;
+ root.innerHTML=`<div class="phone nightMode">${header()}${hero()}${closingSoon()}<main id="screen">${body}</main>${sticky()}<div id="toast"></div></div>${contactSheet()}`;
+ bind();
+ initReveal();
 }
 
 function add(id){
@@ -128,9 +137,19 @@ function add(id){
 }
 
 function toast(t){
- const e=document.querySelector('#nToast');if(!e)return;
- e.innerHTML=icon('check')+' '+t;e.className='nToast';
+ const e=document.querySelector('#toast');if(!e)return;
+ e.innerHTML=icon('check')+' '+t;e.className='toast';
  setTimeout(()=>e.className='',1500);
+}
+
+// même reveal au scroll que le site principal (.card apparaît en fondu)
+function initReveal(){
+ const els=document.querySelectorAll('.card:not(.in)');
+ if(!('IntersectionObserver' in window)){els.forEach(el=>el.classList.add('in'));return}
+ const io=new IntersectionObserver(entries=>{
+  entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('in');io.unobserve(entry.target)}})
+ },{threshold:.15});
+ els.forEach(el=>io.observe(el));
 }
 
 function bind(){

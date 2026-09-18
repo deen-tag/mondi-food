@@ -1,22 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap');
-:root{--n-bg:#0b0710;--n-bg2:#170e24;--n-card:#1b1129;--n-line:rgba(255,255,255,.09);--n-text:#f6eefc;--n-muted:#a293ba;--n-accent:#b23bff;--n-accent2:#ff3fa6;--n-amber:#ffcf6b}
-*{box-sizing:border-box}html,body{margin:0;background:var(--n-bg);color:var(--n-text);font-family:Inter,Arial,sans-serif}
-button,a{font:inherit;color:inherit;cursor:pointer;text-decoration:none}
-.icon{width:1em;height:1em;display:inline-block;vertical-align:-.14em;flex-shrink:0}
-.nightApp{max-width:520px;min-height:100vh;margin:auto;position:relative;padding-bottom:110px;background:radial-gradient(circle at 50% -10%,#2a1440 0,var(--n-bg) 60%);overflow:hidden}
+/* Mondi Night — uniquement les éléments propres à la nuit (statut ouvert/fermé,
+   alerte fin de service, décor étoilé, produit indisponible avant ouverture).
+   Toutes les dimensions communes (header, logo, tuiles, cartes, perks, panier
+   collant, fiche contact...) viennent de style.css via .phone.nightMode, pour
+   rester identiques au site principal — plus aucune valeur dupliquée ici. */
 
-/* header — même logique que le header du site principal : téléphone / logo / panier, en icônes plates sans fond ni cercle */
-.nHeader{display:grid;grid-template-columns:44px 1fr 44px;align-items:start;padding:14px 14px}
-.nHeader a,.nHeader button{display:flex;align-items:center;justify-content:center;color:var(--n-text);border:0;background:none;padding:0}
-.nHeader .nPhone svg,.nHeader .nCart svg{width:22px;height:22px}
-.nHeader .nHomeLogo img{max-width:220px;width:70%;height:auto;display:block;margin:0 auto;filter:drop-shadow(0 0 22px rgba(178,59,255,.45))}
-.nHeader .nCart{position:relative}
-.nHeader .nCart b{position:absolute;top:-4px;right:-4px;background:var(--n-accent);color:#fff;border-radius:50%;font:800 9px Inter;min-width:17px;text-align:center;padding:2px}
-.nWordmark{text-align:center;font:800 13px 'Barlow Condensed';letter-spacing:3px;color:var(--n-muted)}
-
-/* hero */
-.nHero{position:relative;text-align:center;padding:12px 24px 10px}
-.nHero:before{content:'';position:absolute;inset:-16px 0 auto;height:170px;pointer-events:none;z-index:0;opacity:.75;animation:nTwinkle 4.5s ease-in-out infinite alternate;background-image:
+/* décor étoilé discret derrière le hero */
+.nStars{position:relative}
+.nStars:before{content:'';position:absolute;inset:-16px 0 auto;height:140px;pointer-events:none;z-index:0;opacity:.75;animation:nTwinkle 4.5s ease-in-out infinite alternate;background-image:
  radial-gradient(1.4px 1.4px at 12% 10%,#fff9,transparent),
  radial-gradient(1.2px 1.2px at 30% 4%,#fff7,transparent),
  radial-gradient(1px 1px at 48% 14%,#fffa,transparent),
@@ -26,98 +16,26 @@ button,a{font:inherit;color:inherit;cursor:pointer;text-decoration:none}
  radial-gradient(1px 1px at 60% 26%,#fff7,transparent),
  radial-gradient(1.2px 1.2px at 92% 26%,#fff6,transparent);
  background-repeat:no-repeat}
-.nHero>*{position:relative;z-index:1}
+.nStars>*{position:relative;z-index:1}
 @keyframes nTwinkle{from{opacity:.35}to{opacity:.85}}
-.nLogo{max-width:220px;width:70%;height:auto;margin:0 auto 16px;display:block;filter:drop-shadow(0 0 22px rgba(178,59,255,.45))}
-.nHero p{margin:0 0 16px;color:var(--n-muted);font-size:12px;letter-spacing:.3px}
-.nPill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--n-line);background:var(--n-card);padding:8px 16px;border-radius:30px;font:800 10px Inter;letter-spacing:.5px}
-.nPill.live{border-color:rgba(56,224,122,.4)}
-.nPill.live b{width:7px;height:7px;border-radius:50%;background:#38e07a;box-shadow:0 0 0 0 rgba(56,224,122,.6);animation:liveDot 1.8s infinite}
-.nPill.wait b{width:7px;height:7px;border-radius:50%;background:var(--n-amber)}
-@keyframes liveDot{70%{box-shadow:0 0 0 6px rgba(56,224,122,0)}100%{box-shadow:0 0 0 0 rgba(56,224,122,0)}}
 
-/* bouton retour de la vue catégorie vers l'accueil (blocs) — même logique que
-   .back "Retour à l'accueil" du site principal */
-.nBack{display:flex;align-items:center;gap:8px;margin:14px 14px 0;padding:8px 4px;color:var(--n-muted);font:700 11px Inter;background:none;border:0}
-.nBack .icon{width:1.1em;height:1.1em}
+/* statut ouvert / bientôt ouvert — même échelle typo que .tile>span (10px/800) */
+.statusPill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);padding:8px 16px;border-radius:30px;font:800 10px Inter;letter-spacing:.5px;margin-top:8px}
+.statusPill.live{border-color:rgba(56,224,122,.4)}
+.statusPill.live b{width:7px;height:7px;border-radius:50%;background:#38e07a;box-shadow:0 0 0 0 rgba(56,224,122,.6);animation:liveDot 1.8s infinite}
+.statusPill.wait b{width:7px;height:7px;border-radius:50%;background:#ffcf6b}
 
-/* category chips — sous-navigation affichée uniquement une fois dans une
-   catégorie (comme le bloc .switch du site principal), pour changer de
-   catégorie sans revenir à l'accueil */
-.nCats{display:flex;gap:9px;overflow-x:auto;padding:12px 14px 5px;scrollbar-width:none;-ms-overflow-style:none}
-.nCats::-webkit-scrollbar{display:none}
-.nCats button{flex-shrink:0;border:1px solid rgba(178,59,255,.35);background:rgba(178,59,255,.08);color:var(--n-text);border-radius:30px;padding:9px 18px;font:800 10.5px 'Barlow Condensed';letter-spacing:1px;text-transform:uppercase;white-space:nowrap;transition:box-shadow .2s,border-color .2s,background .2s}
-.nCats button:active{background:rgba(178,59,255,.16)}
-.nCats button.active{background:linear-gradient(120deg,var(--n-accent),var(--n-accent2));border-color:transparent;color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 6px 16px rgba(178,59,255,.45)}
-/* bloc "3 avantages" — même contenu/logique que .perks du site principal,
-   habillage neon Mondi Night (icônes en dégradé violet/rose) */
-.nPerks{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:4px 14px 6px}
-.nPerks div{border:1px solid rgba(178,59,255,.25);background:var(--n-card);border-radius:12px;padding:12px 5px;text-align:center}
-.nPerks b{display:block;font-size:22px;margin-bottom:2px}
-.nPerks b .icon{background:linear-gradient(120deg,var(--n-accent),var(--n-accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.nPerks strong{display:block;font-size:9px;color:var(--n-text);letter-spacing:.2px}
-.nPerks small{display:block;color:var(--n-muted);font-size:7px;margin-top:4px}
+/* alerte fin de service — même échelle typo que .delivery/.crumb (10-11px) */
+.closingSoon{display:flex;align-items:center;gap:7px;margin:0 18px 14px;padding:9px 13px;border:1px solid rgba(255,207,107,.35);background:rgba(255,207,107,.08);border-radius:12px;color:#ffcf6b;font:700 10px Inter}
+.closingSoon .icon{width:1.1em;height:1.1em;flex-shrink:0}
 
-/* category blocks — même esprit que .homeTiles/.tile du site principal
-   (image + titre + CTA), habillage neon propre à Mondi Night */
-.nTiles{padding:14px 14px 4px;display:grid;gap:10px}
-.nTile{position:relative;border:1px solid rgba(178,59,255,.28);border-radius:16px;overflow:hidden;background:var(--n-card);padding:13px 46px 13px 16px;display:flex;align-items:center;gap:6px;text-align:left;box-shadow:0 6px 18px rgba(0,0,0,.3);transition:box-shadow .2s,border-color .2s}
-.nTile.active{border-color:transparent;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 8px 20px rgba(178,59,255,.4)}
-.nTileImg{position:relative;flex-shrink:0;width:118px;height:82px;border-radius:11px;overflow:hidden;background:rgba(255,255,255,.04)}
-.nTileImg img{width:100%;height:100%;object-fit:cover;display:block}
-.nTileImg:after{content:'';position:absolute;inset:0;box-shadow:inset 0 0 18px 2px rgba(0,0,0,.35);pointer-events:none}
-.nTileText{flex:1;min-width:0}
-.nTileText h3{font:800 22px 'Barlow Condensed';margin:0 0 3px;text-transform:uppercase;color:var(--n-text);letter-spacing:.2px}
-.nTileText p{margin:0;color:var(--n-muted);font-size:10px}
-.nTile>span{position:absolute;right:10px;bottom:10px;background:linear-gradient(120deg,var(--n-accent),var(--n-accent2));color:#fff;border-radius:30px;padding:5px 12px 5px 13px;display:flex;align-items:center;gap:4px;font:800 10px Inter}
-.nTile>span .icon{width:.9em;height:.9em}
+/* produit indisponible avant l'ouverture — même empreinte que .plus (37px, même position) */
+.waitBadge{position:absolute;right:10px;bottom:13px;width:37px;height:37px;border-radius:50%;border:1px dashed var(--line);color:var(--muted);display:flex;align-items:center;justify-content:center}
+.waitNote{display:block;color:#ffcf6b;font-size:8px;margin-top:3px;letter-spacing:.1px}
 
-/* cards — même logique que .card/.cardMain du site principal : miniature à
-   gauche, texte à droite, bouton rond en bas à droite */
-.nCards{display:grid;gap:10px;padding:16px 14px 4px}
-.nCard{min-height:135px;position:relative;border:1px solid var(--n-line);background:var(--n-card);border-radius:15px;box-shadow:0 6px 18px rgba(0,0,0,.35);display:grid;grid-template-columns:110px 1fr;gap:11px;padding:7px}
-.nThumb{position:relative;border-radius:11px;overflow:hidden;background:none}
-.nThumb img{width:100%;height:120px;object-fit:contain;padding:8px;display:block;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
-.nCopy{padding:4px 40px 5px 0;min-width:0}
-.nCopy h3{font:800 21px 'Barlow Condensed';text-transform:uppercase;margin:5px 0 4px;letter-spacing:.2px}
-.nCopy p{margin:0 0 7px;color:var(--n-muted);font-size:9.5px;line-height:1.45}
-.nCopy strong{display:block;color:#fff;font-size:14px}
-.nWaitNote{display:block;color:var(--n-amber);font-size:8px;margin-top:3px;letter-spacing:.1px}
-.nPlus{position:absolute;right:10px;bottom:13px;width:36px;height:36px;border:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(120deg,var(--n-accent),var(--n-accent2));color:#fff;box-shadow:0 8px 18px rgba(178,59,255,.35)}
-.nPlus .icon{width:1.15em;height:1.15em}
-.nPlus.added{background:linear-gradient(120deg,#1f9d63,#27b473)}
-.nWaitBadge{position:absolute;right:10px;bottom:13px;width:36px;height:36px;border-radius:50%;border:1px dashed var(--n-line);color:var(--n-muted);display:flex;align-items:center;justify-content:center}
-.nBadge{position:absolute;top:6px;left:6px;z-index:2;display:inline-block;color:#fff;background:linear-gradient(120deg,var(--n-accent),var(--n-accent2));border-radius:8px;padding:3px 6px;font-size:6px;letter-spacing:.5px;line-height:1.4;box-shadow:0 2px 8px rgba(178,59,255,.35)}
+/* pas de barre d'onglets en bas sur Mondi Night (contrairement au site principal)
+   → moins de marge basse, et la barre panier colle en bas de l'écran */
+.phone.nightMode{padding-bottom:20px}
+.phone.nightMode .sticky{bottom:16px}
 
-/* alerte "dernières commandes" en fin de service */
-.nClosingSoon{display:flex;align-items:center;gap:7px;margin:0 14px;padding:9px 13px;border:1px solid rgba(255,207,107,.35);background:rgba(255,207,107,.08);border-radius:12px;color:var(--n-amber);font:700 10px Inter}
-.nClosingSoon .icon{width:1.1em;height:1.1em;flex-shrink:0}
-
-/* sticky cart bar */
-.nSticky{position:fixed;z-index:40;bottom:16px;left:14px;right:14px;max-width:492px;margin:0 auto;background:var(--n-card);border:1px solid var(--n-line);border-radius:16px;padding:10px;display:flex;align-items:center;gap:10px;box-shadow:0 14px 34px rgba(0,0,0,.5)}
-.nStickyBag{flex-shrink:0;width:38px;height:38px;border-radius:10px;background:rgba(178,59,255,.16);color:var(--n-accent);display:flex;align-items:center;justify-content:center}
-.nStickyInfo{flex:1;min-width:0}
-.nStickyInfo b,.nStickyInfo small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.nStickyInfo b{font-size:11px}
-.nStickyInfo small{font-size:10px;color:var(--n-accent2)}
-.nSticky a{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;border:0;border-radius:30px;padding:12px 18px;font:800 11px Inter;color:#fff;background:linear-gradient(120deg,var(--n-accent),var(--n-accent2))}
-.nToast{position:fixed;z-index:100;left:50%;bottom:96px;transform:translateX(-50%);background:var(--n-card);border:1px solid var(--n-line);color:var(--n-text);border-radius:30px;padding:10px 16px;font-size:10px;box-shadow:0 12px 28px rgba(0,0,0,.4)}
-
-@media(min-width:700px){body{padding:20px}.nightApp{border:1px solid var(--n-line);border-radius:28px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
-
-/* fiche contact — même comportement que la sheetWrap du site principal, en thème sombre */
-.nSheetWrap{position:fixed;inset:0;z-index:50}
-.nSheetBackdrop{position:absolute;inset:0;background:rgba(5,2,10,.6);animation:nSheetFade .25s ease}
-.nSheetPanel{position:absolute;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:var(--n-card);border:1px solid var(--n-line);border-radius:22px 22px 0 0;padding:10px 22px 30px;box-shadow:0 -10px 40px rgba(0,0,0,.5);animation:nSheetUp .3s cubic-bezier(.2,.8,.2,1)}
-.nSheetHandle{width:36px;height:4px;background:var(--n-line);border-radius:3px;margin:8px auto 16px}
-.nSheetClose{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.06);border:0;display:flex;align-items:center;justify-content:center;color:var(--n-muted);font-size:15px}
-.nSheetPanel h2{font:800 26px 'Barlow Condensed';letter-spacing:.5px;margin:4px 0 3px;color:var(--n-text)}
-.nSheetSub{color:var(--n-muted);font-size:12px;margin:0 0 18px}
-.nContactLinks{display:flex;flex-direction:column;gap:10px}
-.nContactRow{display:flex;align-items:center;gap:13px;border:1px solid var(--n-line);border-radius:14px;padding:13px 15px;text-decoration:none;color:var(--n-text);font-size:19px}
-.nContactRow:active{background:rgba(255,255,255,.05)}
-.nContactRow b{display:block;font-size:14px}
-.nContactRow small{display:block;color:var(--n-muted);font-size:11px;margin-top:1px}
-@keyframes nSheetFade{from{opacity:0}to{opacity:1}}
-@keyframes nSheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
