@@ -512,20 +512,30 @@ function syncDraftFromDom(cfgId, section) {
 // ligne voisine — comme réorganiser des icônes sur un écran d'accueil.
 //
 // Le glissement ne démarre qu'après un court appui maintenu (HOLD_MS) sans
-// bouger le doigt de plus de MOVE_CANCEL_PX : sinon un simple scroll de la
-// page en passant sur la poignée serait interprété comme un glissement.
-const HOLD_MS = 220;
+// bouger le doigt de plus de MOVE_CANCEL_PX — sinon un simple scroll de la
+// page est laissé passer normalement. Le pointeur est capturé dès le contact
+// (setPointerCapture) pour suivre le mouvement de façon fiable même si le
+// doigt dérive hors de la petite poignée pendant l'attente ; ça ne bloque pas
+// le scroll en soi, seul le preventDefault() une fois le glissement armé le
+// fait, et seulement si le seuil de tolérance n'a pas été dépassé avant.
+const HOLD_MS = 250;
 const MOVE_CANCEL_PX = 8;
 function withHoldToDrag(startDrag) {
   return function (e) {
-    if (e.pointerType === 'mouse' && e.button !== 0) { startDrag(e); return; } // souris : pas besoin d'appui maintenu
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     const handle = e.currentTarget;
+    handle.setPointerCapture(e.pointerId);
     const startX = e.clientX, startY = e.clientY;
-    const timer = setTimeout(() => { cleanup(); startDrag(e); }, HOLD_MS);
+    let settled = false;
+    const timer = setTimeout(() => { settled = true; cleanup(); startDrag(e, handle); }, HOLD_MS);
     function onEarlyMove(ev) {
-      if (Math.abs(ev.clientX - startX) > MOVE_CANCEL_PX || Math.abs(ev.clientY - startY) > MOVE_CANCEL_PX) { clearTimeout(timer); cleanup(); }
+      if (Math.abs(ev.clientX - startX) > MOVE_CANCEL_PX || Math.abs(ev.clientY - startY) > MOVE_CANCEL_PX) {
+        clearTimeout(timer);
+        cleanup();
+        try { handle.releasePointerCapture(e.pointerId); } catch {}
+      }
     }
-    function onEarlyUp() { clearTimeout(timer); cleanup(); }
+    function onEarlyUp() { if (!settled) { clearTimeout(timer); cleanup(); } }
     function cleanup() {
       handle.removeEventListener('pointermove', onEarlyMove);
       handle.removeEventListener('pointerup', onEarlyUp);
@@ -539,8 +549,7 @@ function withHoldToDrag(startDrag) {
 
 function attachRepeaterDrag() {
   document.querySelectorAll('.repHandle').forEach(handle => {
-    handle.addEventListener('pointerdown', withHoldToDrag(e => {
-      e.preventDefault();
+    handle.addEventListener('pointerdown', withHoldToDrag((e, handle) => {
       const row = handle.closest('.aRepRow');
       const list = row.parentElement;
       const { repCfg: cfgId, repSection: section } = row.dataset;
@@ -551,7 +560,6 @@ function attachRepeaterDrag() {
       const startY = e.clientY;
       let snapped = 0;
       row.classList.add('dragging');
-      handle.setPointerCapture(e.pointerId);
 
       function onMove(ev) {
         ev.preventDefault();
@@ -684,8 +692,7 @@ function menuView() {
 // ici chaque lâcher persiste directement le nouvel ordre côté serveur.
 function attachDragReorder(onDrop) {
   document.querySelectorAll('.dragHandle').forEach(handle => {
-    handle.addEventListener('pointerdown', withHoldToDrag(e => {
-      e.preventDefault();
+    handle.addEventListener('pointerdown', withHoldToDrag((e, handle) => {
       const row = handle.closest('[data-drag-id]');
       const list = row.parentElement;
       const sel = ':scope > [data-drag-id]';
@@ -695,7 +702,6 @@ function attachDragReorder(onDrop) {
       const startY = e.clientY;
       let snapped = 0;
       row.classList.add('dragging');
-      handle.setPointerCapture(e.pointerId);
 
       function onMove(ev) {
         ev.preventDefault();
