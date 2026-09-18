@@ -37,6 +37,15 @@ button,a{font:inherit;color:inherit;cursor:pointer;text-decoration:none}
 .nCats button{flex-shrink:0;border:1px solid rgba(178,59,255,.35);background:rgba(178,59,255,.08);color:var(--n-text);border-radius:30px;padding:9px 18px;font:800 10.5px 'Barlow Condensed';letter-spacing:1px;text-transform:uppercase;white-space:nowrap;transition:box-shadow .2s,border-color .2s,background .2s}
 .nCats button:active{background:rgba(178,59,255,.16)}
 .nCats button.active{background:linear-gradient(120deg,var(--n-accent),var(--n-accent2));border-color:transparent;color:#fff;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 6px 16px rgba(178,59,255,.45)}
+/* bloc "3 avantages" — même contenu/logique que .perks du site principal,
+   habillage neon Mondi Night (icônes en dégradé violet/rose) */
+.nPerks{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:4px 14px 6px}
+.nPerks div{border:1px solid rgba(178,59,255,.25);background:var(--n-card);border-radius:12px;padding:12px 5px;text-align:center}
+.nPerks b{display:block;font-size:22px;margin-bottom:2px}
+.nPerks b .icon{background:linear-gradient(120deg,var(--n-accent),var(--n-accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.nPerks strong{display:block;font-size:9px;color:var(--n-text);letter-spacing:.2px}
+.nPerks small{display:block;color:var(--n-muted);font-size:7px;margin-top:4px}
+
 /* category blocks — même esprit que .homeTiles/.tile du site principal
    (image + titre + CTA), habillage neon propre à Mondi Night */
 .nTiles{padding:14px 14px 4px;display:grid;gap:10px}

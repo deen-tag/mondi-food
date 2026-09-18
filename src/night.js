@@ -34,7 +34,7 @@ function render(){
   root.innerHTML=`<div class="nightApp"><section class="nHero"><img class="nLogo" src="/images/night/logo.png" alt="Mondi Night"><p>${S.loadError?'Impossible de charger le menu, réessaie dans un instant.':'Chargement du menu…'}</p></section></div>`;
   return;
  }
- const body = S.route==='category' ? `${backNav()}${cats()}${cards()}` : catBlocks();
+ const body = S.route==='category' ? `${backNav()}${cats()}${cards()}` : `${catBlocks()}${perks()}`;
  root.innerHTML=`<div class="nightApp">${header()}${hero()}${body}${sticky()}<div id="nToast"></div></div>${nContactSheet()}`;
  bind();
 }
@@ -49,6 +49,8 @@ const CONTACT = {
 function header(){return `<header class="nHeader"><button class="nPhone" data-contact>${icon('phone')}</button><a class="nHomeLogo" href="/"><img src="/images/night/logo.png" alt="Mondi Night"></a><a class="nCart" href="/index.html?view=cart">${icon('cart')}<b>${count()}</b></a></header>`}
 
 function hero(){const open=isNightOpen();return `<section class="nHero"><p>Vendredi &amp; samedi · 23h → 05h</p><span class="nPill ${open?'live':'wait'}"><b></b>${open?'OUVERT MAINTENANT':nextOpeningLabel()}</span></section>`}
+
+function perks(){return `<section class="nPerks"><div><b>${icon('fire','',true)}</b><strong>Cuisson parfaite</strong><small>Doré & croustillant</small></div><div><b>${icon('check')}</b><strong>Ingrédients frais</strong><small>Sélectionnés avec soin</small></div><div><b>${icon('delivery')}</b><strong>Livraison rapide</strong><small>30–45 min</small></div></section>`}
 
 // Image représentative d'une catégorie pour les blocs : celle choisie dans
 // l'admin en priorité, sinon la photo du premier produit qu'elle contient
