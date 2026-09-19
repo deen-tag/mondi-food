@@ -79,9 +79,43 @@ function backNav(){return `<div class="menuTop"><button class="back" data-go="ho
 function cats(){const list=nightCategories();return `<div class="switch">${list.map(c=>`<button class="${S.cat===c.slug?'active':''}" data-cat="${c.slug}">${c.label}</button>`).join('')}</div>`}
 
 // blocs catégories — mêmes classes .homeTiles/.tile/.tileImg/.tileText que le site principal
+// Bannière visuelle en haut de l'accueil Night (même rôle que la bannière "100% livraison" du jour)
+function homeBanner(){return `<section class="nightHeroWrap"><img class="nightHeroImg" src="/images/night/banner-nuit.jpg" width="1000" height="375" alt="Mondi Night — Le goût de la nuit : burgers, pâtes et plus, vendredi et samedi soir"></section>`}
+
+// tuile catégorie — mêmes classes .tile/.tileImg/.tileText que le site principal.
+// La première catégorie reste en grande carte (elle porte les plats), les suivantes
+// passent en petites cartes côte à côte (grille .catGrid, définie dans style.css).
+function catTile(c){return `<button class="tile" data-cat="${c.slug}"><div class="tileText"><i>${catCount(c)} AU MENU</i><h3>${c.label}</h3><p>Découvre notre sélection ${c.label.toLowerCase()}</p></div><div class="tileImg"><img src="${catImg(c)}" onerror="this.style.display='none'"></div><span>Voir ${icon('arrow-right')}</span></button>`}
 function catBlocks(){
  const list=nightCategories();
- return `<section class="homeTiles">${list.map(c=>`<button class="tile" data-cat="${c.slug}"><div class="tileText"><i>${catCount(c)} AU MENU</i><h3>${c.label}</h3><p>Découvre notre sélection ${c.label.toLowerCase()}</p></div><div class="tileImg"><img src="${catImg(c)}" onerror="this.style.display='none'"></div><span>Voir ${icon('arrow-right')}</span></button>`).join('')}</section>`;
+ if(!list.length)return '';
+ const [first,...rest]=list;
+ return `<section class="block tight catBlock"><div class="heading"><span><i>PARCOURIR</i><h2>Nos catégories</h2></span></div><div class="homeTiles">${catTile(first)}</div>${rest.length?`<div class="homeTiles catGrid">${rest.map(catTile).join('')}</div>`:''}</section>`;
+}
+
+// "Nos plats night" : produits marqués "populaire nuit" dans l'admin ; à défaut, les
+// premiers produits Night, pour ne jamais afficher une section vide.
+function featuredNight(){
+ const all=nightProducts();
+ const pop=all.filter(p=>p.popularNight);
+ return (pop.length?pop:all).slice(0,8);
+}
+// mini carte — mêmes classes .mini/.miniMain/.miniAdd que le site principal ; hors
+// horaires, le bouton "Ajouter" est remplacé par "Dès 23h" (comme le "+" des cartes).
+function mini(p){
+ const open=isNightOpen();
+ const justAdded=S.justAddedKey===p.id;
+ const badge=productBadge(p);
+ const action=open
+  ?`<button class="miniAdd${justAdded?' added':''}" data-add="${p.id}">${justAdded?icon('check')+' Ajouté':icon('plus')+' Ajouter'}</button>`
+  :`<span class="miniAdd wait">${icon('moon')} Dès 23h</span>`;
+ return `<article class="mini">${badge?`<em class="badge">${icon('star','',true)} ${badge}</em>`:''}<div class="miniMain"><img src="${p.img}" alt="${p.name}" loading="lazy" onerror="this.style.display='none'"><b>${p.name}</b><strong>${formatPrice(p.price)}</strong></div>${action}</article>`;
+}
+function platsNight(){
+ const list=featuredNight();
+ if(!list.length)return '';
+ const first=nightCategories()[0];
+ return `<section class="block tight"><div class="heading"><span><i>À LA CARTE</i><h2>Nos plats night</h2></span>${first?`<button data-cat="${first.slug}">Tout voir ${icon('arrow-right')}</button>`:''}</div><div class="railWrap"><div class="rail">${list.map(mini).join('')}</div></div></section>`;
 }
 
 function cards(){const list=nightProducts().filter(p=>productCategorySlugs(p).includes(S.cat));return `<section class="menuSection"><div class="cards">${list.map(card).join('')}</div></section>`}
@@ -128,7 +162,7 @@ function render(){
   root.innerHTML=`<div class="phone nightMode"><section class="simple"><i>MONDI NIGHT</i><h1>${S.loadError?'CONNEXION IMPOSSIBLE':'CHARGEMENT…'}</h1><p>${S.loadError?'Impossible de charger le menu, réessaie dans un instant.':'Un instant, on prépare le menu.'}</p></section></div>`;
   return;
  }
- const body = S.route==='category' ? `${backNav()}${cats()}${cards()}` : `${catBlocks()}${perks()}`;
+ const body = S.route==='category' ? `${backNav()}${cats()}${cards()}` : `${homeBanner()}${catBlocks()}${perks()}${platsNight()}`;
  root.innerHTML=`<div class="phone nightMode${S.cart.length?' hasSticky':''}">${header()}${hero()}${closingSoon()}<main id="screen">${body}</main>${navBar()}${sticky()}<div id="toast"></div></div>${contactSheet()}`;
  bind();
  initReveal();
@@ -155,10 +189,11 @@ function add(id){
 
 // bouton "+" de la carte : passe en "✓" vert puis revient (classe .added)
 function setAddButton(id,on){
- const b=[...document.querySelectorAll('.plus[data-add]')].find(el=>el.dataset.add===id);
- if(!b)return;
- b.classList.toggle('added',on);
- b.innerHTML=on?icon('check'):icon('plus');
+ document.querySelectorAll('[data-add]').forEach(b=>{
+  if(b.dataset.add!==id)return;
+  b.classList.toggle('added',on);
+  b.innerHTML=b.classList.contains('miniAdd')?(on?icon('check')+' Ajouté':icon('plus')+' Ajouter'):(on?icon('check'):icon('plus'));
+ });
 }
 
 // pastilles du panier (header + onglets), barre panier collante, espace du bas
@@ -182,7 +217,7 @@ function toast(t){
 
 // même reveal au scroll que le site principal (.card apparaît en fondu)
 function initReveal(){
- const els=document.querySelectorAll('.card:not(.in)');
+ const els=document.querySelectorAll('.card:not(.in), .mini:not(.in)');
  if(!('IntersectionObserver' in window)){els.forEach(el=>el.classList.add('in'));return}
  const io=new IntersectionObserver(entries=>{
   entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('in');io.unobserve(entry.target)}})

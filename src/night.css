@@ -40,3 +40,18 @@
    pensé pour un fond clair — sur fond sombre il ressort comme un halo flou
    blanc autour des images. On le retire côté nuit. */
 .phone.nightMode .tileImg:after{box-shadow:none}
+
+/* Accueil Night : bannière visuelle au-dessus des catégories */
+.nightHeroWrap{padding:2px 18px 10px}
+.nightHeroImg{display:block;width:100%;height:auto;border-radius:16px;box-shadow:0 8px 28px rgba(140,37,211,.28)}
+
+/* Catégories en "1 grande + petites en grille" : les tuiles sont dans un .block qui
+   porte déjà la marge, et la petite grille se place sous la grande carte. Si le
+   nombre de petites cartes est impair, la dernière prend toute la largeur. */
+.phone.nightMode .block.tight .homeTiles{padding:0}
+.phone.nightMode .homeTiles+.homeTiles{margin-top:9px}
+.phone.nightMode .catGrid .tile:last-child:nth-child(odd){grid-column:1/-1}
+
+/* mini carte hors horaires : "Dès 23h" à la place du bouton Ajouter */
+.miniAdd.wait{background:transparent;border:1px dashed var(--line);color:var(--muted);cursor:default}
+
