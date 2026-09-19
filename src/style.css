@@ -148,3 +148,48 @@ button:active{transform:scale(.97)}
    italique hérité du body (noir, invisible en thème sombre) et titre en Inter. */
 .aboutPage>i{font-size:11px;letter-spacing:2.8px;color:var(--p);font-style:normal;font-weight:800}
 .aboutPage h1{font:900 58px/.85 'Barlow Condensed';letter-spacing:1px;text-transform:uppercase}
+
+/* Accueil (jour) : catégories en grille 2 colonnes — image à gauche, titre et
+   "Découvrir" à droite. Limité à .catGrid pour ne pas toucher aux tuiles pleine
+   largeur de Mondi Night, qui partagent les classes .tile/.tileImg/.tileText. */
+.homeTiles.catGrid{padding:0;grid-template-columns:1fr 1fr;gap:10px}
+.catGrid .tile{display:grid;grid-template-columns:50px 1fr;grid-template-areas:"img text" "img cta";align-items:center;column-gap:7px;row-gap:2px;padding:8px 8px 8px 7px;min-height:74px}
+.catGrid .tileImg{grid-area:img;width:50px;height:50px}
+.catGrid .tileText{grid-area:text;align-self:end}
+.catGrid .tileText i,.catGrid .tileText p{display:none}
+.catGrid .tileText h3{font-size:17px;line-height:1;margin:0;letter-spacing:.3px}
+.catGrid .tile>span{grid-area:cta;position:static;justify-self:start;align-self:start;background:none;color:var(--p);padding:0;font-size:11px}
+
+/* Accueil (jour) : les 3 pastilles forment une seule barre séparée par de fines
+   lignes. Limité à .perksBar : Mondi Night garde ses 3 cartes séparées. */
+.perks.perksBar{gap:0;margin:8px 18px 0;padding:14px 4px;background:linear-gradient(110deg,#faf3ff,#f4ecfb);border:1px solid rgba(140,37,211,.14);border-radius:14px}
+.perks.perksBar div{border:0;background:none;border-radius:0;padding:2px 5px}
+.perks.perksBar div+div{border-left:1px solid rgba(140,37,211,.2)}
+
+/* Accueil (jour) : rythme plus serré, comme sur la maquette — titres de section
+   plus petits et moins d'air entre les blocs (avant : ~40px de vide entre chaque). */
+.block.tight{padding:14px 18px 4px}
+.block.tight .heading{margin-bottom:9px}
+.block.tight .heading h2{font-size:25px;margin:1px 0}
+.nightBannerWrap{padding:12px 18px 6px}
+.perks.perksBar{margin-top:12px}
+
+/* Accueil (jour) — rail "Nos incontournables" : cartes plus étroites pour voir
+   ~3 produits d'un coup, avec l'amorce du 4e qui invite à faire défiler. */
+.rail{grid-auto-columns:98px;gap:8px}
+.rail .mini{padding:5px}
+.rail .miniMain img{height:70px}
+.rail .miniMain b{font-size:15px;margin:5px 2px 0}
+.rail .miniMain strong{margin:1px 0 0 2px}
+.rail .miniAdd{font-size:9.5px;padding:6px 0;gap:3px}
+.rail .mini .badge{top:9px;left:9px;font-size:5.5px;letter-spacing:0;padding:3px 5px;white-space:nowrap}
+
+/* Grille catégories : le titre ne peut plus déborder de la carte, quelle que soit
+   la police ou la longueur du nom (réglable depuis l'admin) — il est tronqué en
+   dernier recours avec "…" plutôt que de sortir du cadre. */
+.catGrid .tile{grid-template-columns:46px minmax(0,1fr);padding:8px 7px 8px 6px;column-gap:6px}
+.catGrid .tileImg{width:46px;height:46px}
+.catGrid .tileText{min-width:0}
+.catGrid .tileText h3{font-size:15px;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.catGrid .tile>span{white-space:nowrap}
+@media(max-width:340px){.catGrid .tileText h3{font-size:13px}.catGrid .tile>span{font-size:10px}}
