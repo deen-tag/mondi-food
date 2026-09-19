@@ -2,7 +2,8 @@
    alerte fin de service, décor étoilé, produit indisponible avant ouverture).
    Toutes les dimensions communes (header, logo, tuiles, cartes, perks, panier
    collant, fiche contact...) viennent de style.css via .phone.nightMode, pour
-   rester identiques au site principal — plus aucune valeur dupliquée ici. */
+   rester identiques au site principal — plus aucune valeur dupliquée ici.
+   Réglages de la barre panier collante : voir --sticky-* dans style.css. */
 
 /* décor étoilé discret derrière le hero */
 .nStars{position:relative}
@@ -33,40 +34,9 @@
 .waitBadge{position:absolute;right:10px;bottom:13px;width:37px;height:37px;border-radius:50%;border:1px dashed var(--line);color:var(--muted);display:flex;align-items:center;justify-content:center}
 .waitNote{display:block;color:#ffcf6b;font-size:8px;margin-top:3px;letter-spacing:.1px}
 
-/* La barre d'onglets (Accueil/Infos/Panier/Suivi) est maintenant affichée
-   aussi sur Mondi Night (voir night.js) : on retrouve donc le même espacement
-   bas et la même position de la barre panier collante que le site principal
-   (valeurs par défaut de style.css), plus besoin de override ici. */
-
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
-
-/* Header, barre panier, fiche contact : correctifs déplacés dans style.css
-   (voir commentaire là-bas) pour s'appliquer aussi au panier du site
-   principal quand le client vient de Mondi Night — cette page ne charge
-   jamais ce fichier-ci. */
-
-/* Le logo du header est un <a> (lien vers le site principal) et non un
-   <button> comme sur le site de jour — les boutons centrent leur contenu par
-   défaut dans le navigateur, pas les liens, d'où le décalage. On le fixe
-   explicitement au lieu de compter sur ce comportement implicite. */
-.logo{text-align:center}
 
 /* Le liseré brillant blanc (box-shadow inset) autour des photos de tuiles est
    pensé pour un fond clair — sur fond sombre il ressort comme un halo flou
    blanc autour des images. On le retire côté nuit. */
 .phone.nightMode .tileImg:after{box-shadow:none}
-
-/* Quand la barre panier collante est affichée (panier non vide), elle se pose
-   au-dessus de la barre d'onglets (87px du bas) et mesure ~58px : le padding
-   de base de .phone (88px, prévu pour la seule barre d'onglets) ne suffit
-   plus et elle recouvre le bas de la page (bloc perks). On ajoute donc sa
-   hauteur + une marge, sinon le bas reste inaccessible même en bout de scroll. */
-.phone.nightMode.hasSticky{padding-bottom:calc(88px + 58px + 80px + env(safe-area-inset-bottom))}
-
-/* Le panier du header est un <a> (lien vers index.html) et non un <button>
-   comme sur le site de jour. Un bouton centre son contenu, pas un lien : l'icône
-   se collait à gauche de la case de 70px alors que la pastille du nombre
-   d'articles reste ancrée à droite (right:2px), d'où un gros écart entre les
-   deux. On centre l'icône comme sur le jour pour que la pastille chevauche le
-   coin du caddie. */
-.cartIcon{text-align:center;text-decoration:none}
