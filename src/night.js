@@ -49,7 +49,7 @@ function hero(){
   const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000);
   label=`Ouvre dans ${h>0?`${h}h${String(m).padStart(2,'0')}`:`${m} min`}`;
  }
- return `<section class="homeHero nStars"><p class="kicker">VENDREDI &amp; SAMEDI · 23H → 05H</p><span class="statusPill ${open?'live':'wait'}"><b></b>${label}</span></section>`;
+ return `<section class="homeHero nStars"><span class="statusPill ${open?'live':'wait'}"><b></b>${label}</span></section>`;
 }
 
 // Alerte affichée en fin de service pour éviter les commandes passées juste

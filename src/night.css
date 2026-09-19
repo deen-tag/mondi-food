@@ -5,6 +5,11 @@
    rester identiques au site principal — plus aucune valeur dupliquée ici.
    Réglages de la barre panier collante : voir --sticky-* dans style.css. */
 
+/* logo agrandi de 30% (110px -> 143px) uniquement côté nuit, sans toucher au jour */
+.nightMode .logo,.nightMode .logo img{height:143px}
+.nightMode .logo img{max-width:299px}
+.nightMode header{height:150px}
+
 /* décor étoilé discret derrière le hero */
 .nStars{position:relative}
 .nStars:before{content:'';position:absolute;inset:-16px 0 auto;height:140px;pointer-events:none;z-index:0;opacity:.75;animation:nTwinkle 4.5s ease-in-out infinite alternate;background-image:
