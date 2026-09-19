@@ -142,9 +142,36 @@ function add(id){
  x?x.qty++:S.cart.push({id:p.id,key:p.id,name:p.name,img:p.img,price:p.price,opts:[],qty:1});
  save();
  toast('Ajouté au panier');
+ // Mise à jour ciblée (pas de render() complet) : redessiner toute la page à
+ // chaque "+" rejouait les animations d'entrée (page, cartes, barre panier)
+ // → effet de rebond bas/haut. On ne touche que ce qui change vraiment.
+ const prev=S.justAddedKey;
  S.justAddedKey=id;
- render();
- setTimeout(()=>{if(S.justAddedKey===id){S.justAddedKey=null;render()}},1000);
+ if(prev&&prev!==id)setAddButton(prev,false);
+ setAddButton(id,true);
+ updateCartUI();
+ setTimeout(()=>{if(S.justAddedKey===id){S.justAddedKey=null;setAddButton(id,false)}},1000);
+}
+
+// bouton "+" de la carte : passe en "✓" vert puis revient (classe .added)
+function setAddButton(id,on){
+ const b=[...document.querySelectorAll('.plus[data-add]')].find(el=>el.dataset.add===id);
+ if(!b)return;
+ b.classList.toggle('added',on);
+ b.innerHTML=on?icon('check'):icon('plus');
+}
+
+// pastilles du panier (header + onglets), barre panier collante, espace du bas
+function updateCartUI(){
+ const c=count();
+ document.querySelectorAll('.cartIcon b, nav b').forEach(b=>{
+  b.textContent=c;
+  b.animate([{transform:'scale(1)'},{transform:'scale(1.5)'},{transform:'scale(1)'}],{duration:320,easing:'cubic-bezier(.2,.8,.2,1)'});
+ });
+ document.querySelector('.phone')?.classList.toggle('hasSticky',S.cart.length>0);
+ const info=document.querySelector('.sticky .stickyInfo');
+ if(info){info.innerHTML=`<b>${c} articles</b><small>${formatPrice(total())}</small>`}
+ else if(S.cart.length){document.querySelector('#toast')?.insertAdjacentHTML('beforebegin',sticky())}
 }
 
 function toast(t){
@@ -184,4 +211,23 @@ async function boot(){
 boot();
 // La fenêtre d'ouverture peut basculer pendant que la page reste ouverte (ex. 5h
 // du matin) : on revérifie régulièrement pour basculer vers l'écran "fermé".
-setInterval(render,60000);
+let lastOpen=isNightOpen();
+setInterval(()=>{
+ const open=isNightOpen();
+ if(!S.catalog||open!==lastOpen){lastOpen=open;render();return}
+ refreshStatus();
+},60000);
+
+// Même contenu qu'avant (compte à rebours d'ouverture, alerte fin de service)
+// mais en ne touchant au DOM que si le texte a changé : plus de redessin complet
+// (et donc plus de saut d'animation) toutes les minutes.
+function refreshStatus(){
+ const tmp=document.createElement('div');
+ tmp.innerHTML=hero();
+ const pill=document.querySelector('.statusPill'),nextPill=tmp.querySelector('.statusPill');
+ if(pill&&nextPill&&pill.textContent!==nextPill.textContent)pill.replaceWith(nextPill);
+ const html=closingSoon(),cur=document.querySelector('.closingSoon');
+ if(cur&&!html)cur.remove();
+ else if(cur&&html){const t=document.createElement('div');t.innerHTML=html;if(cur.textContent!==t.firstChild.textContent)cur.replaceWith(t.firstChild)}
+ else if(!cur&&html)document.querySelector('#screen')?.insertAdjacentHTML('beforebegin',html);
+}
