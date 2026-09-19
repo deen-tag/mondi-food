@@ -136,10 +136,19 @@ function nav(){return `<nav>
 
 function render(){
  const s=document.querySelector('#screen');
+ // Barre panier collante visible (menu/catégorie + panier non vide) : réserve
+ // l'espace en bas de page — réglages partagés dans style.css (.hasSticky).
+ document.querySelector('.phone')?.classList.toggle('hasSticky',S.cart.length>0&&['menu','category'].includes(S.route));
  // Le thème sombre néon ne s'applique qu'au parcours panier lui-même : si le
  // client repart vers l'accueil ou le menu depuis le panier, il retrouve le
  // site principal normal (clair).
- document.querySelector('.phone')?.classList.toggle('nightMode',S.fromNight&&['cart','checkout','confirmation','track','about'].includes(S.route));
+ const isNightTheme=S.fromNight&&['cart','checkout','confirmation','track','about'].includes(S.route);
+ document.querySelector('.phone')?.classList.toggle('nightMode',isNightTheme);
+ // Logo du header : le logo du jour a du texte noir (illisible sur fond sombre),
+ // on affiche donc le logo Mondi Night dès que le thème sombre est actif — même
+ // image que sur night.html, déjà en cache puisque le client vient de là.
+ const logoImg=document.querySelector('.logo img'),logoSrc=isNightTheme?'/images/night/logo.png':'/logo.png';
+ if(logoImg&&logoImg.getAttribute('src')!==logoSrc)logoImg.setAttribute('src',logoSrc);
  if(S.route==='home')s.innerHTML=home();
  if(S.route==='menu'||S.route==='category')s.innerHTML=menu();
  if(S.route==='product')s.innerHTML=product();

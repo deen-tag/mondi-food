@@ -142,3 +142,9 @@ button:active{transform:scale(.97)}
 /* Le bouton "Voir le panier" est un <button> côté jour mais un <a> côté nuit :
    sans ça le lien reste souligné. Même rendu dans les deux thèmes. */
 .cta{text-decoration:none}
+
+/* Page "Infos" : le surtitre et le titre n'étaient pas dans les groupes de
+   styles partagés (.kicker / h1 Barlow) des autres pages. Résultat : surtitre en
+   italique hérité du body (noir, invisible en thème sombre) et titre en Inter. */
+.aboutPage>i{font-size:11px;letter-spacing:2.8px;color:var(--p);font-style:normal;font-weight:800}
+.aboutPage h1{font:900 58px/.85 'Barlow Condensed';letter-spacing:1px;text-transform:uppercase}
