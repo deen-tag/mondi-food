@@ -80,7 +80,7 @@ function cats(){const list=nightCategories();return `<div class="switch">${list.
 
 // blocs catégories — mêmes classes .homeTiles/.tile/.tileImg/.tileText que le site principal
 // Bannière visuelle en haut de l'accueil Night (même rôle que la bannière "100% livraison" du jour)
-function homeBanner(){return `<section class="nightHeroWrap"><img class="nightHeroImg" src="/images/night/banner-nuit.jpg" width="1000" height="375" alt="Mondi Night — Le goût de la nuit : burgers, pâtes et plus, vendredi et samedi soir"></section>`}
+function homeBanner(){return `<section class="nightHeroWrap"><img class="nightHeroImg" src="/images/night/banner-nuit.jpg" width="1000" height="375" alt="Mondi Night — Le goût de la nuit : tous nos produits à 8€, vendredi et samedi soir"></section>`}
 
 // tuile catégorie — mêmes classes .tile/.tileImg/.tileText que le site principal.
 // La première catégorie reste en grande carte (elle porte les plats), les suivantes
