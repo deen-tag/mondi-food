@@ -120,10 +120,10 @@ function contactSheet(){
  if(!c)return;
  if(!S.contactOpen){c.className='';c.innerHTML='';return}
  c.className='sheetWrap';
- c.innerHTML=`<div class="sheetBackdrop" data-contact-close></div><div class="sheetPanel"><div class="sheetHandle"></div><button class="sheetClose" data-contact-close>${icon('close')}</button><h2>NOUS CONTACTER</h2><p class="sheetSub">Une question ? Une envie ? Commandez facilement par téléphone ou via WhatsApp !</p><div class="callBadge">${icon('phone')}<span>Un appel et c'est parti !</span></div><div class="contactLinks">
-<a class="contactRow" href="tel:${CONTACT.phoneHref}"><span class="contactIcon phoneIcon">${icon('phone')}</span><div class="contactInfo"><b>Téléphone</b><small>${CONTACT.phone}</small></div><span class="contactCta">Appeler</span></a>
-<a class="contactRow waRow" href="https://wa.me/${CONTACT.whatsapp}" target="_blank" rel="noopener"><span class="contactIcon waIcon">${icon('whatsapp')}</span><div class="contactInfo"><b>WhatsApp</b><small>Réponse rapide</small></div><span class="contactCta wa">Appeler</span></a>
-</div></div>`;
+ c.innerHTML=`<div class="sheetBackdrop" data-contact-close></div><div class="sheetPanel"><div class="sheetHandle"></div><button class="sheetClose" data-contact-close>${icon('close')}</button><h2>NOUS <span class="accent">CONTACTER</span></h2><p class="sheetSub">Une question ? Une envie ?<br>Commandez facilement <b>par téléphone</b> ou via WhatsApp !</p><div class="callBadge">${icon('phone')}<span>Un appel et c'est parti !</span></div><div class="contactLinks">
+<a class="contactRow" href="tel:${CONTACT.phoneHref}"><span class="contactIcon phoneIcon">${icon('phone')}</span><div class="contactInfo"><b>Téléphone</b><small>${CONTACT.phone}</small></div><span class="contactCta">${icon('phone')}Appeler</span></a>
+<a class="contactRow waRow" href="https://wa.me/${CONTACT.whatsapp}" target="_blank" rel="noopener"><span class="contactIcon waIcon">${icon('whatsapp')}</span><div class="contactInfo"><b>WhatsApp</b><small>${CONTACT.phone}</small></div><span class="contactCta wa">${icon('phone')}Appeler</span></a>
+</div><div class="contactFooter"><div>${icon('clock')}<span>Toujours à<br>vos côtés</span></div><div>${icon('fire')}<span>Commande<br>rapide</span></div></div></div>`;
  c.querySelectorAll('[data-contact-close]').forEach(b=>b.onclick=()=>{S.contactOpen=false;contactSheet()});
 }
 

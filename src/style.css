@@ -11,6 +11,12 @@
 .phone.nightMode .sheetPanel{box-shadow:0 -10px 40px rgba(0,0,0,.5)}
 .phone.nightMode .sheetClose{background:rgba(255,255,255,.08)}
 .phone.nightMode .contactRow:active{background:rgba(255,255,255,.05)}
+.phone.nightMode .sheetPanel h2 .accent{text-shadow:0 0 16px var(--p2)}
+.phone.nightMode .callBadge{box-shadow:0 4px 26px rgba(178,59,255,.5)}
+.phone.nightMode .contactCta{border-color:var(--p2);color:var(--p2)}
+.phone.nightMode .phoneIcon{box-shadow:0 0 16px rgba(178,59,255,.6)}
+.phone.nightMode .waIcon{box-shadow:0 0 16px rgba(37,211,102,.55)}
+.phone.nightMode .contactFooter{border-top-color:rgba(255,255,255,.09)}
 /* Header + barre panier collante : couleurs écrites en dur pour le thème
    clair ailleurs dans ce fichier, donc à raccrocher explicitement ici pour
    TOUTE page en nightMode (Mondi Night, mais aussi panier/checkout/confirmation
@@ -30,13 +36,28 @@
 .sheetPanel{position:absolute;left:0;right:0;bottom:0;max-width:520px;margin:0 auto;background:var(--card);border-radius:22px 22px 0 0;padding:10px 22px 30px;box-shadow:0 -10px 40px rgba(30,15,45,.25);animation:sheetUp .3s cubic-bezier(.2,.8,.2,1)}
 .sheetHandle{width:36px;height:4px;background:var(--line);border-radius:3px;margin:8px auto 16px}
 .sheetClose{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:#f3eef8;border:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:15px}
-.sheetPanel h2{font:800 26px 'Barlow Condensed';letter-spacing:.5px;margin:4px 0 3px;color:var(--text)}
-.sheetSub{color:var(--muted);font-size:12px;margin:0 0 18px}
+.sheetPanel h2{font:800 30px 'Barlow Condensed';letter-spacing:.5px;margin:4px 0 3px;color:var(--text)}
+.sheetPanel h2 .accent{color:var(--p2)}
+.sheetSub{color:var(--muted);font-size:12.5px;margin:0 0 14px;line-height:1.5}
+.sheetSub b{color:var(--p)}
+.callBadge{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(120deg,var(--p),var(--p2));color:#fff;padding:8px 15px 8px 12px;border-radius:30px;font:700 11.5px Inter;margin:0 0 18px;box-shadow:0 4px 18px rgba(140,37,211,.35)}
+.callBadge .icon{width:15px;height:15px}
 .contactLinks{display:flex;flex-direction:column;gap:10px}
-.contactRow{display:flex;align-items:center;gap:13px;border:1px solid var(--line);border-radius:14px;padding:13px 15px;text-decoration:none;color:var(--text);font-size:19px}
+.contactRow{display:flex;align-items:center;gap:13px;border:1px solid var(--line);border-radius:16px;padding:13px 14px;text-decoration:none;color:var(--text)}
 .contactRow:active{background:#faf8fc}
-.contactRow b{display:block;font-size:14px}
+.contactRow b{display:block;font:800 15px 'Barlow Condensed';letter-spacing:.2px}
 .contactRow small{display:block;color:var(--muted);font-size:11px;margin-top:1px}
+.contactIcon{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:19px}
+.contactIcon.phoneIcon{background:linear-gradient(135deg,var(--p),var(--p2));color:#fff}
+.contactIcon.waIcon{background:#25D366;color:#fff}
+.waRow{border-color:rgba(37,211,102,.35)}
+.contactInfo{flex:1;min-width:0}
+.contactCta{display:flex;align-items:center;gap:5px;border:1.5px solid var(--p);color:var(--p);border-radius:30px;padding:8px 13px;font:700 11.5px Inter;white-space:nowrap}
+.contactCta .icon{width:12px;height:12px}
+.contactCta.wa{border-color:#25D366;color:#25D366}
+.contactFooter{display:flex;justify-content:space-around;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.contactFooter>div{display:flex;flex-direction:column;align-items:center;gap:6px;font:600 10px Inter;color:var(--muted);text-align:center;line-height:1.3}
+.contactFooter .icon{width:18px;height:18px;color:var(--p)}
 @keyframes sheetFade{from{opacity:0}to{opacity:1}}
 @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);height:80px;z-index:50;background:rgba(255,255,255,.98);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom)}nav button,nav a{border:0;background:none;color:#938c99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-decoration:none}nav i{font-style:normal;font-size:24px;position:relative}nav small{font-size:10px}nav .on{color:var(--p)}nav .on i{filter:drop-shadow(0 0 6px rgba(140,37,211,.3))}
