@@ -37,7 +37,7 @@ function CUSTOM_CONFIG(){
 // nouvelle catégorie créée par le gérant reçoit un habillage générique automatique.
 const TYPE_META_OVERRIDES = {
  pizza:{heroImg:'/images/pizza-card.png',desc:'Pizzas artisanales cuites à la perfection avec des ingrédients frais et une pâte maison moelleuse et croustillante.',cook:'au four',cookSub:'haute température'},
- pannuezo:{heroImg:'/images/pannuezo-card.png',desc:'Découvrez nos Pannuezo ultra fondants, généreusement garnis et préparés avec des ingrédients de qualité.',cook:'parfaite',cookSub:'Doré & croustillant'},
+ pannuezo:{heroImg:'/images/pannuezo-card.png',desc:'Découvrez nos Panozzo ultra fondants, généreusement garnis et préparés avec des ingrédients de qualité.',cook:'parfaite',cookSub:'Doré & croustillant'},
  boisson:{heroImg:'/images/boissons-category.png',desc:'Sodas, jus et eaux bien fraîches, prêts à accompagner ta commande.',cook:'fraîche',cookSub:'Servie glacée'},
  dessert:{heroImg:'/images/desserts-category.png',desc:'Tiramisus, cookies moelleux, pizzas sucrées et fondants gourmands pour finir en beauté.',cook:'gourmande',cookSub:'Fait maison'},
 };
@@ -236,7 +236,7 @@ function builder(){
 </section>`}
 
 function cart(){
- if(!S.cart.length)return `<section class="empty"><div>${icon('cart')}</div><i>TON PANIER</i><h1>IL EST VIDE.</h1><p>Ajoute une pizza ou un pannuezo et on s’occupe du reste.</p><button class="cta" data-go="menu">DÉCOUVRIR LE MENU ${icon('arrow-right')}</button></section>`;
+ if(!S.cart.length)return `<section class="empty"><div>${icon('cart')}</div><i>TON PANIER</i><h1>IL EST VIDE.</h1><p>Ajoute une pizza ou un panozzo et on s’occupe du reste.</p><button class="cta" data-go="menu">DÉCOUVRIR LE MENU ${icon('arrow-right')}</button></section>`;
  const delivery=total()>=25?0:2.5;return `<section class="cartPage"><button class="back" data-go="menu">${icon('arrow-left')} <span>Retour au menu</span></button><i>COMMANDE</i><h1>TON PANIER</h1><p>${count()} articles · livraison uniquement</p><div class="cartItems">${S.cart.map(x=>`<article><img src="${x.img}"><div><h3>${x.name}</h3>${x.opts&&x.opts.length?`<small class="opts">${x.opts.join(' · ')}</small>`:''}<small>${formatPrice(x.price)}</small><div class="qty"><button data-qty="${x.key}" data-d="-1">${icon('minus')}</button><b>${x.qty}</b><button data-qty="${x.key}" data-d="1">${icon('plus')}</button></div></div><strong>${formatPrice(x.price*x.qty)}</strong></article>`).join('')}</div><div class="summary"><p>Sous-total <b>${formatPrice(total())}</b></p><p>Livraison <b>${delivery?'2,50 €':'OFFERTE'}</b></p><hr><h3>Total <b>${formatPrice(total()+delivery)}</b></h3></div><button class="cta wide" data-go="checkout">PASSER LA COMMANDE ${icon('arrow-right')}</button><small class="secure">${icon('lock')} ${onlinePaymentEnabled()?'Paiement sécurisé · carte ou paiement à la livraison':'Paiement à la livraison uniquement'}</small></section>`}
 
 function checkout(){
@@ -262,7 +262,7 @@ function track(){
  return `<section class="simple"><i>SUIVI</i><h1>#${d.orderId}</h1><p>${d.driverName?`Livreur : ${d.driverName}. `:''}Mise à jour en direct par notre équipe.</p><div class=timeline>${steps.map((x,i)=>`<div class="${i<=idx?'done':''}"><b>${x[1]}</b><span><strong>${x[2]}</strong><small>${x[3]}</small></span></div>`).join('')}</div><button class=cta data-go=menu>COMMANDER AUTRE CHOSE ${icon('arrow-right')}</button></section>`}
 function about(){return `<section class="aboutPage">
 <i>NOTRE HISTOIRE</i><h1>L'APPEL DES SAVEURS</h1>
-<p class="lead">Imaginez une pâte fine et croustillante, tout juste sortie du four, qui craque sous la première bouchée. La chaleur du fromage fondu qui s'étire, le parfum des herbes qui remonte avant même que vous ayez goûté. C'est ça, l'expérience Pannuezo & Pizza signée Mondi Food.</p>
+<p class="lead">Imaginez une pâte fine et croustillante, tout juste sortie du four, qui craque sous la première bouchée. La chaleur du fromage fondu qui s'étire, le parfum des herbes qui remonte avant même que vous ayez goûté. C'est ça, l'expérience Panozzo & Pizza signée Mondi Food.</p>
 <p>Mondi Food, c'est une dark kitchen basée à Vannes, entièrement tournée vers la livraison. Pas de salle, pas de comptoir — juste une cuisine qui prépare, avec soin, des plats généreux pensés pour voyager chauds jusqu'à chez vous.</p>
 <p>Chaque plat est pensé pour réveiller les papilles : des garnitures généreuses, des saveurs qui claquent, un équilibre entre le croustillant et le fondant. Fermez les yeux, imaginez le carton qui s'ouvre, la vapeur qui s'échappe, cette odeur qui remplit la pièce... et cette première bouchée qui vous fait dire « encore un peu ».</p>
 <div class="aboutGrid">
