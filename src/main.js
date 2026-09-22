@@ -61,9 +61,9 @@ function typeMeta(slug){
 // ⚠️ À REMPLACER par les vraies coordonnées avant mise en prod — voir bottom sheet "Nous contacter".
 // phone/whatsapp au format international. whatsapp sans "+" ni espaces (format attendu par wa.me).
 const CONTACT = {
- phone:'+33 6 00 00 00 00',
- phoneHref:'+33600000000',
- whatsapp:'33600000000',
+ phone:'+33 7 48 54 52 95',
+ phoneHref:'+33748545295',
+ whatsapp:'33748545295',
  email:'contact@mondifood.fr',
 };
 
@@ -120,10 +120,9 @@ function contactSheet(){
  if(!c)return;
  if(!S.contactOpen){c.className='';c.innerHTML='';return}
  c.className='sheetWrap';
- c.innerHTML=`<div class="sheetBackdrop" data-contact-close></div><div class="sheetPanel"><div class="sheetHandle"></div><button class="sheetClose" data-contact-close>${icon('close')}</button><h2>NOUS CONTACTER</h2><p class="sheetSub">Une question sur ta commande ? On te répond vite.</p><div class="contactLinks">
-<a class="contactRow" href="tel:${CONTACT.phoneHref}">${icon('phone')}<div><b>Téléphone</b><small>${CONTACT.phone}</small></div></a>
-<a class="contactRow" href="https://wa.me/${CONTACT.whatsapp}" target="_blank" rel="noopener">${icon('phone')}<div><b>WhatsApp</b><small>Réponse rapide</small></div></a>
-<a class="contactRow" href="mailto:${CONTACT.email}">${icon('mail')}<div><b>Email</b><small>${CONTACT.email}</small></div></a>
+ c.innerHTML=`<div class="sheetBackdrop" data-contact-close></div><div class="sheetPanel"><div class="sheetHandle"></div><button class="sheetClose" data-contact-close>${icon('close')}</button><h2>NOUS CONTACTER</h2><p class="sheetSub">Une question ? Une envie ? Commandez facilement par téléphone ou via WhatsApp !</p><div class="callBadge">${icon('phone')}<span>Un appel et c'est parti !</span></div><div class="contactLinks">
+<a class="contactRow" href="tel:${CONTACT.phoneHref}"><span class="contactIcon phoneIcon">${icon('phone')}</span><div class="contactInfo"><b>Téléphone</b><small>${CONTACT.phone}</small></div><span class="contactCta">Appeler</span></a>
+<a class="contactRow waRow" href="https://wa.me/${CONTACT.whatsapp}" target="_blank" rel="noopener"><span class="contactIcon waIcon">${icon('whatsapp')}</span><div class="contactInfo"><b>WhatsApp</b><small>Réponse rapide</small></div><span class="contactCta wa">Appeler</span></a>
 </div></div>`;
  c.querySelectorAll('[data-contact-close]').forEach(b=>b.onclick=()=>{S.contactOpen=false;contactSheet()});
 }
