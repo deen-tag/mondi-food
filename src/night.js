@@ -85,7 +85,7 @@ function homeBanner(){return `<section class="nightHeroWrap"><img class="nightHe
 // tuile catégorie — mêmes classes .tile/.tileImg/.tileText que le site principal.
 // La première catégorie reste en grande carte (elle porte les plats), les suivantes
 // passent en petites cartes côte à côte (grille .catGrid, définie dans style.css).
-function catTile(c){return `<button class="tile" data-cat="${c.slug}"><div class="tileText"><i>${catCount(c)} AU MENU</i><h3>${c.label}</h3><p>Découvre notre sélection ${c.label.toLowerCase()}</p></div><div class="tileImg"><img src="${catImg(c)}" onerror="this.style.display='none'"></div><span>Voir ${icon('arrow-right')}</span></button>`}
+function catTile(c){return `<button class="tile" data-cat="${c.slug}"><div class="tileText"><i>${catCount(c)} AU MENU</i><h3>${c.label}</h3><p>Découvre notre sélection ${c.label.toLowerCase()}</p></div><div class="tileImg"><img src="${catImg(c)}" onerror="this.style.display='none'"></div><span>Découvrir ${icon('arrow-right')}</span></button>`}
 function catBlocks(){
  const list=nightCategories();
  if(!list.length)return '';
