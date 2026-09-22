@@ -115,7 +115,7 @@ function platsNight(){
  const list=featuredNight();
  if(!list.length)return '';
  const first=nightCategories()[0];
- return `<section class="block tight"><div class="heading"><span><i>À LA CARTE</i><h2>Nos plats night</h2></span>${first?`<button data-cat="${first.slug}">Tout voir ${icon('arrow-right')}</button>`:''}</div><div class="railWrap"><div class="rail">${list.map(mini).join('')}</div></div></section>`;
+ return `<section class="block tight"><div class="heading"><span><i>À LA CARTE</i><h2>Nos incontournables</h2></span>${first?`<button data-cat="${first.slug}">Tout voir ${icon('arrow-right')}</button>`:''}</div><div class="railWrap"><div class="rail">${list.map(mini).join('')}</div></div></section>`;
 }
 
 function cards(){const list=nightProducts().filter(p=>productCategorySlugs(p).includes(S.cat));return `<section class="menuSection"><div class="cards">${list.map(card).join('')}</div></section>`}
