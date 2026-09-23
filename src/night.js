@@ -1,7 +1,7 @@
 import './style.css';
 import './night.css';
 import { icon } from './icons.js';
-import { isNightOpen, nextOpeningDate, minutesUntilClose } from './night-schedule.js';
+import { isNightOpen, nextOpeningDate, nextOpeningLabel, minutesUntilClose } from './night-schedule.js';
 import { loadCatalog } from './menu-client.js';
 
 const S = {route:'home',cat:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),justAddedKey:null,catalog:null,loadError:false,contactOpen:false};
@@ -46,8 +46,14 @@ function hero(){
  if(open){label='OUVERT MAINTENANT'}
  else{
   const diff=Math.max(0,nextOpeningDate()-new Date());
-  const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000);
-  label=`Ouvre dans ${h>0?`${h}h${String(m).padStart(2,'0')}`:`${m} min`}`;
+  // Plus de 24h avant l'ouverture : on affiche le rendez-vous ("Ouvre vendredi
+  // à 23h") plutôt qu'un compte à rebours en heures peu lisible (ex. "59h23").
+  // En dessous de 24h, le décompte précis prend le relais.
+  if(diff>24*3600000){label=nextOpeningLabel()}
+  else{
+   const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000);
+   label=`Ouvre dans ${h>0?`${h}h${String(m).padStart(2,'0')}`:`${m} min`}`;
+  }
  }
  return `<section class="homeHero nStars"><span class="statusPill ${open?'live':'wait'}"><b></b>${label}</span></section>`;
 }

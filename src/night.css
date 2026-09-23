@@ -26,10 +26,10 @@
 @keyframes nTwinkle{from{opacity:.35}to{opacity:.85}}
 
 /* statut ouvert / bientôt ouvert — même échelle typo que .tile>span (10px/800) */
-.statusPill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--card);padding:8px 16px;border-radius:30px;font:800 10px Inter;letter-spacing:.5px;margin-top:8px}
+.statusPill{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--card);padding:5px 12px;border-radius:30px;font:800 9px Inter;letter-spacing:.4px;margin-top:6px}
 .statusPill.live{border-color:rgba(56,224,122,.4)}
-.statusPill.live b{width:7px;height:7px;border-radius:50%;background:#38e07a;box-shadow:0 0 0 0 rgba(56,224,122,.6);animation:liveDot 1.8s infinite}
-.statusPill.wait b{width:7px;height:7px;border-radius:50%;background:#ffcf6b}
+.statusPill.live b{width:6px;height:6px;border-radius:50%;background:#38e07a;box-shadow:0 0 0 0 rgba(56,224,122,.6);animation:liveDot 1.8s infinite}
+.statusPill.wait b{width:6px;height:6px;border-radius:50%;background:#ffcf6b}
 
 /* alerte fin de service — même échelle typo que .delivery/.crumb (10-11px) */
 .closingSoon{display:flex;align-items:center;gap:7px;margin:0 18px 14px;padding:9px 13px;border:1px solid rgba(255,207,107,.35);background:rgba(255,207,107,.08);border-radius:12px;color:#ffcf6b;font:700 10px Inter}
