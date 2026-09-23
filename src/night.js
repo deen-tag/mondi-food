@@ -1,7 +1,7 @@
 import './style.css';
 import './night.css';
 import { icon } from './icons.js';
-import { isNightOpen, nextOpeningDate, minutesUntilClose } from './night-schedule.js';
+import { isNightOpen, nextOpeningDate, nextOpeningLabel, minutesUntilClose } from './night-schedule.js';
 import { loadCatalog } from './menu-client.js';
 
 const S = {route:'home',cat:null,cart:JSON.parse(localStorage.getItem('fd_cart')||'[]'),justAddedKey:null,catalog:null,loadError:false,contactOpen:false};
@@ -40,16 +40,28 @@ const CONTACT = {
 // header — mêmes classes/dimensions que le site principal (logo 110px, icônes 28px)
 function header(){return `<header><button class="hamb" data-contact>${icon('phone')}</button><a class="logo" href="/"><img src="/images/night/logo.png" alt="Mondi Night"></a><a class="cartIcon" href="/index.html?view=cart&from=night">${icon('cart')}<b>${count()}</b></a></header>`}
 
+// Segment du compte à rebours (heures/minutes/secondes) — un bloc chiffré + son libellé.
+function cdSeg(v,l){return `<div class="cdSeg"><b>${String(v).padStart(2,'0')}</b><small>${l}</small></div>`}
+
+// Dans les dernières 24h avant l'ouverture (le vendredi, ou le samedi en fin
+// d'après-midi avant la 2e session), un simple "Ouvre dans 58h" n'a pas de sens :
+// on bascule sur un vrai compte à rebours h:min:sec qui tourne en direct — voir
+// tickCountdown() plus bas, qui ne touche qu'aux chiffres, sans redessiner.
+function countdownBlock(diff){
+ const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
+ return `<div class="nightCountdown"><span class="cdLabel">${icon('moon')} Ouverture ce soir à 23h</span><div class="cdRow">${cdSeg(h,'h')}<i>:</i>${cdSeg(m,'min')}<i>:</i>${cdSeg(s,'sec')}</div></div>`;
+}
+
 function hero(){
  const open=isNightOpen();
- let label;
- if(open){label='OUVERT MAINTENANT'}
- else{
+ let inner;
+ if(open){
+  inner=`<span class="statusPill live"><b></b>OUVERT MAINTENANT</span>`;
+ }else{
   const diff=Math.max(0,nextOpeningDate()-new Date());
-  const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000);
-  label=`Ouvre dans ${h>0?`${h}h${String(m).padStart(2,'0')}`:`${m} min`}`;
+  inner=diff<=24*3600000?countdownBlock(diff):`<span class="statusPill wait"><b></b>${nextOpeningLabel()}</span>`;
  }
- return `<section class="homeHero nStars"><span class="statusPill ${open?'live':'wait'}"><b></b>${label}</span></section>`;
+ return `<section class="homeHero nStars">${inner}</section>`;
 }
 
 // Alerte affichée en fin de service pour éviter les commandes passées juste
@@ -250,6 +262,21 @@ setInterval(()=>{
  if(!S.catalog||open!==lastOpen){lastOpen=open;render();return}
  refreshStatus();
 },60000);
+
+// Fait tourner le compte à rebours seconde par seconde une fois dans les
+// dernières 24h. On ne met à jour que le texte des 3 chiffres (pas de redessin)
+// pour que ce soit fluide ; un render() complet n'a lieu qu'aux deux instants où
+// on bascule dedans/dehors de la fenêtre "compte à rebours".
+setInterval(()=>{
+ if(!S.catalog||isNightOpen())return;
+ const diff=Math.max(0,nextOpeningDate()-new Date());
+ const wrap=document.querySelector('.nightCountdown');
+ if(diff>24*3600000){if(wrap)render();return}
+ if(!wrap){render();return}
+ const nums=wrap.querySelectorAll('.cdSeg b');
+ const h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
+ [h,m,s].forEach((v,i)=>{if(nums[i])nums[i].textContent=String(v).padStart(2,'0')});
+},1000);
 
 // Même contenu qu'avant (compte à rebours d'ouverture, alerte fin de service)
 // mais en ne touchant au DOM que si le texte a changé : plus de redessin complet
