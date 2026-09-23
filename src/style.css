@@ -174,12 +174,13 @@ button:active{transform:scale(.97)}
    "Découvrir" à droite. Limité à .catGrid pour ne pas toucher aux tuiles pleine
    largeur de Mondi Night, qui partagent les classes .tile/.tileImg/.tileText. */
 .homeTiles.catGrid{padding:0;grid-template-columns:1fr 1fr;gap:10px}
-.catGrid .tile{display:grid;grid-template-columns:68px 1fr;grid-template-areas:"img text" "img cta";align-items:center;column-gap:9px;row-gap:2px;padding:9px 8px 9px 8px;min-height:88px}
+.catGrid .tile{display:grid;grid-template-columns:68px 1fr;grid-template-areas:"img text" "img cta";align-items:center;column-gap:7px;row-gap:5px;padding:9px 8px 9px 8px;min-height:88px}
 .catGrid .tileImg{grid-area:img;width:68px;height:68px}
 .catGrid .tileText{grid-area:text;align-self:end}
 .catGrid .tileText i,.catGrid .tileText p{display:none}
 .catGrid .tileText h3{font-size:17px;line-height:1;margin:0;letter-spacing:.3px}
-.catGrid .tile>span{grid-area:cta;position:static;justify-self:start;align-self:start;display:inline-flex;align-items:center;gap:4px;background:color-mix(in srgb,var(--p) 12%,transparent);border:1px solid color-mix(in srgb,var(--p) 32%,transparent);color:var(--p);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.catGrid .tile>span{grid-area:cta;justify-self:start;align-self:start;display:inline-flex;align-items:center;background:color-mix(in srgb,var(--p) 14%,transparent);color:var(--p);padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.catGrid .tile>span svg{display:none}
 
 /* Accueil (jour) : les 3 pastilles forment une seule barre séparée par de fines
    lignes. Limité à .perksBar : Mondi Night garde ses 3 cartes séparées. */
@@ -208,8 +209,8 @@ button:active{transform:scale(.97)}
 /* Grille catégories : le titre ne peut plus déborder de la carte, quelle que soit
    la police ou la longueur du nom (réglable depuis l'admin) — il est tronqué en
    dernier recours avec "…" plutôt que de sortir du cadre. */
-.catGrid .tile{grid-template-columns:68px minmax(0,1fr);padding:9px 8px 9px 8px;column-gap:9px}
+.catGrid .tile{grid-template-columns:68px minmax(0,1fr);padding:9px 8px 9px 8px;column-gap:7px}
 .catGrid .tileText{min-width:0}
 .catGrid .tileText h3{font-size:15px;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .catGrid .tile>span{white-space:nowrap}
-@media(max-width:340px){.catGrid .tile{grid-template-columns:58px minmax(0,1fr)}.catGrid .tileImg{width:58px;height:58px}.catGrid .tileText h3{font-size:13px}.catGrid .tile>span{font-size:10px}}
+@media(max-width:340px){.catGrid .tile{grid-template-columns:58px minmax(0,1fr)}.catGrid .tileImg{width:58px;height:58px}.catGrid .tileText h3{font-size:13px}.catGrid .tile>span{font-size:9px;padding:2px 7px}}
