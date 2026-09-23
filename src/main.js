@@ -328,7 +328,7 @@ function toast(t){
 }
 
 function initReveal(){
- const els=document.querySelectorAll('.card:not(.in), .mini:not(.in)');
+ const els=document.querySelectorAll('.card:not(.in)');
  if(!('IntersectionObserver' in window)){els.forEach(el=>el.classList.add('in'));return}
  const io=new IntersectionObserver(entries=>{
   entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('in');io.unobserve(entry.target)}})
